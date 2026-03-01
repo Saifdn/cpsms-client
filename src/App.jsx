@@ -1,14 +1,22 @@
-import { useEffect } from "react";
-import api from "./services/api";
+import { Route, Routes } from "react-router-dom";
+import { ThemeProvider } from "@/components/ThemeProvider";
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AppSidebar } from "@/components/layout/AppSidebar";
+import { Header } from "@/components/layout/Header";
 
-function App() {
-  useEffect(() => {
-    api.get("/")
-      .then(res => console.log(res.data))
-      .catch(err => console.log(err));
-  }, []);
+const App = () => {
+  return (
+    <ThemeProvider>
+      <SidebarProvider open={false}>
+        <AppSidebar />
 
-  return <h1>CPSMS Client Running</h1>;
-}
+        <SidebarInset>
+          <Header />
+
+        </SidebarInset>
+      </SidebarProvider>
+    </ThemeProvider>
+  );
+};
 
 export default App;
