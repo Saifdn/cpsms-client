@@ -19,12 +19,12 @@ export const APP_SIDEBAR = {
   primaryNav: [
     {
       title: 'Home',
-      url: '#',
+      url: '/',
       Icon: HomeIcon,
     },
     {
       title: 'Dashboard',
-      url: '#',
+      url: '/dashboard',
       Icon: LayoutDashboardIcon,
     },
     {
@@ -44,8 +44,12 @@ export const APP_SIDEBAR = {
     },
     {
       title: 'Users',
-      url: '#',
+      url: '/staff',
       Icon: UsersIcon,
+      children: [
+        { title: "Staff", url: "/staff"},
+        { title: "Gradaute", url: "/dashboard"},
+      ]
     },
   ],
   secondaryNav: [

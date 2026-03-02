@@ -8,7 +8,16 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
 } from "@/components/ui/sidebar";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronRight } from "lucide-react";
 import Avatar from "react-avatar";
 import { Button } from "@/components/ui/button";
 
@@ -18,20 +27,34 @@ import { Logo } from "@/assets/Logo";
 import { APP_SIDEBAR } from "/constants-index";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "./UserMenu";
-import { PanelLeftOpen } from "lucide-react";
+import { PanelLeftOpen, PanelLeftClose } from "lucide-react";
 
 export const AppSidebar = () => {
   const { isMobile } = useSidebar();
+  const { toggleSidebar, open } = useSidebar();
 
   return (
-    <Sidebar variant="floating" collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon">
       {/* Sidebar Header */}
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem 
-            className="px-0.5 max-lg:p-2"
-          > 
-            <Logo variant={isMobile ? "default" : "icon"} />
+          <SidebarMenuItem className="px-0.5 max-lg:p-2">
+            {isMobile ? (
+              <Logo />
+            ) : open ? (
+              // Sidebar is open — show logo + close button
+              <div className="flex items-center justify-between">
+                <Logo />
+                <Button variant="ghost" size="icon-sm" onClick={toggleSidebar}>
+                  <PanelLeftClose />
+                </Button>
+              </div>
+            ) : (
+              // Sidebar is collapsed — show only the open button (replaces logo)
+              <Button variant="ghost" size="icon-sm" onClick={toggleSidebar}>
+                <PanelLeftOpen />
+              </Button>
+            )}
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
@@ -41,7 +64,7 @@ export const AppSidebar = () => {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {APP_SIDEBAR.primaryNav.map((item) => (
+              {/* {APP_SIDEBAR.primaryNav.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton tooltip={item.title} asChild>
                     <a href={item.url}>
@@ -50,7 +73,50 @@ export const AppSidebar = () => {
                     </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+              ))} */}
+              {APP_SIDEBAR.primaryNav.map((item) =>
+                item.children ? (
+                  <Collapsible
+                    key={item.title}
+                    asChild
+                    defaultOpen={false}
+                    className="group/collapsible"
+                  >
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton tooltip={item.title}>
+                          <item.Icon />
+                          <span>{item.title}</span>
+                          <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {item.children.map((child) => (
+                            <SidebarMenuSubItem key={child.title}>
+                              <SidebarMenuSubButton asChild>
+                                <a href={child.url}>
+                                  <span>{child.title}</span>
+                                </a>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                ) : (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton tooltip={item.title} asChild>
+                      <a href={item.url}>
+                        <item.Icon />
+                        <span>{item.title}</span>
+                      </a>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ),
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
