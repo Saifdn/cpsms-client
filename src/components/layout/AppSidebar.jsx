@@ -38,21 +38,31 @@ export const AppSidebar = () => {
       {/* Sidebar Header */}
       <SidebarHeader>
         <SidebarMenu>
-          <SidebarMenuItem className="px-0.5 max-lg:p-2">
+          <SidebarMenuItem
+            className={cn(
+              "px-0.5 max-lg:p-2",
+              "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center",
+            )}
+          >
             {isMobile ? (
               <Logo />
             ) : open ? (
-              // Sidebar is open — show logo + close button
-              <div className="flex items-center justify-between">
+              // Sidebar open → logo + close button (your existing layout)
+              <div className="flex items-center justify-between w-full">
                 <Logo />
                 <Button variant="ghost" size="icon-sm" onClick={toggleSidebar}>
                   <PanelLeftClose />
                 </Button>
               </div>
             ) : (
-              // Sidebar is collapsed — show only the open button (replaces logo)
-              <Button variant="ghost" size="icon-sm" onClick={toggleSidebar}>
-                <PanelLeftOpen />
+              // Sidebar collapsed → centered toggle button
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8" // make button square for perfect centering
+                onClick={toggleSidebar}
+              >
+                <PanelLeftOpen className="h-5 w-5" />
               </Button>
             )}
           </SidebarMenuItem>
@@ -146,7 +156,7 @@ export const AppSidebar = () => {
       <SidebarFooter className={cn(isMobile && "border-t")}>
         <SidebarMenu>
           <SidebarMenuItem className={cn(isMobile && "p-2")}>
-            {isMobile ? (
+            {isMobile || open ? (
               <div className="flex items-center justify-between gap-3">
                 {/* Left side */}
                 <div className="flex items-center gap-3 min-w-0">
