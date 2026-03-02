@@ -13,6 +13,10 @@ import {
   TrashIcon,
   UserIcon,
   UsersIcon,
+  Camera,
+  CalendarCheck,
+  ClockAlert,
+  ScanQrCode,
 } from 'lucide-react';
 
 export const APP_SIDEBAR = {
@@ -28,14 +32,33 @@ export const APP_SIDEBAR = {
       Icon: LayoutDashboardIcon,
     },
     {
-      title: 'Project',
+      title: 'Studio',
       url: '#',
-      Icon: FolderKanbanIcon,
+      Icon: Camera,
+      children: [
+        { title: "Location", url: "#"},
+        { title: "Package", url: "#"},
+        { title: "Session", url: "#"}
+      ]
     },
     {
-      title: 'Tasks',
+      title: 'Booking',
       url: '#',
-      Icon: CopyCheckIcon,
+      Icon: CalendarCheck,
+    },
+    {
+      title: 'Counter',
+      url: '#',
+      Icon: ScanQrCode,
+      children: [
+        { title: "Registration", url: "#"},
+        { title: "Studio", url: "#"},
+      ]
+    },
+    {
+      title: 'Live Queue',
+      url: '#',
+      Icon: ClockAlert,
     },
     {
       title: 'Reporting',
@@ -48,7 +71,8 @@ export const APP_SIDEBAR = {
       Icon: UsersIcon,
       children: [
         { title: "Staff", url: "/staff"},
-        { title: "Gradaute", url: "/dashboard"},
+        { title: "Gradaute", url: "/graduate"},
+        { title: "Admin", url: "#"}
       ]
     },
   ],

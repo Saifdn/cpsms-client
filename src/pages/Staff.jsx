@@ -1,9 +1,7 @@
 import { Page, PageHeader } from "@/components/layout/Page";
-import { StaffTable } from "@/components/StaffTable";
 import { DataTable } from "@/components/ui/data-table";
 import { staff } from "@/data/Staff";
 import { staffColumns } from "@/components/columns/staff-columns";
-import { graduateColumns } from "@/components/columns/graduate-columns";
 
 const Staff = () => {
   return (
@@ -18,12 +16,6 @@ const Staff = () => {
           title="List of Staff Members"
           description="View and manage all staff members in your organization."
           columns={staffColumns}
-          data={staff}
-        />
-        <DataTable
-          title="List of Graduate"
-          description="View and manage all graduate in your organization."
-          columns={graduateColumns}
           data={staff}
         />
       </div>
