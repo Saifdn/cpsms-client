@@ -5,7 +5,7 @@ import { Header } from "@/components/layout/Header"
 
 const MainLayout = () => {
   return (
-    <SidebarProvider defaultOpen={false}>
+    <SidebarProvider defaultOpen={true}>
       <AppSidebar />
       <SidebarInset>
         <Header />

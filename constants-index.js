@@ -51,8 +51,8 @@ export const APP_SIDEBAR = {
       url: '#',
       Icon: ScanQrCode,
       children: [
-        { title: "Registration", url: "#"},
-        { title: "Studio", url: "#"},
+        { title: "Registration", url: "/registration-counter"},
+        { title: "Studio", url: "/studio-counter"},
       ]
     },
     {
@@ -72,7 +72,7 @@ export const APP_SIDEBAR = {
       children: [
         { title: "Staff", url: "/staff"},
         { title: "Gradaute", url: "/graduate"},
-        { title: "Admin", url: "#"}
+        { title: "Admin", url: "/admin"}
       ]
     },
   ],
