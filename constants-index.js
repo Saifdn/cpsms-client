@@ -36,9 +36,9 @@ export const APP_SIDEBAR = {
       url: '#',
       Icon: Camera,
       children: [
-        { title: "Location", url: "#"},
-        { title: "Package", url: "#"},
-        { title: "Session", url: "#"}
+        { title: "Location", url: "/studio"},
+        { title: "Package", url: "/package"},
+        { title: "Session", url: "/session"}
       ]
     },
     {
@@ -57,7 +57,7 @@ export const APP_SIDEBAR = {
     },
     {
       title: 'Live Queue',
-      url: '#',
+      url: '/live-queue',
       Icon: ClockAlert,
     },
     {
