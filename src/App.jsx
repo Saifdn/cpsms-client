@@ -2,10 +2,12 @@ import { Route, Routes } from "react-router-dom";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 import Dashboard from "@/pages/Dashboard";
-import MainLayout from "./components/layout/MainLayout";
+import MainLayout from "@/components/layout/MainLayout";
 
-import SignUp from "@/pages/auth/SignUp";
-import SignIn from "./pages/auth/SignIn";
+import SignUp from "@/pages/auth/SignUpPage";
+import SignIn from "@/pages/auth/SignInPage";
+import ForgotPassword from "@/pages/auth/ForgotPasswordPage";
+import ResetPassword from "@/pages/auth/ResetPasswordPage";
 
 import Studio from "@/pages/studio/Studio"
 import Package from "@/pages/studio/Package"
@@ -16,9 +18,9 @@ import StudioCounter from "@/pages/StudioCounter"
 
 import QueueTest from "@/pages/QueueTest";
 
-import Staff from "@/pages/Staff";
-import Graduate from "@/pages/Graduate";
-import Admin from "@/pages/Admin";
+import Staff from "@/pages/users/Staff";
+import Graduate from "@/pages/users/Graduate";
+import Admin from "@/pages/users/Admin";
 
 import { ProtectedRoute } from "./routes/ProtectedRoute"
 
@@ -30,6 +32,8 @@ const App = () => {
         {/* Public Routes */}
         <Route path="/sign-in" element={<SignIn />} />
         <Route path="/sign-up" element={<SignUp />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
 
         {/* Protected Routes */}
         <Route element={<ProtectedRoute />}>
@@ -51,6 +55,12 @@ const App = () => {
             <Route path="/graduate" element={<Graduate />} />
             <Route path="/admin" element={<Admin />} />
 
+          </Route>
+        </Route>
+
+        <Route element={<ProtectedRoute allowedRoles={["admin"]} />}>
+          <Route element={<MainLayout />}>
+            {/* <Route path="/admin" element={<Admin />} /> */}
           </Route>
         </Route>
 

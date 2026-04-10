@@ -1,29 +1,30 @@
-import { useState } from "react"
-import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
+import { cn } from "@/lib/utils";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Field,
   FieldDescription,
   FieldGroup,
   FieldLabel,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 
 export function LoginForm({
   className,
   onSubmit,
   loading = false,
-  error = null,
   ...props
 }) {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    onSubmit?.({ email, password })
-  }
+    e.preventDefault();
+    if (onSubmit) {
+      onSubmit({ email, password });
+    }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -47,6 +48,7 @@ export function LoginForm({
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </Field>
 
@@ -54,7 +56,7 @@ export function LoginForm({
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Password</FieldLabel>
                   <a
-                    href="#"
+                    href="/forgot-password"
                     className="ml-auto text-sm underline-offset-2 hover:underline"
                   >
                     Forgot your password?
@@ -66,24 +68,25 @@ export function LoginForm({
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={loading}
                 />
               </Field>
 
-              {error && (
-                <p className="text-sm text-red-500 text-center">
-                  {error}
-                </p>
-              )}
-
               <Field>
-                <Button type="submit" disabled={loading} className="w-full">
+                <Button 
+                  type="submit" 
+                  disabled={loading} 
+                  className="w-full"
+                >
                   {loading ? "Logging in..." : "Login"}
                 </Button>
               </Field>
 
               <FieldDescription className="text-center">
                 Don&apos;t have an account?{" "}
-                <a href="/sign-up">Sign up</a>
+                <a href="/sign-up" className="hover:underline">
+                  Sign up
+                </a>
               </FieldDescription>
             </FieldGroup>
           </form>
@@ -91,7 +94,7 @@ export function LoginForm({
           <div className="relative hidden bg-muted md:block">
             <img
               src="/signup.png"
-              alt="Image"
+              alt="Login background"
               className="absolute inset-0 h-full w-full object-cover"
             />
           </div>
@@ -100,9 +103,9 @@ export function LoginForm({
 
       <FieldDescription className="px-6 text-center">
         By clicking continue, you agree to our{" "}
-        <a href="#">Terms of Service</a> and{" "}
-        <a href="#">Privacy Policy</a>.
+        <a href="#" className="hover:underline">Terms of Service</a> and{" "}
+        <a href="#" className="hover:underline">Privacy Policy</a>.
       </FieldDescription>
     </div>
-  )
+  );
 }

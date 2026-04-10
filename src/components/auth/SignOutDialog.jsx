@@ -19,7 +19,7 @@ export function LogoutAlertDialog({ open, onOpenChange, onConfirmLogout }) {
           </AlertDialogMedia> */}
           <AlertDialogTitle>Are you sure you want to logout?</AlertDialogTitle>
           <AlertDialogDescription>
-            This will logut your account.
+            This will log you out of your account.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

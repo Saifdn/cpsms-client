@@ -1,13 +1,10 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../context/useAuth";
 import { Spinner } from "@/components/ui/spinner";
 
 export const ProtectedRoute = ({ allowedRoles }) => {
   const { accessToken, user, loading } = useAuth();
   const location = useLocation();
-
-  console.log("loading:", loading)
-  console.log("accessToken:", accessToken)
 
   // if (loading && !accessToken) {
   //   // return spinner or null while checking refresh token

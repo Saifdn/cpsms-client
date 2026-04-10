@@ -1,3 +1,4 @@
+import { useState } from "react";           // ← Added
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,23 +7,40 @@ import {
   FieldDescription,
   FieldGroup,
   FieldLabel,
-  FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
-export function SignupForm({ onSubmit, className, ...props }) {
+export function SignupForm({ 
+  onSubmit, 
+  loading = false, 
+  className, 
+  ...props 
+}) {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phone: "",
+    password: "",
+    confirmPassword: "",
+  });
+
+  const handleChange = (e) => {
+    const { id, value } = e.target;
+    setFormData(prev => ({ ...prev, [id]: value }));
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    const form = e.target;
 
-    const fullName = form.fullName.value;
-    const email = form.email.value;
-    const phone = form.phone.value;
-    const password = form.password.value;
-    const confirmPassword = form["confirm-password"].value;
+    const { fullName, email, phone, password, confirmPassword } = formData;
 
     if (password !== confirmPassword) {
-      alert("Passwords do not match");
+      alert("Passwords do not match");   // You can replace this with toast later
+      return;
+    }
+
+    if (password.length < 8) {
+      alert("Password must be at least 8 characters long");
       return;
     }
 
@@ -38,7 +56,7 @@ export function SignupForm({ onSubmit, className, ...props }) {
               <div className="flex flex-col items-center gap-2 text-center">
                 <h1 className="text-2xl font-bold">Create your account</h1>
                 <p className="text-sm text-balance text-muted-foreground">
-                  Enter your email below to create your account
+                  Enter your details below to create your account
                 </p>
               </div>
 
@@ -46,9 +64,12 @@ export function SignupForm({ onSubmit, className, ...props }) {
                 <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
                 <Input
                   id="fullName"
-                  type="fullName"
+                  type="text"
                   placeholder="John Doe"
+                  value={formData.fullName}
+                  onChange={handleChange}
                   required
+                  disabled={loading}
                 />
               </Field>
 
@@ -58,12 +79,11 @@ export function SignupForm({ onSubmit, className, ...props }) {
                   id="email"
                   type="email"
                   placeholder="m@example.com"
+                  value={formData.email}
+                  onChange={handleChange}
                   required
+                  disabled={loading}
                 />
-                {/* <FieldDescription>
-                  We&apos;ll use this to contact you. We will not share your
-                  email with anyone else.
-                </FieldDescription> */}
               </Field>
 
               <Field>
@@ -72,34 +92,58 @@ export function SignupForm({ onSubmit, className, ...props }) {
                   id="phone"
                   type="tel"
                   placeholder="012-345 6789"
+                  value={formData.phone}
+                  onChange={handleChange}
                   required
+                  disabled={loading}
                 />
               </Field>
 
               <Field>
-                <Field className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input id="password" type="password" required />
+                    <Input
+                      id="password"
+                      type="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      disabled={loading}
+                    />
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor="confirm-password">
-                      Confirm Password
-                    </FieldLabel>
-                    <Input id="confirm-password" type="password" required />
+                    <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={formData.confirmPassword}
+                      onChange={handleChange}
+                      required
+                      disabled={loading}
+                    />
                   </Field>
-                </Field>
+                </div>
                 <FieldDescription>
                   Must be at least 8 characters long.
                 </FieldDescription>
               </Field>
 
               <Field>
-                <Button type="submit">Create Account</Button>
+                <Button 
+                  type="submit" 
+                  className="w-full" 
+                  disabled={loading}
+                >
+                  {loading ? "Creating account..." : "Create Account"}
+                </Button>
               </Field>
 
               <FieldDescription className="text-center">
-                Already have an account? <a href="/sign-in">Sign in</a>
+                Already have an account?{" "}
+                <a href="/sign-in" className="hover:underline">
+                  Sign in
+                </a>
               </FieldDescription>
             </FieldGroup>
           </form>
@@ -107,7 +151,7 @@ export function SignupForm({ onSubmit, className, ...props }) {
           <div className="relative hidden bg-muted md:block">
             <img
               src="/signup.png"
-              alt="Image"
+              alt="Signup background"
               className="absolute inset-0 h-full w-full object-cover"
             />
           </div>
@@ -115,8 +159,9 @@ export function SignupForm({ onSubmit, className, ...props }) {
       </Card>
 
       <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our <a href="#">Terms of Service</a>{" "}
-        and <a href="#">Privacy Policy</a>.
+        By clicking continue, you agree to our{" "}
+        <a href="#" className="hover:underline">Terms of Service</a> and{" "}
+        <a href="#" className="hover:underline">Privacy Policy</a>.
       </FieldDescription>
     </div>
   );
