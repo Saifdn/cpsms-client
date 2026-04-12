@@ -19,19 +19,19 @@ export const studio = [
   },
   {
     _id: "67c4a1b2e9f8d1234567890d",
-    name: "Podcast Room",
+    name: "Studio D",
     location: "Lot 8-d",
     isOccupied: false
   },
   {
     _id: "67c4a1b2e9f8d1234567890e",
-    name: "Rehearsal Space",
+    name: "Studio E",
     location: "Lot 5-e",
     isOccupied: true
   },
   {
     _id: "67c4a1b2e9f8d1234567890f",
-    name: "Dance Studio",
+    name: "Studio F",
     location: "Lot 9-f",
     isOccupied: false
   }
