@@ -43,7 +43,7 @@ export const APP_SIDEBAR = {
     },
     {
       title: 'Booking',
-      url: '#',
+      url: '/booking',
       Icon: CalendarCheck,
     },
     {

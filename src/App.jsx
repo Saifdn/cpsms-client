@@ -13,6 +13,8 @@ import Studio from "@/pages/studio/Studio"
 import Package from "@/pages/studio/Package"
 import Session from "@/pages/studio/Session"
 
+import Booking from "@/pages/booking/Booking";
+
 import RegistrationCounter from "@/pages/RegistrationCounter"
 import StudioCounter from "@/pages/StudioCounter"
 
@@ -45,6 +47,7 @@ const App = () => {
             <Route path="/studio" element={<Studio />} />
             <Route path="/package" element={<Package />} />
             <Route path="/session" element={<Session />} />
+            <Route path="/booking" element={<Booking />} />
 
             <Route path="/registration-counter" element={<RegistrationCounter />} />
             <Route path="/studio-counter" element={<StudioCounter />} />

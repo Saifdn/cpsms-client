@@ -16,6 +16,10 @@ export function ViewDetailsDialog({
 }) {
   if (!data) return null;
 
+  const getNestedValue = (obj, path) => {
+  return path.split(".").reduce((acc, key) => acc?.[key], obj);
+};
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -28,7 +32,7 @@ export function ViewDetailsDialog({
             children
           ) : (
             fields.map((field) => {
-              const value = data[field.key];
+              const value = getNestedValue(data, field.key);
               if (value === undefined || value === null) return null;
 
               return (
