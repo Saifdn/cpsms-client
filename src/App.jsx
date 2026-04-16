@@ -15,8 +15,8 @@ import Session from "@/pages/studio/Session"
 
 import Booking from "@/pages/booking/Booking";
 
-import RegistrationCounter from "@/pages/RegistrationCounter"
-import StudioCounter from "@/pages/StudioCounter"
+import RegistrationCounter from "@/pages/check-in-out/RegistrationCounter"
+import StudioCounter from "@/pages/check-in-out/StudioCounter"
 
 import QueueTest from "@/pages/QueueTest";
 

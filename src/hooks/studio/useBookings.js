@@ -9,6 +9,14 @@ export const useBookings = () => {
   });
 };
 
+export const useBookingById = (id, enabled = false) => {
+  return useQuery({
+    queryKey: ["booking", id],
+    queryFn: () => bookingService.getBookingById(id).then(res => res.data),
+    enabled: !!id && enabled,
+  });
+};
+
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();
   return useMutation({
