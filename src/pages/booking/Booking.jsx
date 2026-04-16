@@ -5,7 +5,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 
 import { DataTable } from "@/components/ui/data-table";
-import { bookingColumns } from "@/components/columns/bookingColumns";
+import { bookingColumns } from "@/components/columns/BookingColumns";
 import { CreateDialog } from "@/components/dialog/CreateDialog";
 
 import { useBookings, useCreateBooking } from "@/hooks/studio/useBookings";
