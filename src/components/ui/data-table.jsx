@@ -36,7 +36,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export function DataTable({ title, description, columns, data }) {
+export function DataTable({ title, description, columns, data = [], isLoading = false, onRefresh }) {
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [globalFilter, setGlobalFilter] = useState(""); // for search across all columns

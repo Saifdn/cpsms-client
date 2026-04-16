@@ -25,11 +25,13 @@ export const APP_SIDEBAR = {
       title: 'Home',
       url: '/',
       Icon: HomeIcon,
+      roles: ["admin", "staff"]
     },
     {
       title: 'Dashboard',
       url: '/dashboard',
       Icon: LayoutDashboardIcon,
+      roles: ["admin", "staff"]
     },
     {
       title: 'Studio',
@@ -43,11 +45,11 @@ export const APP_SIDEBAR = {
     },
     {
       title: 'Booking',
-      url: '/booking',
+      url: '#',
       Icon: CalendarCheck,
     },
     {
-      title: 'Check-In / Out',
+      title: 'Counter',
       url: '#',
       Icon: ScanQrCode,
       children: [

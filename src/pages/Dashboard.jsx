@@ -5,7 +5,7 @@ import { TotalBookChart } from "@/components/dashboard/TotalBookChart";
 
 import { DataTable } from "@/components/ui/data-table";
 import { staff } from "@/data/Staff";
-import { staffColumns } from "@/components/columns/staff-columns";
+import { staffColumns } from "@/components/columns/StaffColumns";
 
 const Dashboard = () => {
   return (
