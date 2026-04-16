@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
 
 import { useSessions, useGenerateSessions } from "@/hooks/studio/useSessions";
-import { sessionColumns } from "@/components/columns/sessionColumns";
+import { sessionColumns } from "@/components/columns/SessionColumns";
 
 const Session = () => {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
