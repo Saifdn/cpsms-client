@@ -267,7 +267,7 @@ const Booking = () => {
                     </SelectItem>
                   ))
                 ) : (
-                  <SelectItem value="" disabled>
+                  <SelectItem value="none" disabled>
                     No sessions available on this date
                   </SelectItem>
                 )}

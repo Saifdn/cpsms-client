@@ -1,159 +1,217 @@
+// StudioCounter.jsx
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
-import { Users, Play, LogOut, Loader2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { Play, CheckCircle, LogOut, Wifi, WifiOff } from "lucide-react";
 
 import { useStudios } from "@/hooks/studio/useStudios";
-import { useActiveQueue, useCallNext, useCheckOut } from "@/hooks/counter/useQueue";
+import { useLiveQueue } from "@/hooks/counter/useLiveQueue";
+import { 
+  useCallNext, 
+  useConfirmArrival, 
+  useCheckOut 
+} from "@/hooks/counter/useQueue";
+
+import QrScanner from "@/components/QrScanner";
 
 const StudioCounter = () => {
-  const { data: studiosData, isLoading: studiosLoading } = useStudios();
-  const { data: activeQueueData, isLoading: queueLoading } = useActiveQueue();
+  const { data: studiosData } = useStudios();
+  const { activeQueue, isConnected } = useLiveQueue();
 
   const callNextMutation = useCallNext();
+  const confirmArrivalMutation = useConfirmArrival();
   const checkOutMutation = useCheckOut();
 
   const studios = studiosData?.data || [];
-  const activeQueue = activeQueueData?.data || [];
-
   const [selectedStudio, setSelectedStudio] = useState(null);
+  const [showScanner, setShowScanner] = useState(false);
 
-  // Get the next waiting person
-  const nextInQueue = activeQueue.find(q => q.status === "waiting");
+  // Improved calledCustomer detection
+  const calledCustomer = useMemo(() => {
+    if (!selectedStudio) return null;
 
-  // Get current person in this studio
-  const currentUser = activeQueue.find(q => 
-    q.studio?._id === selectedStudio?._id && 
-    (q.status === "in-progress" || q.status === "called")
-  );
+    return activeQueue.find((q) => {
+      const studioIdFromQueue = q.studio?._id || q.studio; // handle both string and object
+      const selectedStudioId = selectedStudio._id || selectedStudio.id;
 
+      return studioIdFromQueue === selectedStudioId && q.status === "called";
+    });
+  }, [activeQueue, selectedStudio]);
+
+  const currentUser = useMemo(() => {
+    if (!selectedStudio) return null;
+
+    return activeQueue.find((q) => {
+      const studioIdFromQueue = q.studio?._id || q.studio;
+      const selectedStudioId = selectedStudio._id || selectedStudio.id;
+
+      return studioIdFromQueue === selectedStudioId && q.status === "in-progress";
+    });
+  }, [activeQueue, selectedStudio]);
+
+  const nextInQueue = activeQueue.find((q) => q.status === "waiting");
+
+  // Handlers
   const handleCallNext = () => {
-    if (!selectedStudio || !nextInQueue) return;
-    callNextMutation.mutate(selectedStudio._id);
+    if (!selectedStudio) return;
+    callNextMutation.mutate({ studioId: selectedStudio._id });
+    setShowScanner(true);
+  };
+
+  const handleQrScan = (scannedValue) => {
+    console.log("Scanned:", scannedValue);
+
+    if (!calledCustomer) {
+      alert("No customer is currently called for this studio.");
+      setShowScanner(false);
+      return;
+    }
+
+    const isMatch = 
+      scannedValue === calledCustomer._id || 
+      scannedValue === calledCustomer.booking?.bookingNumber;
+
+    if (isMatch) {
+      confirmArrivalMutation.mutate(calledCustomer._id);
+      setShowScanner(false);
+    } else {
+      alert("Scanned QR does not match the called customer. Please try again.");
+    }
   };
 
   const handleCheckOut = () => {
     if (!currentUser) return;
-    checkOutMutation.mutate(currentUser._id);
+    checkOutMutation.mutate({ queueId: currentUser._id });
   };
 
   return (
     <Page>
       <PageHeader
         title="Studio Counter"
-        description="Manage active studios and call next customer"
+        description="Call Next → Scan QR to confirm → Check-out"
       />
 
       <div className="grid gap-6 py-8 lg:grid-cols-12">
-
-        {/* Left: List of Studios */}
+        {/* Left: Studios */}
         <div className="lg:col-span-5">
-          <h2 className="text-lg font-semibold mb-4">Active Studios</h2>
-          
-          {studiosLoading ? (
-            <div className="text-center py-8">Loading studios...</div>
-          ) : (
-            <div className="grid gap-4">
-              {studios.map((studio) => (
-                <Card 
-                  key={studio._id}
-                  className={`cursor-pointer transition-all hover:shadow-md ${
-                    selectedStudio?._id === studio._id ? "ring-2 ring-primary" : ""
-                  }`}
-                  onClick={() => setSelectedStudio(studio)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-center">
-                      <CardTitle className="text-base">{studio.name}</CardTitle>
-                      <Badge variant={studio.isAvailable ? "default" : "destructive"}>
-                        {studio.isAvailable ? "Free" : "Occupied"}
-                      </Badge>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">{studio.location}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          <h2 className="text-lg font-semibold mb-4">Studios</h2>
+          <div className="grid gap-3">
+            {studios.map((studio) => (
+              <Card
+                key={studio._id}
+                className={`cursor-pointer transition-all hover:shadow-md ${
+                  selectedStudio?._id === studio._id ? "ring-2 ring-primary" : ""
+                }`}
+                onClick={() => setSelectedStudio(studio)}
+              >
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between">
+                    <CardTitle className="text-base">{studio.name}</CardTitle>
+                    <Badge variant={studio.isAvailable ? "default" : "destructive"}>
+                      {studio.isAvailable ? "Free" : "Occupied"}
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-muted-foreground">{studio.location}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
 
-        {/* Right: Studio Control Panel */}
+        {/* Right: Control Panel */}
         <div className="lg:col-span-7">
           {selectedStudio ? (
             <Card>
               <CardHeader>
-                <CardTitle className="text-xl">{selectedStudio.name}</CardTitle>
+                <CardTitle>{selectedStudio.name}</CardTitle>
                 <p className="text-muted-foreground">{selectedStudio.location}</p>
               </CardHeader>
 
               <CardContent className="space-y-6">
-
-                {/* Current Status */}
-                <div className="p-4 bg-muted rounded-lg">
-                  <p className="text-sm text-muted-foreground mb-1">Studio Status</p>
-                  <p className="text-lg font-semibold">
-                    {selectedStudio.isAvailable ? "✅ Available" : "⏳ Occupied"}
-                  </p>
+                <div className="flex items-center gap-2 text-sm">
+                  <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
+                  {isConnected ? "Live" : "Connecting..."}
                 </div>
 
-                {/* Next in Queue */}
-                {nextInQueue ? (
-                  <div>
-                    <p className="font-medium mb-2">Next Customer</p>
-                    <div className="bg-white border rounded-lg p-4">
-                      <div className="font-semibold">Queue #{nextInQueue.queueNumber}</div>
-                      <div className="text-sm mt-1">
-                        {nextInQueue.booking?.graduate?.fullName}
+                {/* Called Customer */}
+                {calledCustomer && (
+                  <div className="bg-blue-50 border-2 border-blue-300 p-6 rounded-2xl">
+                    <div className="flex items-center gap-3 mb-4">
+                      <CheckCircle className="h-8 w-8 text-blue-600" />
+                      <div>
+                        <h3 className="text-xl font-bold text-blue-700">Called Customer</h3>
+                        <p className="text-blue-600">Waiting for QR scan confirmation</p>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-muted-foreground">
-                    No customers waiting in queue.
+
+                    <p className="text-2xl font-semibold">
+                      {calledCustomer.booking?.graduate?.fullName || "Customer"}
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Queue #{calledCustomer.queueNumber}
+                    </p>
+
+                    <Button 
+                      onClick={() => setShowScanner(true)}
+                      className="mt-6 w-full"
+                      size="lg"
+                    >
+                      Open QR Scanner
+                    </Button>
                   </div>
                 )}
 
                 {/* Current User in Studio */}
                 {currentUser && (
-                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
-                    <p className="font-medium text-amber-700">Currently in Studio</p>
-                    <p className="text-sm mt-1">
+                  <div className="bg-amber-50 border border-amber-200 p-6 rounded-xl">
+                    <h3 className="font-semibold text-amber-700 mb-3">Currently in Studio</h3>
+                    <p className="text-xl">
                       {currentUser.booking?.graduate?.fullName}
                     </p>
+                    <Button 
+                      variant="destructive"
+                      onClick={handleCheckOut}
+                      disabled={checkOutMutation.isPending}
+                      className="mt-4 w-full"
+                    >
+                      Check-out Customer
+                    </Button>
                   </div>
                 )}
 
-                {/* Action Buttons */}
-                <div className="flex gap-3 pt-4">
+                {/* Call Next Button */}
+                {!calledCustomer && !currentUser && (
                   <Button 
                     onClick={handleCallNext}
-                    disabled={!nextInQueue || !selectedStudio.isAvailable}
-                    className="flex-1"
+                    disabled={!nextInQueue || callNextMutation.isPending}
+                    className="w-full"
+                    size="lg"
                   >
-                    <Play className="mr-2 h-4 w-4" />
+                    <Play className="mr-2 h-5 w-5" />
                     Call Next Customer
                   </Button>
+                )}
 
-                  <Button 
-                    variant="destructive"
-                    onClick={handleCheckOut}
-                    disabled={!currentUser}
-                    className="flex-1"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Check-out Current User
-                  </Button>
-                </div>
+                {!calledCustomer && !currentUser && !nextInQueue && (
+                  <div className="text-center py-12 text-muted-foreground">
+                    No customers waiting in queue.
+                  </div>
+                )}
+
+                {/* QR Scanner */}
+                {showScanner && (
+                  <QrScanner onScan={handleQrScan} />
+                )}
               </CardContent>
             </Card>
           ) : (
-            <div className="h-64 flex items-center justify-center border rounded-lg text-muted-foreground">
-              Select a studio from the left to begin managing
-            </div>
+            <Card className="h-80 flex items-center justify-center">
+              <p className="text-muted-foreground">Select a studio from the left</p>
+            </Card>
           )}
         </div>
       </div>
