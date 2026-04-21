@@ -18,7 +18,7 @@ import Booking from "@/pages/booking/Booking";
 import RegistrationCounter from "@/pages/check-in-out/RegistrationCounter"
 import StudioCounter from "@/pages/check-in-out/StudioCounter"
 
-import QueueTest from "@/pages/QueueTest";
+import QueueTest from "@/pages/queue/LiveQueueBoard";
 
 import Staff from "@/pages/users/Staff";
 import Graduate from "@/pages/users/Graduate";

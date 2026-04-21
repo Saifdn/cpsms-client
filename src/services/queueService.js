@@ -10,6 +10,9 @@ export const queueService = {
   // Call next person (when studio is free)
   callNext: (studioId) => axios.post("/queue/call-next", { studioId }),
 
+  confirmArrival: (queueId) => 
+    axios.post("/queue/confirm-arrival", { queueId }),
+
   // Check-out (when user finishes)
   checkOut: (queueId) => axios.post("/queue/checkout", { queueId }),
 
