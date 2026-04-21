@@ -7,7 +7,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreVertical, Edit, Trash2, Eye } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
 
 import { DeleteAlertDialog } from "@/components/dialog/DeleteAlertDialog";
 import { EditDialog } from "@/components/dialog/EditDialog";
@@ -54,7 +54,7 @@ export function SessionActionsCell({ row }) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8">
-              <MoreVertical className="h-4 w-4" />
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

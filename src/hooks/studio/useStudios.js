@@ -79,7 +79,7 @@ export const useToggleStudioAvailability = () => {
 
     onSuccess: (response) => {
       const status = response.data?.isAvailable ? "Available" : "Unavailable";
-      toast.success(`Studio is now ${status}`);
+      toast.success(response?.data?.message || `Studio is now ${status}`);
       queryClient.invalidateQueries({ queryKey: ["studios"] });
     },
 

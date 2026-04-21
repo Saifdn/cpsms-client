@@ -43,7 +43,7 @@ const StudioCard = ({
 }) => {
   const isAvailable = studio.isAvailable !== false;
   const isOccupied = studio.isOccupied || false;
-  const bookingNumber = studio.currentBooking || studio.bookingNumber;
+  const bookingNumber = studio.currentBooking;
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -153,7 +153,7 @@ const StudioCard = ({
               className={isOccupied ? "bg-red-600" : "bg-green-600"}
             >
               {isOccupied 
-                ? `Occupied (${bookingNumber || 'Booking #'})` 
+                ? `Occupied` 
                 : "Free / Available"}
             </Badge>
           </div>
