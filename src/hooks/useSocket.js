@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
-const SOCKET_URL = "http://localhost:8000";
+// const SOCKET_URL = "http://localhost:8000";
 
 let socketInstance = null;
 
 const getSocket = () => {
   if (!socketInstance) {
-    socketInstance = io(SOCKET_URL, {
+    socketInstance = io(import.meta.env.SOCKET_URL, {
       withCredentials: true,
       transports: ["websocket", "polling"],
       reconnection: true,
