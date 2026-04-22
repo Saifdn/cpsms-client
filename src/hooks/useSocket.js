@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
 // const SOCKET_URL = "http://localhost:8000";
-const SOCKET_URL = VITE_SOCKET_URL;
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 
 let socketInstance = null;
 
