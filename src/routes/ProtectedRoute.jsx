@@ -1,31 +1,38 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "../context/useAuth";
-import { Spinner } from "@/components/ui/spinner";
+import { useAuth } from "@/context/useAuth";
 
-export const ProtectedRoute = ({ allowedRoles }) => {
-  const { accessToken, user, loading } = useAuth();
+export const ProtectedRoute = ({ allowedRoles = [] }) => {
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  // if (loading && !accessToken) {
-  //   // return spinner or null while checking refresh token
-  //   return (
-  //     <div className="fixed inset-0 flex items-center justify-center bg-background backdrop-blur-sm z-50">
-  //       <Spinner className="size-15" />
-  //     </div>
-  //   );
-  // }
-
-  if (loading) return null
+  // Still loading user data
+  if (loading) {
+    // return (
+    //   <div className="flex min-h-screen items-center justify-center">
+    //     <p className="text-muted-foreground">Loading...</p>
+    //   </div>
+    // );
+    return null;
+  }
 
   // Not logged in
-  if (!accessToken) {
+  if (!user) {
     return <Navigate to="/sign-in" state={{ from: location }} replace />;
   }
 
-  // Role restriction
-  if (allowedRoles && !allowedRoles.includes(user?.role)) {
-    return <Navigate to="/dashboard" replace />;
+  // If no specific roles required → allow any logged-in user
+  if (allowedRoles.length === 0) {
+    return <Outlet />;
   }
 
-  return <Outlet />;
+  // Role check (safe guard against undefined role)
+  const userRole = user.role || user.Role || "";   // handle different casing
+
+  if (allowedRoles.includes(userRole)) {
+    return <Outlet />;
+  }
+
+  // Role not allowed
+  console.warn(`Access denied. User role "${userRole}" not in allowed roles:`, allowedRoles);
+  return <Navigate to="/dashboard" replace />;
 };

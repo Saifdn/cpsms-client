@@ -18,14 +18,17 @@ import { Button } from "@/components/ui/button"
 import { PlusIcon } from "lucide-react"
 
 import { APP_SIDEBAR } from "/constants-index"	
+import { useAuth } from "@/context/useAuth"
 
 
 export const UserMenu = () => {
+    const { user } = useAuth()
+
     return (
         <DropdownMenu>
             <DropdownMenuTrigger>
                 <div className="relative">
-                    <Avatar src={APP_SIDEBAR.curProfile.src} size="32px" round="8px"/>
+                    <Avatar name={user?.fullName || user?.email || "User"} size="32px" round="8px"/>
                     {/* <div className="absolute bottom-0 right-0 size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 ring-sidebar ring-1"></div> */}
                   </div>
             </DropdownMenuTrigger>
