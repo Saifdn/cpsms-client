@@ -1,3 +1,4 @@
+// components/layout/AppSidebar.jsx
 import { useState, useEffect, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
@@ -22,10 +23,9 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, LogOutIcon, PanelLeftOpen, PanelLeftClose } from "lucide-react";
 import Avatar from "react-avatar";
 import { Button } from "@/components/ui/button";
-import { LogOutIcon, PanelLeftOpen, PanelLeftClose } from "lucide-react";
 
 import { useSidebar } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/useAuth";
@@ -42,16 +42,49 @@ export const AppSidebar = () => {
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
-  // Calculate which sections should be open based on current route
+  // Filter menu items based on user role (including children)
+  const filteredNav = useMemo(() => {
+    if (!user?.role) return [];
+
+    return APP_SIDEBAR.primaryNav
+      .map((item) => {
+        // Clone to avoid mutation
+        const filteredItem = { ...item };
+
+        // If item has children → filter children
+        if (item.children && item.children.length > 0) {
+          filteredItem.children = item.children.filter((child) => {
+            if (!child.allowedRoles || child.allowedRoles.length === 0) return true;
+            return child.allowedRoles.includes(user.role);
+          });
+
+          // Hide parent if all children are filtered out
+          if (filteredItem.children.length === 0) {
+            return null;
+          }
+        } 
+        // If no children (leaf item) → check its own allowedRoles
+        else if (item.allowedRoles && item.allowedRoles.length > 0) {
+          if (!item.allowedRoles.includes(user.role)) {
+            return null;
+          }
+        }
+
+        return filteredItem;
+      })
+      .filter(Boolean);
+  }, [user]);
+
+  // Calculate open sections
   const sectionsToOpen = useMemo(() => {
     const result = {};
 
-    APP_SIDEBAR.primaryNav.forEach((item) => {
+    filteredNav.forEach((item) => {
       if (item.children) {
         const isActive = item.children.some(
           (child) =>
             location.pathname === child.url ||
-            location.pathname.startsWith(child.url),
+            location.pathname.startsWith(child.url)
         );
         if (isActive) {
           result[item.title] = true;
@@ -60,17 +93,16 @@ export const AppSidebar = () => {
     });
 
     return result;
-  }, [location.pathname]);
+  }, [filteredNav, location.pathname]);
 
-  // Update openSections when route changes
+  const [openSections, setOpenSections] = useState({});
+
   useEffect(() => {
     setOpenSections((prev) => ({
       ...prev,
       ...sectionsToOpen,
     }));
   }, [sectionsToOpen]);
-
-  const [openSections, setOpenSections] = useState({});
 
   const toggleSection = (title) => {
     setOpenSections((prev) => ({
@@ -93,7 +125,7 @@ export const AppSidebar = () => {
             <SidebarMenuItem
               className={cn(
                 "px-0.5 max-lg:p-2",
-                "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center",
+                "group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:justify-center"
               )}
             >
               {isMobile ? (
@@ -101,21 +133,12 @@ export const AppSidebar = () => {
               ) : open ? (
                 <div className="flex items-center justify-between w-full">
                   <Logo />
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={toggleSidebar}
-                  >
+                  <Button variant="ghost" size="icon-sm" onClick={toggleSidebar}>
                     <PanelLeftClose />
                   </Button>
                 </div>
               ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={toggleSidebar}
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleSidebar}>
                   <PanelLeftOpen className="h-5 w-5" />
                 </Button>
               )}
@@ -128,8 +151,8 @@ export const AppSidebar = () => {
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu>
-                {APP_SIDEBAR.primaryNav.map((item) =>
-                  item.children ? (
+                {filteredNav.map((item) =>
+                  item.children && item.children.length > 0 ? (
                     <Collapsible
                       key={item.title}
                       asChild
@@ -177,7 +200,7 @@ export const AppSidebar = () => {
                         </a>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
-                  ),
+                  )
                 )}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -212,7 +235,7 @@ export const AppSidebar = () => {
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <Avatar
-                      src={APP_SIDEBAR.curProfile.src}
+                      name={user?.fullName || user?.email || "User"}
                       size="36px"
                       round="8px"
                     />
