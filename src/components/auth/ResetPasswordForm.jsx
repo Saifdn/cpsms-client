@@ -95,7 +95,7 @@ export function ResetPasswordForm({
 
           <div className="relative hidden bg-muted md:block">
             <img
-              src="/signup.png"
+              src="/signup.svg"
               alt="Reset password background"
               className="absolute inset-0 h-full w-full object-cover"
             />
