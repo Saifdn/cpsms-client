@@ -22,6 +22,9 @@ import Staff from "@/pages/users/Staff";
 import Graduate from "@/pages/users/Graduate";
 import Admin from "@/pages/users/Admin";
 
+import GraduateHome from "@/pages/graduates/GraduateHome";
+import GraduateBooking from "@/pages/graduates/Booking";
+
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 
 const App = () => {
@@ -37,7 +40,11 @@ const App = () => {
         {/* All Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
-            <Route path="/" element={<Dashboard />} />
+
+            <Route element={<ProtectedRoute allowedRoles={["graduate"]} />}>
+              <Route path="/" element={<GraduateHome />} />
+              <Route path="/book" element={<GraduateBooking />} />
+            </Route>
 
             {/* Pages accessible by superadmin, admin, staff */}
             <Route element={<ProtectedRoute allowedRoles={["superadmin", "admin", "staff"]} />}>

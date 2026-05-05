@@ -93,7 +93,7 @@ export function LoginForm({
 
           <div className="relative hidden bg-muted md:block">
             <img
-              src="/signup.png"
+              src="/signup.svg"
               alt="Login background"
               className="absolute inset-0 h-full w-full object-cover"
             />
