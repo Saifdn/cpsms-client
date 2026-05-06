@@ -19,11 +19,24 @@ export const useBookingById = (id, enabled = false) => {
 
 export const useCreateBooking = () => {
   const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: bookingService.createBooking,
-    onSuccess: () => {
-      toast.success("Booking created successfully");
-      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+
+    onSuccess: (response) => {
+      toast.success(response.data.message || "Booking created successfully!");
+
+      if (response.data.paymentUrl) {
+        setTimeout(() => {
+          window.location.href = response.data.paymentUrl;
+        }, 800);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      }
+    },
+
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to create booking");
     },
   });
 };

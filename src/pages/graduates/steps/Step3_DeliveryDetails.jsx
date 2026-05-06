@@ -67,7 +67,7 @@ const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
   const finalFormData = {
     ...formData,
     fullName: formData.fullName || user?.fullName || "",
-    phone: composePhoneWithCountryCode(),
+    // phone: composePhoneWithCountryCode(),
     email: formData.email || user?.email || "",
   };
 
