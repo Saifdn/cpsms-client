@@ -25,6 +25,7 @@ export const APP_SIDEBAR = {
       title: 'Home',
       url: '/',
       Icon: HomeIcon,
+      allowedRoles: ["graduate"]
     },
     {
       title: 'Dashboard',
