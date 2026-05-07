@@ -6,6 +6,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 
+import { usePaymentStatusById } from "@/hooks/payment/usePayments";
+
 const PaymentResult = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -15,16 +17,41 @@ const PaymentResult = () => {
 
   const billplzId = searchParams.get("billplz[id]");
   const billplzPaid = searchParams.get("billplz[paid]"); // "true" or "false"
+  const billplzXSignature = searchParams.get("billplz[x_signature]");
 
+  // Use server-side status check when we have an id
+  const {
+    data: paymentStatusData,
+    isLoading: isPaymentLoading,
+    isError: isPaymentError,
+  } = usePaymentStatusById(billplzId, Boolean(billplzId));
 
   useEffect(() => {
-    if (billplzPaid === "true") {
+    if (isPaymentLoading) {
+      setStatus("loading");
+      return;
+    }
+
+    if (isPaymentError || !paymentStatusData) {
+      // fallback to query param if server check failed
+      if (billplzPaid === "true") {
+        setStatus("success");
+        setBookingNumber(billplzId || "N/A");
+      } else {
+        setStatus("failed");
+      }
+      return;
+    }
+
+    const paid = paymentStatusData.status === "paid";
+
+    if (paid) {
       setStatus("success");
-      setBookingNumber(searchParams.get("billplz[reference_1]") || "N/A");
+      setBookingNumber(paymentStatusData.bill_number || billplzId || "N/A");
     } else {
       setStatus("failed");
     }
-  }, [billplzPaid, searchParams]);
+  }, [isPaymentLoading, isPaymentError, paymentStatusData, billplzPaid, billplzId]);
 
   if (status === "loading") {
     return (
@@ -51,7 +78,7 @@ const PaymentResult = () => {
 
                 {bookingNumber && (
                   <div className="bg-green-50 dark:bg-green-950 p-4 rounded-lg mb-8">
-                    <p className="text-sm text-muted-foreground">Booking Number</p>
+                    <p className="text-sm text-muted-foreground">Bill Number</p>
                     <p className="font-mono text-2xl font-bold text-green-600">
                       {bookingNumber}
                     </p>
