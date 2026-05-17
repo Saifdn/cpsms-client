@@ -18,6 +18,9 @@ import RegistrationCounter from "@/pages/check-in-out/RegistrationCounter";
 import StudioCounter from "@/pages/check-in-out/StudioCounter";
 import LiveQueueBoard from "@/pages/queue/LiveQueueBoard";
 
+import ShipmentManagement from "@/pages/shipment/ShipmentManagement";
+import EasyParcelConnect from "@/pages/shipment/EasyParcelConnect";
+
 import Staff from "@/pages/users/Staff";
 import Graduate from "@/pages/users/Graduate";
 import Admin from "@/pages/users/Admin";
@@ -25,6 +28,8 @@ import Admin from "@/pages/users/Admin";
 import GraduateHome from "@/pages/graduates/GraduateHome";
 import GraduateBooking from "@/pages/graduates/Booking";
 import PaymentResult from "@/pages/graduates/PaymentResult";
+import MyBookings from "@/pages/graduates/MyBookings";
+import BookingDetails from "@/pages/graduates/BookingDetails";
 
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 
@@ -46,6 +51,8 @@ const App = () => {
               <Route path="/" element={<GraduateHome />} />
               <Route path="/book" element={<GraduateBooking />} />
               <Route path="/booking/result" element={<PaymentResult />} />
+              <Route path="/my-bookings" element={<MyBookings />} />
+              <Route path="/my-bookings/:id" element={<BookingDetails />} />
             </Route>
 
             {/* Pages accessible by superadmin, admin, staff */}
@@ -58,6 +65,7 @@ const App = () => {
               <Route path="/registration-counter" element={<RegistrationCounter />} />
               <Route path="/studio-counter" element={<StudioCounter />} />
               <Route path="/live-queue" element={<LiveQueueBoard />} />
+              <Route path="/shipment" element={<ShipmentManagement />} />
               <Route path="/staff" element={<Staff />} />
               <Route path="/graduate" element={<Graduate />} />
             </Route>

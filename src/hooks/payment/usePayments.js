@@ -11,10 +11,11 @@ export const usePaymentById = (id, enabled = false) => {
   });
 };
 
-export const usePaymentStatusById = (id, enabled = false) => {
+export const usePaymentStatusById = (id, options = {}) => {
   return useQuery({
     queryKey: ["paymentStatus", id],
     queryFn: () => paymentService.getPaymentStatusById(id).then(res => res.data),
-    enabled: !!id && enabled,
+    enabled: !!id,
+    ...options,  // ← add this
   });
-}
+};

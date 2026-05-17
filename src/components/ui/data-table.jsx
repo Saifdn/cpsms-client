@@ -36,7 +36,18 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export function DataTable({ title, description, columns, data = [], isLoading = false, onRefresh }) {
+export function DataTable({
+  title,
+  description,
+  columns,
+  data = [],
+  isLoading = false,
+  onRefresh,
+  enableRowSelection = false,
+  rowSelection,
+  onRowSelectionChange,
+  getRowId,
+}) {
   const [sorting, setSorting] = useState([]);
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [globalFilter, setGlobalFilter] = useState(""); // for search across all columns
@@ -48,10 +59,14 @@ export function DataTable({ title, description, columns, data = [], isLoading = 
       sorting,
       pagination,
       globalFilter,
+      rowSelection,
     },
     onSortingChange: setSorting,
     onPaginationChange: setPagination,
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange,
+    enableRowSelection,
+    getRowId,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(), // ← enables pagination
