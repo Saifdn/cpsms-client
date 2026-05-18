@@ -67,8 +67,9 @@ export const useBulkProcessShipments = () => {
       );
 
       // Refresh pending shipments table
+      // Query key is ['shipments','pending'] — invalidate that exact key
       queryClient.invalidateQueries({
-        queryKey: ["pendingShipments"],
+        queryKey: ["shipments", "pending"],
       });
 
       // Optional:
@@ -98,6 +99,14 @@ export const useBulkProcessShipments = () => {
         "Failed to process shipments"
       );
     },
+  });
+};
+
+export const useWalletBalance = () => {
+  return useQuery({
+    queryKey: ["shipmentWalletBalance"],
+    queryFn: () => shipmentService.getWalletBalance().then(res => res.data),
+    staleTime: 5 * 60 * 1000,
   });
 };
 

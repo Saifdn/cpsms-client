@@ -1,4 +1,3 @@
-// pages/admin/ShipmentManagement.jsx
 import { useState, useMemo } from "react";
 import { Page, PageHeader } from "@/components/layout/Page";
 import { DataTable } from "@/components/ui/data-table";
@@ -7,12 +6,13 @@ import { shipmentColumns } from "@/components/columns/shipmentColumns";
 import { 
   usePendingShipments, 
   useGetQuotation,
-  useBulkProcessShipments
+  useBulkProcessShipments,
 } from "@/hooks/shipment/useShipments";
 
 import { Button } from "@/components/ui/button";
 import { Truck, RefreshCw, Calculator } from "lucide-react";
 import QuotationModal from "@/pages/shipment/QuotationModal";
+import ShipmentConfirmationModal from "@/pages/shipment/ShipmentConfirmationModal";
 
 const ShipmentManagement = () => {
   const { data, isLoading, refetch } = usePendingShipments();
@@ -23,6 +23,8 @@ const ShipmentManagement = () => {
   const [rowSelection, setRowSelection] = useState({});
   const [showQuotationModal, setShowQuotationModal] = useState(false);
   const [quotationResult, setQuotationResult] = useState(null);
+  const [selectedService, setSelectedService] = useState(null);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
 
   // Get selected booking IDs
   const selectedIds = useMemo(() => {
@@ -46,13 +48,27 @@ const ShipmentManagement = () => {
   const handleProceedWithService = (selectedOption) => {
     setShowQuotationModal(false);
 
-    bulkProcessMutation.mutate({
-      bookingIds: selectedIds,
-      serviceId: selectedOption.serviceId,
-      serviceName: selectedOption.serviceName,
-      courierName: selectedOption.courierName,
-    });
+    setSelectedService(selectedOption);
+
+    setShowConfirmationModal(true);
   };
+
+  const handleConfirmShipment = (payload) => {
+  if (!selectedService) return;
+
+  bulkProcessMutation.mutate({
+    bookingIds: selectedIds,
+    serviceId: selectedService.serviceId,
+    serviceName: selectedService.serviceName,
+    courierName: selectedService.courierName,
+    collectionDate: payload.collectionDate,
+    sender: payload.sender,
+    packageDetails: payload.packageDetails,
+    features: payload.features,
+  });
+
+  setShowConfirmationModal(false);
+};
 
   return (
     <Page>
@@ -93,6 +109,15 @@ const ShipmentManagement = () => {
         onOpenChange={setShowQuotationModal}
         quotationResult={quotationResult}
         onProceed={handleProceedWithService}
+        isProcessing={bulkProcessMutation.isPending}
+      />
+
+      <ShipmentConfirmationModal
+        open={showConfirmationModal}
+        onOpenChange={setShowConfirmationModal}
+        service={selectedService}
+        totalBookings={selectedIds.length}
+        onConfirm={handleConfirmShipment}
         isProcessing={bulkProcessMutation.isPending}
       />
 

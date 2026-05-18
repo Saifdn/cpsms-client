@@ -6,6 +6,9 @@ export const shipmentService = {
   getPendingShipments: () => 
     axios.get("/shipments/pending"),
 
+  getSubmittedShipments: () => 
+    axios.get("/shipments/submitted"),
+
   // Get quotation for selected booking IDs
   getQuotation: (bookingIds) => 
     axios.post("/shipments/quotation", { bookingIds }),
@@ -15,11 +18,22 @@ export const shipmentService = {
     serviceId,
     serviceName,
     courierName,
+    collectionDate,
+    sender,
+    packageDetails,
+    features,
   }) =>
     axios.post("/shipments/submit", {
       bookingIds,
       serviceId,
       serviceName,
       courierName,
+      collectionDate,
+      sender,
+      packageDetails,
+      features,
     }),
+
+  getWalletBalance: () =>
+    axios.get("/shipments/wallet"),
 };
