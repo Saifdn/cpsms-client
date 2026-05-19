@@ -3,11 +3,11 @@ import axios from "@/api/axios";
 
 export const shipmentService = {
   // Get all pending shipments (paid bookings without shipment)
-  getPendingShipments: () => 
-    axios.get("/shipments/pending"),
+  getPendingShipments: ({ date, page, limit } = {}) =>
+    axios.get("/shipments/pending", { params: { date, page, limit } }),
 
-  getSubmittedShipments: () => 
-    axios.get("/shipments/submitted"),
+  getSubmittedShipments: ({ date, page, limit } = {}) =>
+    axios.get("/shipments/submitted", { params: { date, page, limit } }),
 
   // Get quotation for selected booking IDs
   getQuotation: (bookingIds) => 

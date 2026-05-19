@@ -6,11 +6,23 @@ import toast from "react-hot-toast";
 // ==================== QUERIES ====================
 
 // Get all pending shipments
-export const usePendingShipments = () => {
+export const usePendingShipments = ({ date = null, page = 1, limit = 20 } = {}) => {
   return useQuery({
-    queryKey: ["pendingShipments"],
-    queryFn: () => shipmentService.getPendingShipments().then(res => res.data),
+    queryKey: ["shipments", "pending", date, page, limit],
+    queryFn: () =>
+      shipmentService.getPendingShipments({ date, page, limit }).then((res) => res.data),
     staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
+  });
+};
+
+export const useSubmittedShipments = ({ date = null, page = 1, limit = 20 } = {}) => {
+  return useQuery({
+    queryKey: ["shipments", "submitted", date, page, limit],
+    queryFn: () =>
+      shipmentService.getSubmittedShipments({ date, page, limit }).then((res) => res.data),
+    staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
   });
 };
 
