@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/context/useAuth";
 
 const malaysiaStates = [
@@ -37,61 +37,65 @@ const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
   const { user } = useAuth();
 
   const [formData, setFormData] = useState({
-    fullName: "",
-    countryCode: "+60",
-    phone: "",
-    email: "",
-    addressLine1: "",
-    addressLine2: "",
-    postcode: "",
-    state: "",
-    city: "",
-    notes: "",
-    ...(data.deliveryAddress || {}),
+    name: data.deliveryAddress?.receiver?.name || user?.fullName || "",
+    phone_number: data.deliveryAddress?.receiver?.phone_number || user?.phone?.replace("+60", "") || "",
+    email: data.deliveryAddress?.receiver?.email || user?.email || "",
+
+    address_1: data.deliveryAddress?.receiver?.address_1 || "",
+    address_2: data.deliveryAddress?.receiver?.address_2 || "",
+    postcode: data.deliveryAddress?.receiver?.postcode || "",
+    city: data.deliveryAddress?.receiver?.city || "",
+    subdivision_code: data.deliveryAddress?.receiver?.subdivision_code || "",
+    country_code: "MY",
+
+    notes: data.notes || "",
   });
 
-  const cleanPhone = (value = "") => value.replace(/\s+/g, "").trim();
-
-  const composePhoneWithCountryCode = () => {
-    const providedPhone = cleanPhone(
-      formData.phone || user?.phone || user?.phoneNumber || "",
-    );
-
-    if (!providedPhone) return "";
-    if (providedPhone.startsWith("+")) return providedPhone;
-
-    const selectedCode = cleanPhone(formData.countryCode || "+60");
-    return `${selectedCode}${providedPhone}`;
-  };
-
-  const finalFormData = {
-    ...formData,
-    fullName: formData.fullName || user?.fullName || "",
-    // phone: composePhoneWithCountryCode(),
-    email: formData.email || user?.email || "",
-  };
-
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const requiredFieldsFilled =
-    finalFormData.fullName.trim() &&
-    finalFormData.phone.trim() &&
-    finalFormData.email.trim() &&
-    finalFormData.addressLine1.trim() &&
-    finalFormData.addressLine2.trim() &&
-    finalFormData.postcode.trim() &&
-    finalFormData.state.trim() &&
-    finalFormData.city.trim();
+  const handleStateChange = (value) => {
+    setFormData((prev) => ({ ...prev, subdivision_code: value }));
+  };
+
+  const isFormValid =
+    formData.name.trim() &&
+    formData.phone_number.trim() &&
+    formData.email.trim() &&
+    formData.address_1.trim() &&
+    formData.postcode.trim() &&
+    formData.city.trim() &&
+    formData.subdivision_code;
 
   const handleContinue = () => {
-    if (!requiredFieldsFilled) {
+    if (!isFormValid) {
       alert("Please fill in all required fields");
       return;
     }
 
-    updateData({ deliveryAddress: finalFormData });
+    // Transform to match EasyParcel receiver structure
+    const receiverData = {
+      name: formData.name,
+      phone_number_country_code: "MY",
+      phone_number: formData.phone_number,
+      email: formData.email,
+      address_1: formData.address_1,
+      address_2: formData.address_2 || "",
+      postcode: formData.postcode,
+      city: formData.city,
+      subdivision_code: formData.subdivision_code,
+      country_code: "MY",
+    };
+
+    updateData({
+      deliveryAddress: {
+        receiver: receiverData,
+      },
+      notes: formData.notes,
+    });
+
     onNext();
   };
 
@@ -101,124 +105,136 @@ const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
         <CardTitle>Step 3: Delivery Details</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
+            <Label htmlFor="name">Full Name *</Label>
             <Input
-              id="fullName"
-              name="fullName"
+              id="name"
+              name="name"
               placeholder="Enter full name"
-              value={finalFormData.fullName}
+              value={formData.name}
               onChange={handleChange}
+              required
             />
           </div>
 
           <div className="space-y-2">
-            <Label>Phone Number</Label>
-            <div className="grid grid-cols-3 gap-2">
+            <Label htmlFor="phone_number">Phone Number *</Label>
+            <div className="flex">
+              <div className="bg-muted px-3 flex items-center text-sm border border-r-0 border-input rounded-l-md">
+                +60
+              </div>
               <Input
-                name="countryCode"
-                placeholder="Code"
-                value={formData.countryCode}
+                id="phone_number"
+                name="phone_number"
+                placeholder="123456789"
+                value={formData.phone_number}
                 onChange={handleChange}
-              />
-              <Input
-                name="phone"
-                placeholder="e.g. 123456789"
-                value={formData.phone}
-                onChange={handleChange}
-                className="col-span-2"
+                className="rounded-l-none"
+                required
               />
             </div>
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">Email Address *</Label>
           <Input
             id="email"
             name="email"
-            placeholder="Enter email"
-            value={finalFormData.email}
-            onChange={handleChange}
             type="email"
+            placeholder="your@email.com"
+            value={formData.email}
+            onChange={handleChange}
+            required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="addressLine1">Address Line 1</Label>
+          <Label htmlFor="address_1">Address Line 1 *</Label>
           <Input
-            id="addressLine1"
-            name="addressLine1"
-            placeholder="Enter address line 1"
-            value={formData.addressLine1}
+            id="address_1"
+            name="address_1"
+            placeholder="House number, street name"
+            value={formData.address_1}
             onChange={handleChange}
+            required
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="addressLine2">Address Line 2</Label>
+          <Label htmlFor="address_2">Address Line 2 (Optional)</Label>
           <Input
-            id="addressLine2"
-            name="addressLine2"
-            placeholder="Enter address line 2"
-            value={formData.addressLine2}
+            id="address_2"
+            name="address_2"
+            placeholder="Floor, unit, landmark (optional)"
+            value={formData.address_2}
             onChange={handleChange}
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="postcode">Postcode</Label>
+            <Label htmlFor="postcode">Postcode *</Label>
             <Input
               id="postcode"
               name="postcode"
-              placeholder="Enter postcode"
+              placeholder="12345"
               value={formData.postcode}
               onChange={handleChange}
+              required
             />
           </div>
+
           <div className="space-y-2">
-            <Label htmlFor="city">City</Label>
+            <Label htmlFor="city">City *</Label>
             <Input
               id="city"
               name="city"
-              placeholder="Enter city"
+              placeholder="City name"
               value={formData.city}
               onChange={handleChange}
+              required
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="subdivision_code">State *</Label>
+            <Select value={formData.subdivision_code} onValueChange={handleStateChange}>
+              <SelectTrigger id="subdivision_code">
+                <SelectValue placeholder="Select state" />
+              </SelectTrigger>
+              <SelectContent>
+                {malaysiaStates.map((state) => (
+                  <SelectItem key={state.code} value={state.code}>
+                    {state.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor="state">State</Label>
-          <Select
-            value={formData.state}
-            onValueChange={(value) =>
-              setFormData({ ...formData, state: value })
-            }
-          >
-            <SelectTrigger id="state">
-              <SelectValue placeholder="Select state" />
-            </SelectTrigger>
-            <SelectContent>
-              {malaysiaStates.map((state) => (
-                <SelectItem key={state.code} value={state.code}>
-                  {state.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+        {/* <div className="space-y-2">
+          <Label htmlFor="notes">Delivery Notes (Optional)</Label>
+          <Textarea
+            id="notes"
+            name="notes"
+            placeholder="Special instructions, leave at door, etc."
+            value={formData.notes}
+            onChange={handleChange}
+            rows={3}
+          />
+        </div> */}
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 pt-4">
           <Button variant="outline" onClick={onPrev} className="flex-1">
             Back
           </Button>
-          <Button
-            onClick={handleContinue}
+          <Button 
+            onClick={handleContinue} 
+            disabled={!isFormValid}
             className="flex-1"
-            disabled={!requiredFieldsFilled}
           >
             Continue to Review & Payment
           </Button>

@@ -31,7 +31,7 @@ const formatDate = (date) => {
 };
 
 const Step4_ReviewPayment = ({ data, onPrev, onComplete }) => {
-  const deliveryAddress = data.deliveryAddress || {};
+  const deliveryAddress = data.deliveryAddress.receiver || {};
   const session = data.selectedSession || {};
   const selectedPackage = data.selectedPackage || {};
   const selectedAddons = data.selectedAddons || [];
@@ -123,11 +123,11 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete }) => {
               <div className="space-y-1">
                 <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">Name</span>
-                  <span className="font-medium text-right">{deliveryAddress.fullName || "-"}</span>
+                  <span className="font-medium text-right">{deliveryAddress.name || "-"}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">Phone</span>
-                  <span className="font-medium text-right">{(deliveryAddress.countryCode || "+60") + (deliveryAddress.phone || "-")}</span>
+                  <span className="font-medium text-right">{("+60") + (deliveryAddress.phone_number || "-")}</span>
                 </div>
                 <div className="flex justify-between gap-4">
                   <span className="text-muted-foreground">Email</span>
@@ -136,13 +136,13 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete }) => {
                 <div className="space-y-1">
                   <div className="text-muted-foreground">Address</div>
                   <div className="text-right leading-5">
-                    <div>{deliveryAddress.addressLine1 || "-"}</div>
-                    {deliveryAddress.addressLine2 ? <div>{deliveryAddress.addressLine2}</div> : null}
+                    <div>{deliveryAddress.address_1 || "-"}</div>
+                    {deliveryAddress.address_2 ? <div>{deliveryAddress.address_2}</div> : null}
                     <div>
                       {[deliveryAddress.postcode, deliveryAddress.city].filter(Boolean).join(", ") || "-"}
                     </div>
                     <div>
-                      {deliveryAddress.state ? `${deliveryAddress.state} - ${malaysiaStates[deliveryAddress.state] || deliveryAddress.state}` : "-"}
+                      {deliveryAddress.subdivision_code ? `${deliveryAddress.subdivision_code} - ${malaysiaStates[deliveryAddress.subdivision_code] || deliveryAddress.subdivision_code}` : "-"}
                     </div>
                   </div>
                 </div>

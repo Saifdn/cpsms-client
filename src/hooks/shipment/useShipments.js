@@ -1,0 +1,130 @@
+// hooks/shipment/useShipments.js
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { shipmentService } from "@/services/shipmentService";
+import toast from "react-hot-toast";
+
+// ==================== QUERIES ====================
+
+// Get all pending shipments
+export const usePendingShipments = ({ date = null, page = 1, limit = 20 } = {}) => {
+  return useQuery({
+    queryKey: ["shipments", "pending", date, page, limit],
+    queryFn: () =>
+      shipmentService.getPendingShipments({ date, page, limit }).then((res) => res.data),
+    staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
+  });
+};
+
+export const useSubmittedShipments = ({ date = null, page = 1, limit = 20 } = {}) => {
+  return useQuery({
+    queryKey: ["shipments", "submitted", date, page, limit],
+    queryFn: () =>
+      shipmentService.getSubmittedShipments({ date, page, limit }).then((res) => res.data),
+    staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
+  });
+};
+
+// Get single shipment
+export const useShipmentById = (id) => {
+  return useQuery({
+    queryKey: ["shipment", id],
+    queryFn: () => shipmentService.getShipmentById(id).then(res => res.data),
+    enabled: !!id,
+  });
+};
+
+// Get shipment by booking
+export const useShipmentByBooking = (bookingId) => {
+  return useQuery({
+    queryKey: ["shipment", "booking", bookingId],
+    queryFn: () => shipmentService.getShipmentByBooking(bookingId).then(res => res.data),
+    enabled: !!bookingId,
+  });
+};
+
+// ==================== MUTATIONS ====================
+
+
+// Get Quotation for selected bookings
+export const useGetQuotation = () => {
+  return useMutation({
+    mutationFn: (bookingIds) => shipmentService.getQuotation(bookingIds),
+
+    onSuccess: (response) => {
+      toast.success(`Found ${response.data?.totalQuotationsFound || 0} quotation options`);
+    },
+
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to get quotation");
+    },
+  });
+};
+
+// Submit Orders to EasyParcel
+export const useBulkProcessShipments = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload) =>
+      shipmentService.submitOrder(payload),
+
+    onSuccess: (response) => {
+      const data = response?.data;
+
+      toast.success(
+        data.message ||
+        "Shipments processed successfully"
+      );
+
+      // Refresh pending shipments table
+      // Query key is ['shipments','pending'] — invalidate that exact key
+      queryClient.invalidateQueries({
+        queryKey: ["shipments", "pending"],
+      });
+
+      // Optional:
+      // refresh shipment history list too
+      queryClient.invalidateQueries({
+        queryKey: ["shipments"],
+      });
+    },
+
+    onError: (err) => {
+      const data = err.response?.data;
+
+      // OAuth required
+      if (data?.oauthRequired) {
+        toast.loading(
+          "Redirecting to EasyParcel..."
+        );
+
+        window.location.href =
+          data.connectUrl;
+
+        return;
+      }
+
+      toast.error(
+        data?.message ||
+        "Failed to process shipments"
+      );
+    },
+  });
+};
+
+export const useWalletBalance = () => {
+  return useQuery({
+    queryKey: ["shipmentWalletBalance"],
+    queryFn: () => shipmentService.getWalletBalance().then(res => res.data),
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+export const useDeleteShipment = () => {
+
+}
+
+
+

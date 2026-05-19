@@ -17,6 +17,7 @@ import {
   CalendarCheck,
   ClockAlert,
   ScanQrCode,
+  Truck,
 } from 'lucide-react';
 
 export const APP_SIDEBAR = {
@@ -25,6 +26,12 @@ export const APP_SIDEBAR = {
       title: 'Home',
       url: '/',
       Icon: HomeIcon,
+      allowedRoles: ["graduate"]
+    },
+    {
+      title: 'My Bookings',
+      url: '/my-bookings',
+      Icon: BookOpenIcon,
       allowedRoles: ["graduate"]
     },
     {
@@ -68,6 +75,12 @@ export const APP_SIDEBAR = {
       title: 'Reporting',
       url: '#',
       Icon: ChartPieIcon,
+      allowedRoles: ["superadmin", "admin", "staff"]
+    },
+    {
+      title: 'Shipment',
+      url: '/shipment',
+      Icon: Truck,
       allowedRoles: ["superadmin", "admin", "staff"]
     },
     {

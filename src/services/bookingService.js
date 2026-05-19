@@ -1,6 +1,10 @@
 import axios from "@/api/axios";
 
 export const bookingService = {
+
+  getMyBookings: () => axios.get("/bookings/my-bookings"),
+  getMyBookingById: (id) => axios.get(`/bookings/my-bookings/${id}`),
+
   getAllBookings: () => axios.get("/bookings"),
   getBookingById: (id) => axios.get(`/bookings/${id}`),
   createBooking: (data) => axios.post("/bookings", data),

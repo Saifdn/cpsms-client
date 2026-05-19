@@ -2,6 +2,21 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { bookingService } from "@/services/bookingService";
 import toast from "react-hot-toast";
 
+export const useMyBookings = () => {
+  return useQuery({
+    queryKey: ['myBookings'],
+    queryFn: () => bookingService.getMyBookings().then(res => res.data),
+  });
+};
+
+export const useMyBookingById = (id) => {
+  return useQuery({
+    queryKey: ['myBooking', id],
+    queryFn: () => bookingService.getMyBookingById(id).then(res => res.data),
+    enabled: !!id,
+  });
+};
+
 export const useBookings = () => {
   return useQuery({
     queryKey: ["bookings"],
