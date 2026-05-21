@@ -17,10 +17,13 @@ export const useMyBookingById = (id) => {
   });
 };
 
-export const useBookings = () => {
+export const useBookings = ({ date = null, page = 1, limit = 20} = {}) => {
   return useQuery({
-    queryKey: ["bookings"],
-    queryFn: () => bookingService.getAllBookings().then(res => res.data),
+    queryKey: ["bookings", date, page, limit],
+    queryFn: () => 
+      bookingService.getAllBookings({ date, page, limit}).then(res => res.data),
+    staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
   });
 };
 

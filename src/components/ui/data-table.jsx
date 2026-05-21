@@ -177,7 +177,7 @@ export function DataTable({
                   <SelectValue placeholder={limit} />
                 </SelectTrigger>
                 <SelectContent side="top">
-                  {[10, 20, 30, 50].map((size) => (
+                  {[5, 10, 20, 30, 50].map((size) => (
                     <SelectItem key={size} value={`${size}`}>
                       {size}
                     </SelectItem>

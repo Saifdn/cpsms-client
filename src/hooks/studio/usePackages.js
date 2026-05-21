@@ -3,10 +3,11 @@ import { packageService } from "@/services/packageService";
 import toast from "react-hot-toast";
 
 // Packages
-export const usePackages = () => {
+export const usePackages = (options = {}) => {
   return useQuery({
     queryKey: ["packages"],
     queryFn: () => packageService.getAll().then(res => res.data),
+    ...options,
   });
 };
 

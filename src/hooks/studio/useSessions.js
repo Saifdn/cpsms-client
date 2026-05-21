@@ -2,10 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { sessionService } from "@/services/sessionService";
 import toast from "react-hot-toast";
 
-export const useSessions = (date) => {
+export const useSessions = (date, options = {}) => {
   return useQuery({
     queryKey: ["sessions", date],
     queryFn: () => sessionService.getAllSessions(date).then(res => res.data),
+    enabled: !!date,                
+    staleTime: 1 * 60 * 1000,
+    ...options,
   });
 };
 
