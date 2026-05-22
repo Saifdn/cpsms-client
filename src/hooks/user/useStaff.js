@@ -4,10 +4,11 @@ import toast from "react-hot-toast";
 
 // ==================== QUERY ====================
 // Fetch all staff
-export const useStaff = () => {
+export const useStaff = ({ page = 1, limit = 20, search = "" } = {}) => {
   return useQuery({
-    queryKey: ["staff"],
-    queryFn: () => userService.staff.getAll().then((res) => res.data),
+    queryKey: ["staff", page, limit, search],
+    queryFn: () =>
+      userService.staff.getAll({ page, limit, search }).then((res) => res.data),
     staleTime: 2 * 60 * 1000,
     keepPreviousData: true,
   });

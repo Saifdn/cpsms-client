@@ -16,7 +16,8 @@ export const queueService = {
   // Check-out (when user finishes)
   checkOut: (queueId) => axios.post("/queue/checkout", { queueId }),
 
-  // Add this inside the queueService object
   getBookingByNumber: (bookingNumber) =>
     axios.get(`/bookings/number/${bookingNumber}`),
+
+  skip: (bookingId) => axios.post("/queue/skip", { bookingId }),
 };

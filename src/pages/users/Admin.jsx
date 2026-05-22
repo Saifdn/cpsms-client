@@ -2,11 +2,11 @@ import { Page, PageHeader } from "@/components/layout/Page";
 import { DataTable } from "@/components/ui/data-table";
 import { adminColumns } from "@/components/columns/AdminColumns";
 import { useAdmins } from "@/hooks/user/useAdmin";
-import { useCreateAdmin } from "@/hooks/user/useAdmin";     // ← Import create hook
+import { useCreateAdmin } from "@/hooks/user/useAdmin";
 
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { CreateDialog } from "@/components/dialog/CreateDialog";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -20,17 +20,36 @@ import {
 } from "@/components/ui/select";
 
 const Admin = () => {
-  const { 
-    data, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useAdmins();
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const {
+    data,
+    isLoading,
+    error,
+    refetch
+  } = useAdmins({
+    page: currentPage,
+    limit,
+    search: debouncedSearch,
+  });
 
   const createAdmin = useCreateAdmin();
 
-  // Safely extract the admin array from API response
-  const admins = data?.data || data?.admins || data || [];
+  // Safely extract data
+  const admins = data?.data || [];
+  const pagination = data?.pagination;
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -40,12 +59,23 @@ const Admin = () => {
     adminLevel: "admin",
   });
 
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
+  };
+
   const handleCreate = () => {
     createAdmin.mutate(formData, {
       onSuccess: () => {
         setShowCreateDialog(false);
-        setFormData({ fullName: "", email: "", phone: "", adminLevel: "" }); // reset form
-        refetch(); // refresh table
+        setFormData({ 
+          fullName: "", 
+          email: "", 
+          phone: "", 
+          adminLevel: "admin" 
+        });
+        setCurrentPage(1);     // Reset to first page after creating
+        refetch();
       },
     });
   };
@@ -87,10 +117,17 @@ const Admin = () => {
           data={admins}
           isLoading={isLoading}
           onRefresh={refetch}
+          searchValue={search}
+          onSearchChange={setSearch}
+          currentPage={currentPage}
+          totalPages={pagination?.totalPages ?? 1}
+          onPageChange={setCurrentPage}
+          limit={limit}
+          onLimitChange={handleLimitChange}
         />
       </div>
 
-      {/* Reusable Create Dialog for Admin */}
+      {/* Create Dialog */}
       <CreateDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}

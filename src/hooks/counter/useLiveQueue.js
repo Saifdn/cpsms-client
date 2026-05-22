@@ -9,7 +9,7 @@ export const useLiveQueue = () => {
 
   useEffect(() => {
     const handleQueueUpdate = (payload) => {
-      console.log("📡 Live queue update received:", payload.count || 0, "items");
+      console.log("Live queue update received:", payload.count || 0, "items");
       setActiveQueue(payload.data || []);
       setIsLoading(false);
     };
@@ -19,7 +19,7 @@ export const useLiveQueue = () => {
 
     // Request latest queue data whenever we connect or reconnect
     const requestLatestQueue = () => {
-      console.log("🔄 Requesting latest queue data...");
+      console.log("Requesting latest queue data...");
       socket.emit("requestQueueUpdate");   // We'll handle this on backend
     };
 

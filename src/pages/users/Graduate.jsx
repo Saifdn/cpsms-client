@@ -5,16 +5,37 @@ import { useGraduates } from "@/hooks/user/useGraduates";
 import { useCreateGraduate } from "@/hooks/user/useGraduates";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CreateDialog } from "@/components/dialog/CreateDialog";
-import { Field, FieldLabel, FieldDescription } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 
 const Graduate = () => {
-  const { data, isLoading, error, refetch } = useGraduates();
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data, isLoading, error, refetch } = useGraduates({
+    page: currentPage,
+    limit,
+    search: debouncedSearch,
+  });
+
   const createGraduate = useCreateGraduate();
 
-  const graduates = data?.data || data?.graduates || data || [];
+  // Extract data
+  const graduates = data?.data || [];
+  const pagination = data?.pagination;
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [formData, setFormData] = useState({
@@ -23,11 +44,17 @@ const Graduate = () => {
     phone: "",
   });
 
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
+  };
+
   const handleCreate = () => {
     createGraduate.mutate(formData, {
       onSuccess: () => {
         setShowCreateDialog(false);
         setFormData({ fullName: "", email: "", phone: "" });
+        setCurrentPage(1); // Reset to first page after creating
         refetch();
       },
     });
@@ -69,10 +96,17 @@ const Graduate = () => {
           data={graduates}
           isLoading={isLoading}
           onRefresh={refetch}
+          searchValue={search}
+          onSearchChange={setSearch}
+          currentPage={currentPage}
+          totalPages={pagination?.totalPages ?? 1}
+          onPageChange={setCurrentPage}
+          limit={limit}
+          onLimitChange={handleLimitChange}
         />
       </div>
 
-      {/* Reusable Create Dialog */}
+      {/* Create Dialog */}
       <CreateDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}

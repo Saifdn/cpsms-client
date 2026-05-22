@@ -49,6 +49,20 @@ export const useConfirmArrival = () => {
   });
 };
 
+// ====================== SKIP ======================
+export const useSkip = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (bookingId) => queueService.skip(bookingId),
+    onSuccess: () => {
+      toast.success("Customer skipped — moved to end of queue");
+      queryClient.invalidateQueries({ queryKey: ["activeQueue"] });
+    },
+    onError: (err) => toast.error(err.response?.data?.message || "Failed to skip customer"),
+  });
+};
+
 // ====================== CHECK-OUT ======================
 export const useCheckOut = () => {
   const queryClient = useQueryClient();

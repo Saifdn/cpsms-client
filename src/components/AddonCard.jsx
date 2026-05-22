@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Puzzle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { EditDialog } from "@/components/dialog/EditDialog";
 import { DeleteAlertDialog } from "@/components/dialog/DeleteAlertDialog";
@@ -36,43 +37,55 @@ export function AddonCard({ addon, onEdit, onDelete }) {
 
   return (
     <>
-      <Card className="hover:shadow-md transition-all">
-        <CardHeader>
-          <div className="flex justify-between">
-            <CardTitle className="text-base">{addon.name}</CardTitle>
-            <Badge variant="secondary">+ RM {addon.price}</Badge>
+      <Card
+        className={cn(
+          "hover:shadow-md transition-all duration-200",
+          "border-l-4 border-l-secondary",
+        )}
+      >
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex items-center gap-2.5 flex-1 min-w-0">
+              <div className="rounded-md bg-muted p-1.5 shrink-0">
+                <Puzzle className="h-3.5 w-3.5 text-muted-foreground" />
+              </div>
+              <p className="font-semibold text-sm leading-tight">
+                {addon.name}
+              </p>
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <Badge variant="secondary" className="font-semibold text-xs">
+                + RM {addon.price}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowEditDialog(true)}
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
 
-        <CardContent>
-          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-            {addon.description}
-          </p>
-
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1"
-              onClick={() => setShowEditDialog(true)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm" 
-              className="flex-1"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div>
+        <CardContent className="pt-0">
+          {addon.description && (
+            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+              {addon.description}
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
       <EditDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
@@ -84,18 +97,18 @@ export function AddonCard({ addon, onEdit, onDelete }) {
       >
         <div className="space-y-6">
           <Field>
-            <FieldLabel htmlFor="name">Add-on Name</FieldLabel>
+            <FieldLabel htmlFor="addon-name">Add-on Name</FieldLabel>
             <Input
-              id="name"
+              id="addon-name"
               value={editForm.name}
               onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
             />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="price">Price (RM)</FieldLabel>
+            <FieldLabel htmlFor="addon-price">Price (RM)</FieldLabel>
             <Input
-              id="price"
+              id="addon-price"
               type="number"
               value={editForm.price}
               onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
@@ -103,9 +116,9 @@ export function AddonCard({ addon, onEdit, onDelete }) {
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="description">Description</FieldLabel>
+            <FieldLabel htmlFor="addon-description">Description</FieldLabel>
             <Textarea
-              id="description"
+              id="addon-description"
               value={editForm.description}
               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               rows={3}
@@ -114,7 +127,6 @@ export function AddonCard({ addon, onEdit, onDelete }) {
         </div>
       </EditDialog>
 
-      {/* Delete Dialog */}
       <DeleteAlertDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
