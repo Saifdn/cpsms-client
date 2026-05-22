@@ -4,11 +4,11 @@ import toast from "react-hot-toast";
 
 // ==================== QUERY ====================
 // Fetch all admins
-export const useAdmins = ({ page = 1, limit = 20 } = {}) => {
+export const useAdmins = ({ page = 1, limit = 20, search = "" } = {}) => {
   return useQuery({
-    queryKey: ["admins", page, limit],
+    queryKey: ["admins", page, limit, search],
     queryFn: () =>
-      userService.admins.getAll({ page, limit }).then((res) => res.data),
+      userService.admins.getAll({ page, limit, search }).then((res) => res.data),
     staleTime: 2 * 60 * 1000,
     keepPreviousData: true,
   });

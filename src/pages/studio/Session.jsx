@@ -2,17 +2,21 @@ import { Page, PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/button";
 import { Plus, Loader2, CalendarIcon } from "lucide-react";
 import { useState } from "react";
+import { format } from "date-fns";
 
 import { CreateDialog } from "@/components/dialog/CreateDialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { DataTable } from "@/components/ui/data-table";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-import { useSessions, useGenerateSessions } from "@/hooks/studio/useSessions";
+import { useSessions, useGenerateSessions, useSessionDates } from "@/hooks/studio/useSessions";
 import { sessionColumns } from "@/components/columns/SessionColumns";
 
 const Session = () => {
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [filterDate, setFilterDate] = useState(new Date());
 
   // Form data
   const [generateForm, setGenerateForm] = useState({
@@ -27,7 +31,9 @@ const Session = () => {
   });
 
   // Data & Mutation
-  const { data: sessionsData, isLoading } = useSessions();
+  const { data: availableDates = [] } = useSessionDates();
+  const dateParam = filterDate ? format(filterDate, "yyyy-MM-dd") : null;
+  const { data: sessionsData, isLoading } = useSessions(dateParam);
   const generateSessionsMutation = useGenerateSessions();
 
   const sessions = sessionsData?.data || [];
@@ -60,7 +66,26 @@ const Session = () => {
 
       <div className="flex justify-between items-center mb-6 pt-8">
         <div className="flex items-center gap-3">
-          <CalendarIcon className="h-5 w-5 text-muted-foreground" />
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="w-[200px] justify-start">
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {filterDate ? format(filterDate, "dd MMM yyyy") : "Filter by date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                className="w-50"
+                mode="single"
+                selected={filterDate}
+                onSelect={(date) => setFilterDate(date)}
+                disabled={(date) =>
+                  !availableDates.some((d) => d.toDateString() === date.toDateString())
+                }
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
           <span className="text-sm text-muted-foreground">
             Total Sessions: <strong>{sessions.length}</strong>
           </span>

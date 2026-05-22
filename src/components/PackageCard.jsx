@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { EditDialog } from "@/components/dialog/EditDialog";
 import { DeleteAlertDialog } from "@/components/dialog/DeleteAlertDialog";
@@ -23,7 +24,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
   const handleEditSave = () => {
     const servicesArray = editForm.services
       .split(",")
-      .map(s => s.trim())
+      .map((s) => s.trim())
       .filter(Boolean);
 
     onEdit({
@@ -44,53 +45,73 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
 
   return (
     <>
-      <Card className="hover:shadow-md transition-all">
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <CardTitle className="text-lg">{pkg.name}</CardTitle>
-            <Badge variant="default" className="text-lg font-semibold">
-              RM {pkg.price}
-            </Badge>
+      <Card
+        className={cn(
+          "hover:shadow-lg transition-all duration-200",
+          "border-l-4 border-l-primary/40",
+        )}
+      >
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <p className="font-semibold text-base leading-tight truncate">
+                {pkg.name}
+              </p>
+              {pkg.duration && (
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {pkg.duration}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-1 shrink-0">
+              <Badge variant="default" className="text-sm font-bold px-2.5 py-1">
+                RM {pkg.price}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowEditDialog(true)}
+              >
+                <Edit className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                onClick={() => setShowDeleteDialog(true)}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground">{pkg.duration}</p>
         </CardHeader>
 
-        <CardContent className="space-y-4">
-          <div>
-            <p className="text-xs uppercase text-muted-foreground mb-2">INCLUDES</p>
-            <ul className="space-y-1 text-sm">
-              {pkg.services?.map((item, i) => (
-                <li key={i} className="flex items-start gap-2">
-                  <span className="text-green-600 mt-1">•</span> {item}
-                </li>
-              ))}
-            </ul>
-          </div>
+        <CardContent className="space-y-3 pt-0">
+          {pkg.services?.length > 0 && (
+            <div>
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 font-medium">
+                Includes
+              </p>
+              <ul className="space-y-1">
+                {pkg.services.map((item, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
-          <div className="flex gap-2 pt-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1"
-              onClick={() => setShowEditDialog(true)}
-            >
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button 
-              variant="destructive" 
-              size="sm" 
-              className="flex-1"
-              onClick={() => setShowDeleteDialog(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete
-            </Button>
-          </div>
+          {pkg.description && (
+            <p className="text-xs text-muted-foreground line-clamp-2 pt-1 border-t">
+              {pkg.description}
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {/* Edit Dialog */}
       <EditDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
@@ -102,18 +123,18 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
       >
         <div className="space-y-6">
           <Field>
-            <FieldLabel htmlFor="name">Package Name</FieldLabel>
+            <FieldLabel htmlFor="pkg-name">Package Name</FieldLabel>
             <Input
-              id="name"
+              id="pkg-name"
               value={editForm.name}
               onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
             />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="price">Price (RM)</FieldLabel>
+            <FieldLabel htmlFor="pkg-price">Price (RM)</FieldLabel>
             <Input
-              id="price"
+              id="pkg-price"
               type="number"
               value={editForm.price}
               onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
@@ -121,9 +142,9 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="services">Services (comma separated)</FieldLabel>
+            <FieldLabel htmlFor="pkg-services">Services (comma separated)</FieldLabel>
             <Textarea
-              id="services"
+              id="pkg-services"
               value={editForm.services}
               onChange={(e) => setEditForm({ ...editForm, services: e.target.value })}
               rows={4}
@@ -131,9 +152,9 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="description">Description</FieldLabel>
+            <FieldLabel htmlFor="pkg-description">Description</FieldLabel>
             <Textarea
-              id="description"
+              id="pkg-description"
               value={editForm.description}
               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               rows={3}
@@ -142,7 +163,6 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
         </div>
       </EditDialog>
 
-      {/* Delete Dialog */}
       <DeleteAlertDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}

@@ -1,8 +1,6 @@
-// hooks/useSocket.js
 import { useEffect, useState } from "react";
 import io from "socket.io-client";
 
-// const SOCKET_URL = "http://localhost:8000";
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL;
 
 let socketInstance = null;
@@ -27,12 +25,12 @@ export const useSocket = () => {
     const socket = getSocket();
 
     const onConnect = () => {
-      console.log("✅ Global Socket.IO Connected");
+      console.log("Global Socket.IO Connected");
       setIsConnected(true);
     };
 
     const onDisconnect = () => {
-      console.log("❌ Global Socket.IO Disconnected");
+      console.log("Global Socket.IO Disconnected");
       setIsConnected(false);
     };
 

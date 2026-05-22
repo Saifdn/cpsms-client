@@ -53,6 +53,9 @@ export function DataTable({
   onPageChange,
   limit = 20,
   onLimitChange,
+  // --- optional controlled search (server-side); falls back to local globalFilter
+  searchValue,
+  onSearchChange,
 }) {
   const [sorting, setSorting] = useState([]);
   const [globalFilter, setGlobalFilter] = useState("");
@@ -93,8 +96,10 @@ export function DataTable({
         </div>
         <Input
           placeholder="Search..."
-          value={globalFilter ?? ""}
-          onChange={(e) => setGlobalFilter(e.target.value)}
+          value={onSearchChange ? (searchValue ?? "") : (globalFilter ?? "")}
+          onChange={(e) =>
+            onSearchChange ? onSearchChange(e.target.value) : setGlobalFilter(e.target.value)
+          }
           className="max-w-sm"
         />
       </CardHeader>

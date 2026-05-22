@@ -23,15 +23,26 @@ const Admin = () => {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const { 
-    data, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useAdmins({ 
-    page: currentPage, 
-    limit 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const {
+    data,
+    isLoading,
+    error,
+    refetch
+  } = useAdmins({
+    page: currentPage,
+    limit,
+    search: debouncedSearch,
   });
 
   const createAdmin = useCreateAdmin();
@@ -48,10 +59,10 @@ const Admin = () => {
     adminLevel: "admin",
   });
 
-  // Reset to first page when limit changes
-  useEffect(() => {
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
     setCurrentPage(1);
-  }, [limit]);
+  };
 
   const handleCreate = () => {
     createAdmin.mutate(formData, {
@@ -106,12 +117,13 @@ const Admin = () => {
           data={admins}
           isLoading={isLoading}
           onRefresh={refetch}
-          // Pagination Props (consistent with your other pages)
+          searchValue={search}
+          onSearchChange={setSearch}
           currentPage={currentPage}
           totalPages={pagination?.totalPages ?? 1}
           onPageChange={setCurrentPage}
           limit={limit}
-          onLimitChange={setLimit}
+          onLimitChange={handleLimitChange}
         />
       </div>
 

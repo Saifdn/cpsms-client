@@ -14,10 +14,21 @@ const Graduate = () => {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const { data, isLoading, error, refetch } = useGraduates({
     page: currentPage,
     limit,
+    search: debouncedSearch,
   });
 
   const createGraduate = useCreateGraduate();
@@ -33,10 +44,10 @@ const Graduate = () => {
     phone: "",
   });
 
-  // Reset to first page when limit changes
-  useEffect(() => {
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
     setCurrentPage(1);
-  }, [limit]);
+  };
 
   const handleCreate = () => {
     createGraduate.mutate(formData, {
@@ -85,12 +96,13 @@ const Graduate = () => {
           data={graduates}
           isLoading={isLoading}
           onRefresh={refetch}
-          // === Pagination Props (matching your other page) ===
+          searchValue={search}
+          onSearchChange={setSearch}
           currentPage={currentPage}
           totalPages={pagination?.totalPages ?? 1}
           onPageChange={setCurrentPage}
           limit={limit}
-          onLimitChange={setLimit}
+          onLimitChange={handleLimitChange}
         />
       </div>
 

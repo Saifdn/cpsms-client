@@ -4,11 +4,11 @@ import toast from "react-hot-toast";
 
 // ==================== QUERY ====================
 // Fetch all graduates
-export const useGraduates = ({ page = 1, limit = 20 } = {}) => {
+export const useGraduates = ({ page = 1, limit = 20, search = "" } = {}) => {
   return useQuery({
-    queryKey: ["graduates", page, limit],
+    queryKey: ["graduates", page, limit, search],
     queryFn: () =>
-      userService.graduates.getAll({ page, limit }).then((res) => res.data),
+      userService.graduates.getAll({ page, limit, search }).then((res) => res.data),
     staleTime: 2 * 60 * 1000,
     keepPreviousData: true,
   });

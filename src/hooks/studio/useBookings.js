@@ -17,11 +17,11 @@ export const useMyBookingById = (id) => {
   });
 };
 
-export const useBookings = ({ date = null, page = 1, limit = 20} = {}) => {
+export const useBookings = ({ date = null, page = 1, limit = 20, search = "" } = {}) => {
   return useQuery({
-    queryKey: ["bookings", date, page, limit],
-    queryFn: () => 
-      bookingService.getAllBookings({ date, page, limit}).then(res => res.data),
+    queryKey: ["bookings", date, page, limit, search],
+    queryFn: () =>
+      bookingService.getAllBookings({ date, page, limit, search }).then(res => res.data),
     staleTime: 2 * 60 * 1000,
     keepPreviousData: true,
   });
@@ -32,6 +32,20 @@ export const useBookingById = (id, enabled = false) => {
     queryKey: ["booking", id],
     queryFn: () => bookingService.getBookingById(id).then(res => res.data),
     enabled: !!id && enabled,
+  });
+};
+
+export const useCreateAdminBooking = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: bookingService.createAdminBooking,
+    onSuccess: (response) => {
+      toast.success(response.data.message || "Booking created successfully!");
+      queryClient.invalidateQueries({ queryKey: ["bookings"] });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to create booking");
+    },
   });
 };
 

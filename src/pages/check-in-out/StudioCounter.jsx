@@ -1,20 +1,36 @@
-// StudioCounter.jsx
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { useState, useMemo } from "react";
-import { Play, CheckCircle, LogOut, Wifi, WifiOff } from "lucide-react";
+import {
+  Play,
+  CheckCircle,
+  CheckCircle2,
+  LogOut,
+  MapPin,
+  Users,
+  Camera,
+  ScanQrCode,
+  SkipForward,
+  Mail,
+  Phone,
+  Package,
+} from "lucide-react";
+import toast from "react-hot-toast";
 
 import { useStudios } from "@/hooks/studio/useStudios";
 import { useLiveQueue } from "@/hooks/counter/useLiveQueue";
-import { 
-  useCallNext, 
-  useConfirmArrival, 
-  useCheckOut 
+import {
+  useCallNext,
+  useConfirmArrival,
+  useCheckOut,
+  useSkip,
 } from "@/hooks/counter/useQueue";
 
 import QrScanner from "@/components/QrScanner";
+import { cn } from "@/lib/utils";
 
 const StudioCounter = () => {
   const { data: studiosData } = useStudios();
@@ -23,61 +39,78 @@ const StudioCounter = () => {
   const callNextMutation = useCallNext();
   const confirmArrivalMutation = useConfirmArrival();
   const checkOutMutation = useCheckOut();
+  const skipMutation = useSkip();
 
   const studios = studiosData?.data || [];
   const [selectedStudio, setSelectedStudio] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
 
-  // Improved called customer detection (handles string or object studio)
+  // Derive occupancy from live queue — avoids stale REST data
+  const occupiedStudioIds = useMemo(() => {
+    const ids = new Set();
+    activeQueue.forEach((q) => {
+      if (q.status === "in-progress") {
+        const id = q.studio?._id || q.studio;
+        ids.add(id);
+      }
+    });
+    return ids;
+  }, [activeQueue]);
+
+  // Queue waiting count per studio
+  const waitingCountByStudio = useMemo(() => {
+    const map = {};
+    activeQueue.forEach((q) => {
+      if (q.status === "waiting") {
+        const id = q.studio?._id || q.studio;
+        map[id] = (map[id] || 0) + 1;
+      }
+    });
+    return map;
+  }, [activeQueue]);
+
   const calledCustomer = useMemo(() => {
     if (!selectedStudio) return null;
-
     return activeQueue.find((q) => {
-      const queueStudioId = q.studio?._id || q.studio;           // string or object
+      const queueStudioId = q.studio?._id || q.studio;
       const selectedId = selectedStudio._id || selectedStudio.id;
-
       return queueStudioId === selectedId && q.status === "called";
     });
   }, [activeQueue, selectedStudio]);
 
   const currentUser = useMemo(() => {
     if (!selectedStudio) return null;
-
     return activeQueue.find((q) => {
       const queueStudioId = q.studio?._id || q.studio;
       const selectedId = selectedStudio._id || selectedStudio.id;
-
       return queueStudioId === selectedId && q.status === "in-progress";
     });
   }, [activeQueue, selectedStudio]);
 
   const nextInQueue = activeQueue.find((q) => q.status === "waiting");
 
-  // Handlers
   const handleCallNext = () => {
     if (!selectedStudio) return;
     callNextMutation.mutate({ studioId: selectedStudio._id });
-    setShowScanner(true); // Auto open scanner
+    setShowScanner(true);
   };
 
   const handleQrScan = (scannedValue) => {
-    console.log("Scanned value:", scannedValue);
-
     if (!calledCustomer) {
-      alert("No customer is currently called for this studio.");
+      toast.error("No customer is currently called for this studio.");
       setShowScanner(false);
       return;
     }
 
-    const isMatch = 
-      scannedValue === calledCustomer._id || 
+    const isMatch =
+      scannedValue === calledCustomer._id ||
       scannedValue === calledCustomer.booking?.bookingNumber;
 
     if (isMatch) {
       confirmArrivalMutation.mutate(calledCustomer._id);
       setShowScanner(false);
     } else {
-      alert("Scanned QR does not match the called customer. Please try again.");
+      toast.error("Scanned QR does not match the called customer. Please try again.");
     }
   };
 
@@ -86,136 +119,319 @@ const StudioCounter = () => {
     checkOutMutation.mutate({ queueId: currentUser._id });
   };
 
+  const handleSelectStudio = (studio) => {
+    if (!studio.isAvailable) return;
+    setSelectedStudio(studio);
+    setShowScanner(false);
+  };
+
   return (
     <Page>
       <PageHeader
         title="Studio Counter"
-        description="Call Next → Scan QR to confirm → Check-out"
+        description="Select a studio, call the next customer, confirm arrival via QR, then check out."
       />
 
-      <div className="grid gap-6 py-8 lg:grid-cols-12">
-        {/* Left: Studios List */}
-        <div className="lg:col-span-5">
-          <h2 className="text-lg font-semibold mb-4">Studios</h2>
-          <div className="grid gap-3">
-            {studios.map((studio) => (
-              <Card
-                key={studio._id}
-                className={`cursor-pointer transition-all hover:shadow-md border ${
-                  selectedStudio?._id === studio._id 
-                    ? "ring-2 ring-primary border-primary" 
-                    : "hover:border-border"
-                }`}
-                onClick={() => setSelectedStudio(studio)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-center">
-                    <CardTitle className="text-base">{studio.name}</CardTitle>
-                    <Badge 
-                      variant={studio.isOccupied ? "destructive" : "secondary"}
-                    >
-                      {studio.isOccupied ? "Occupied" : "Free"}
-                    </Badge>
+      <div className="grid gap-6 py-8 lg:grid-cols-[320px_1fr]">
+        {/* ── Studios Panel ─────────────────────────────── */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-semibold text-foreground">
+              Studios
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              {studios.filter((s) => s.isAvailable).length} active
+            </span>
+          </div>
+
+          <div className="grid gap-2">
+            {studios.map((studio) => {
+              const isInactive = !studio.isAvailable;
+              const isSelected = selectedStudio?._id === studio._id;
+              const waitingCount =
+                waitingCountByStudio[studio._id] ?? 0;
+
+              return (
+                <button
+                  key={studio._id}
+                  type="button"
+                  disabled={isInactive}
+                  onClick={() => handleSelectStudio(studio)}
+                  className={cn(
+                    "w-full text-left rounded-lg border bg-card p-4 transition-all",
+                    isInactive
+                      ? "opacity-50 cursor-not-allowed"
+                      : "cursor-pointer hover:shadow-sm hover:border-border/80",
+                    isSelected &&
+                      "ring-2 ring-primary border-primary bg-primary/5"
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className={cn("font-medium text-base truncate", isSelected && "text-primary")}>
+                        {studio.name}
+                      </p>
+                      {studio.location && (
+                        <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5 truncate">
+                          <MapPin size={10} className="shrink-0" />
+                          {studio.location}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1.5 shrink-0">
+                      {isInactive ? (
+                        <Badge className="text-xs px-1.5 py-0 bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border-gray-200">
+                          Inactive
+                        </Badge>
+                      ) : occupiedStudioIds.has(studio._id) ? (
+                        <Badge className="text-xs px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200">
+                          Occupied
+                        </Badge>
+                      ) : (
+                        <Badge className="text-xs px-1.5 py-0 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200">
+                          Free
+                        </Badge>
+                      )}
+
+                      {!isInactive && waitingCount > 0 && (
+                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                          <Users size={11} />
+                          {waitingCount} waiting
+                        </span>
+                      )}
+                    </div>
                   </div>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-sm text-muted-foreground">{studio.location}</p>
-                </CardContent>
-              </Card>
-            ))}
+                </button>
+              );
+            })}
+
+            {studios.length === 0 && (
+              <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
+                No studios available
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Right: Control Panel */}
-        <div className="lg:col-span-7">
+        {/* ── Control Panel ─────────────────────────────── */}
+        <div>
           {selectedStudio ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>{selectedStudio.name}</CardTitle>
-                <p className="text-muted-foreground">{selectedStudio.location}</p>
+            <Card className="overflow-hidden">
+              {/* Card Header */}
+              <CardHeader className="bg-muted/40 border-b pb-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <Camera size={15} className="text-muted-foreground" />
+                      <CardTitle className="text-base">{selectedStudio.name}</CardTitle>
+                    </div>
+                    {selectedStudio.location && (
+                      <p className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <MapPin size={11} />
+                        {selectedStudio.location}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Connection pill */}
+                  <div
+                    className={cn(
+                      "flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full border shrink-0",
+                      isConnected
+                        ? "bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                        : "bg-red-50 text-red-600 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800"
+                    )}
+                  >
+                    <div
+                      className={cn(
+                        "w-1.5 h-1.5 rounded-full",
+                        isConnected ? "bg-green-500 animate-pulse" : "bg-red-500"
+                      )}
+                    />
+                    {isConnected ? "Live" : "Connecting"}
+                  </div>
+                </div>
               </CardHeader>
 
-              <CardContent className="space-y-6">
-                {/* Connection Status */}
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <div className={`w-2 h-2 rounded-full ${isConnected ? "bg-green-500" : "bg-red-500"}`} />
-                  {isConnected ? "Live updates enabled" : "Connecting to server..."}
-                </div>
-
-                {/* Called Customer - Most Prominent */}
+              <CardContent className="p-5 space-y-4">
+                {/* ── Called Customer State ── */}
                 {calledCustomer && (
-                  <div className="bg-blue-50 dark:bg-blue-950 border-2 border-blue-300 dark:border-blue-700 p-6 rounded-2xl">
+                  <div className="rounded-xl border-2 border-blue-300 dark:border-blue-700 bg-blue-50 dark:bg-blue-950/40 p-5">
                     <div className="flex items-center gap-3 mb-4">
-                      <CheckCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                      <div className="rounded-full bg-blue-100 dark:bg-blue-900/50 p-2">
+                        <CheckCircle size={18} className="text-blue-600 dark:text-blue-400" />
+                      </div>
                       <div>
-                        <h3 className="text-xl font-bold text-blue-700 dark:text-blue-300">Called Customer</h3>
-                        <p className="text-blue-600 dark:text-blue-400">Waiting for QR scan confirmation</p>
+                        <p className="font-semibold text-blue-700 dark:text-blue-300 text-sm">
+                          Customer Called
+                        </p>
+                        <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
+                          Waiting for QR scan confirmation
+                        </p>
                       </div>
                     </div>
 
-                    <p className="text-2xl font-semibold text-foreground">
-                      {calledCustomer.booking?.graduate?.fullName || "Customer"}
+                    <p className="text-xl font-bold text-foreground">
+                      {calledCustomer.booking?.graduate?.fullName || "Unknown"}
                     </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Queue #{calledCustomer.queueNumber}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Queue #{calledCustomer.queueNumber} ·{" "}
+                      {calledCustomer.booking?.bookingNumber}
                     </p>
 
-                    <Button 
-                      onClick={() => setShowScanner(true)}
-                      className="mt-6 w-full"
-                      size="lg"
-                    >
-                      Open QR Scanner
-                    </Button>
+                    <div className="mt-4 flex items-center gap-2">
+                      <Button
+                        onClick={() => setShowScanner((v) => !v)}
+                      >
+                        <ScanQrCode size={16} className="mr-2" />
+                        {showScanner ? "Close Scanner" : "Open QR Scanner"}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        className="text-amber-600 border-amber-300 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-950/40"
+                        disabled={skipMutation.isPending}
+                        onClick={() => {
+                          setShowScanner(false);
+                          skipMutation.mutate(calledCustomer.booking?._id);
+                        }}
+                      >
+                        <SkipForward size={15} className="mr-2" />
+                        {skipMutation.isPending ? "Skipping..." : "Skip Customer"}
+                      </Button>
+                    </div>
                   </div>
                 )}
 
-                {/* Currently in Studio */}
+                {/* ── In Progress State ── */}
                 {currentUser && (
-                  <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-700 p-6 rounded-xl">
-                    <h3 className="font-semibold text-amber-700 dark:text-amber-300 mb-3">Currently in Studio</h3>
-                    <p className="text-xl font-medium">
-                      {currentUser.booking?.graduate?.fullName}
-                    </p>
-                    <Button 
-                      variant="destructive"
-                      onClick={handleCheckOut}
-                      disabled={checkOutMutation.isPending}
-                      className="mt-4 w-full"
-                    >
-                      {checkOutMutation.isPending ? "Checking out..." : "Check-out Customer"}
-                    </Button>
+                  <div className="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 overflow-hidden">
+                    {/* Header */}
+                    <div className="px-5 py-3 border-b border-amber-200 dark:border-amber-700">
+                      <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
+                        Currently in Studio
+                      </p>
+                    </div>
+
+                    <div className="p-5 space-y-4">
+                      {/* Graduate info */}
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                          Graduate
+                        </p>
+                        <p className="text-xl font-bold text-foreground leading-tight">
+                          {currentUser.booking?.graduate?.fullName || "Unknown"}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5 mb-3">
+                          {currentUser.booking?.bookingNumber}
+                        </p>
+                        <div className="space-y-1.5">
+                          {currentUser.booking?.graduate?.email && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Mail size={13} className="shrink-0" />
+                              <span>{currentUser.booking.graduate.email}</span>
+                            </div>
+                          )}
+                          {currentUser.booking?.graduate?.phone && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <Phone size={13} className="shrink-0" />
+                              <span>{currentUser.booking.graduate.phone}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      {/* Package info */}
+                      {currentUser.booking?.package && (
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                            Package
+                          </p>
+                          <div className="flex items-center gap-2 mb-1">
+                            <Package size={14} className="text-muted-foreground shrink-0" />
+                            <p className="font-semibold text-base">
+                              {currentUser.booking.package.name}
+                            </p>
+                          </div>
+                          {currentUser.booking.package.description && (
+                            <p className="text-sm text-muted-foreground mb-3 pl-5">
+                              {currentUser.booking.package.description}
+                            </p>
+                          )}
+                          {Array.isArray(currentUser.booking.package.services) &&
+                            currentUser.booking.package.services.length > 0 && (
+                              <div className="space-y-1.5 pl-1">
+                                {currentUser.booking.package.services.map((service, i) => (
+                                  <div key={i} className="flex items-center gap-2 text-sm">
+                                    <CheckCircle2
+                                      size={13}
+                                      className="text-amber-600 dark:text-amber-400 shrink-0"
+                                    />
+                                    <span>{service}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                        </div>
+                      )}
+
+                      <Separator />
+
+                      <Button
+                        variant="destructive"
+                        onClick={handleCheckOut}
+                        disabled={checkOutMutation.isPending}
+                      >
+                        <LogOut size={15} className="mr-2" />
+                        {checkOutMutation.isPending ? "Checking out..." : "Check Out Customer"}
+                      </Button>
+                    </div>
                   </div>
                 )}
 
-                {/* Call Next Button */}
+                {/* ── Idle State ── */}
                 {!calledCustomer && !currentUser && (
-                  <Button 
-                    onClick={handleCallNext}
-                    disabled={!nextInQueue || callNextMutation.isPending}
-                    className="w-full"
-                    size="lg"
-                  >
-                    <Play className="mr-2 h-5 w-5" />
-                    {callNextMutation.isPending ? "Calling..." : "Call Next Customer"}
-                  </Button>
+                  <>
+                    {nextInQueue ? (
+                      <Button
+                        onClick={handleCallNext}
+                        disabled={callNextMutation.isPending}
+                      >
+                        <Play size={16} className="mr-2" />
+                        {callNextMutation.isPending ? "Calling..." : "Call Next Customer"}
+                      </Button>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground border border-dashed rounded-xl">
+                        <Users size={28} className="opacity-40" />
+                        <p className="text-sm font-medium">Queue is empty</p>
+                        <p className="text-xs">No customers waiting at the moment</p>
+                      </div>
+                    )}
+                  </>
                 )}
 
-                {!calledCustomer && !currentUser && !nextInQueue && (
-                  <div className="text-center py-12 text-muted-foreground">
-                    No customers waiting in queue at the moment.
-                  </div>
-                )}
-
-                {/* QR Scanner */}
+                {/* ── QR Scanner (inline) ── */}
                 {showScanner && (
-                  <QrScanner onScan={handleQrScan} />
+                  <div className="pt-2">
+                    <Separator className="mb-4" />
+                    <QrScanner onScan={handleQrScan} />
+                  </div>
                 )}
               </CardContent>
             </Card>
           ) : (
-            <Card className="h-80 flex items-center justify-center border-dashed">
-              <p className="text-muted-foreground">Select a studio from the left to manage</p>
+            <Card className="flex items-center justify-center border-dashed min-h-[320px]">
+              <div className="text-center space-y-2 text-muted-foreground p-8">
+                <div className="mx-auto mb-3 rounded-full bg-muted p-4 w-fit">
+                  <Camera size={28} className="opacity-40" />
+                </div>
+                <p className="font-medium">No studio selected</p>
+                <p className="text-xs max-w-xs">
+                  Select an active studio from the list to start managing the queue
+                </p>
+              </div>
             </Card>
           )}
         </div>

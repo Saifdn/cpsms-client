@@ -1,7 +1,8 @@
+import { useState, useMemo } from "react";
 import { Page, PageHeader } from "@/components/layout/Page";
 import StudioCard from "@/components/StudioCard";
-import { useStudios } from "@/hooks/studio/useStudios";
 import {
+  useStudios,
   useCreateStudio,
   useUpdateStudio,
   useDeleteStudio,
@@ -9,13 +10,79 @@ import {
 } from "@/hooks/studio/useStudios";
 
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import {
+  Plus,
+  Search,
+  Building2,
+  CheckCircle2,
+  XCircle,
+  Users2,
+} from "lucide-react";
 
 import { CreateDialog } from "@/components/dialog/CreateDialog";
 import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+
+function StudioPageSkeleton() {
+  return (
+    <div className="grid gap-6 py-8">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-5">
+              <Skeleton className="h-3 w-20 mb-2" />
+              <Skeleton className="h-7 w-10" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Card key={i} className="overflow-hidden">
+            <div className="p-6 pb-4 border-b space-y-3">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-10 w-10 rounded-lg" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-20" />
+                </div>
+                <Skeleton className="h-6 w-12 rounded-full" />
+              </div>
+            </div>
+            <div className="p-6 space-y-3">
+              <Skeleton className="h-3 w-full" />
+              <Skeleton className="h-3 w-3/4" />
+              <Skeleton className="h-6 w-20 rounded-md mt-4" />
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ label, value, icon, iconClass }) {
+  const Icon = icon;
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="text-2xl font-bold mt-1">{value}</p>
+          </div>
+          <div className={cn("mt-0.5", iconClass)}>
+            <Icon size={20} />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 const Studio = () => {
   const { data, isLoading, error, refetch } = useStudios();
@@ -25,44 +92,54 @@ const Studio = () => {
   const deleteStudio = useDeleteStudio();
   const toggleAvailability = useToggleStudioAvailability();
 
-  const studios = data?.data || data || [];
+  const studios = useMemo(() => data?.data || data || [], [data]);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     location: "",
     description: "",
   });
 
-  // Create
+  const stats = useMemo(
+    () => ({
+      total: studios.length,
+      available: studios.filter((s) => s.isAvailable !== false).length,
+      unavailable: studios.filter((s) => s.isAvailable === false).length,
+      occupied: studios.filter((s) => s.isOccupied).length,
+    }),
+    [studios],
+  );
+
+  const filteredStudios = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return studios;
+    return studios.filter(
+      (s) =>
+        s.name?.toLowerCase().includes(q) ||
+        s.location?.toLowerCase().includes(q),
+    );
+  }, [studios, searchQuery]);
+
   const handleCreate = () => {
     createStudio.mutate(formData, {
       onSuccess: () => {
         setShowCreateDialog(false);
         setFormData({ name: "", location: "", description: "" });
-        refetch();
       },
     });
   };
 
-  // Edit - receives edited data from StudioCard
   const handleEdit = (editedData) => {
-    updateStudio.mutate(
-      {
-        id: editedData._id || editedData.id,
-        ...editedData,
-      },
-      {
-        onSuccess: () => refetch(),
-      },
-    );
+    updateStudio.mutate({
+      id: editedData._id || editedData.id,
+      ...editedData,
+    });
   };
 
-  // Delete
   const handleDelete = (id) => {
-    deleteStudio.mutate(id, {
-      onSuccess: () => refetch(),
-    });
+    deleteStudio.mutate(id);
   };
 
   const handleToggle = (studioId, isAvailable) => {
@@ -74,10 +151,16 @@ const Studio = () => {
       <Page>
         <PageHeader
           title="Studio Management"
-          description="Error loading studios"
+          description="Manage your studios availability and status."
         />
-        <div className="p-8 text-center text-red-500">
-          Failed to load studios. Please try again.
+        <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+          <XCircle className="h-10 w-10 text-destructive" />
+          <p className="text-sm text-muted-foreground">
+            Failed to load studios. Please try again.
+          </p>
+          <Button variant="outline" onClick={() => refetch()}>
+            Retry
+          </Button>
         </div>
       </Page>
     );
@@ -90,28 +173,98 @@ const Studio = () => {
         description="Manage your studios availability and status."
       />
 
-      <div className="grid gap-6 py-8">
-        <div className="flex justify-end">
-          <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
-            <Plus className="h-4 w-4" />
-            Add New Studio
-          </Button>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {studios.map((studio) => (
-            <StudioCard
-              key={studio._id}
-              studio={studio}
-              onToggleAvailability={handleToggle}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
+      {isLoading ? (
+        <StudioPageSkeleton />
+      ) : (
+        <div className="grid gap-6 py-8">
+          {/* Stats Row */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+            <StatCard
+              label="Total Studios"
+              value={stats.total}
+              icon={Building2}
+              iconClass="text-primary"
             />
-          ))}
-        </div>
-      </div>
+            <StatCard
+              label="Available"
+              value={stats.available}
+              icon={CheckCircle2}
+              iconClass="text-green-500"
+            />
+            <StatCard
+              label="Unavailable"
+              value={stats.unavailable}
+              icon={XCircle}
+              iconClass="text-muted-foreground"
+            />
+            <StatCard
+              label="Occupied"
+              value={stats.occupied}
+              icon={Users2}
+              iconClass="text-amber-500"
+            />
+          </div>
 
-      {/* Only Create Dialog here */}
+          {/* Search + Add Row */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Search by name or location..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Button
+              onClick={() => setShowCreateDialog(true)}
+              className="gap-2 shrink-0"
+            >
+              <Plus className="h-4 w-4" />
+              Add New Studio
+            </Button>
+          </div>
+
+          {/* Card Grid or Empty States */}
+          {studios.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+              <Building2 className="h-10 w-10 text-muted-foreground" />
+              <p className="font-medium">No studios yet</p>
+              <p className="text-sm text-muted-foreground">
+                Get started by adding your first studio.
+              </p>
+              <Button
+                onClick={() => setShowCreateDialog(true)}
+                className="gap-2 mt-1"
+              >
+                <Plus className="h-4 w-4" />
+                Add New Studio
+              </Button>
+            </div>
+          ) : filteredStudios.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
+              <Search className="h-10 w-10 text-muted-foreground" />
+              <p className="font-medium">No studios match your search</p>
+              <p className="text-sm text-muted-foreground">
+                Try a different name or location.
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredStudios.map((studio) => (
+                <StudioCard
+                  key={studio._id}
+                  studio={studio}
+                  onToggleAvailability={handleToggle}
+                  onEdit={handleEdit}
+                  onDelete={handleDelete}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <CreateDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}

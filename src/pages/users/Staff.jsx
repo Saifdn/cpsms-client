@@ -14,15 +14,26 @@ const Staff = () => {
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
-  const { 
-    data, 
-    isLoading, 
-    error, 
-    refetch 
-  } = useStaff({ 
-    page: currentPage, 
-    limit 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const {
+    data,
+    isLoading,
+    error,
+    refetch
+  } = useStaff({
+    page: currentPage,
+    limit,
+    search: debouncedSearch,
   });
 
   const createStaff = useCreateStaff();
@@ -39,10 +50,10 @@ const Staff = () => {
     department: "",
   });
 
-  // Reset to first page when limit changes
-  useEffect(() => {
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
     setCurrentPage(1);
-  }, [limit]);
+  };
 
   const handleCreate = () => {
     createStaff.mutate(formData, {
@@ -97,12 +108,13 @@ const Staff = () => {
           data={staff}
           isLoading={isLoading}
           onRefresh={refetch}
-          // Pagination Props
+          searchValue={search}
+          onSearchChange={setSearch}
           currentPage={currentPage}
           totalPages={pagination?.totalPages ?? 1}
           onPageChange={setCurrentPage}
           limit={limit}
-          onLimitChange={setLimit}
+          onLimitChange={handleLimitChange}
         />
       </div>
 

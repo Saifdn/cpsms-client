@@ -1,7 +1,7 @@
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import { DataTable } from "@/components/ui/data-table";
 import { bookingColumns } from "@/components/columns/BookingColumns";
@@ -11,11 +11,30 @@ import { useBookings } from "@/hooks/studio/useBookings";
 import { CreateBookingDialog } from "@/pages/booking/CreateBookingDialog";
 
 const Booking = () => {
-  const { data: bookingsData, isLoading } = useBookings();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  const { data: bookingsData, isLoading } = useBookings({ page: currentPage, limit, search: debouncedSearch });
 
   const bookings = bookingsData?.data || [];
+  const pagination = bookingsData?.pagination;
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+
+  const handleLimitChange = (newLimit) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
+  };
 
   return (
     <Page>
@@ -37,6 +56,13 @@ const Booking = () => {
         columns={bookingColumns}
         data={bookings}
         isLoading={isLoading}
+        currentPage={currentPage}
+        totalPages={pagination?.totalPages ?? 1}
+        onPageChange={setCurrentPage}
+        limit={limit}
+        onLimitChange={handleLimitChange}
+        searchValue={search}
+        onSearchChange={setSearch}
       />
 
       <CreateBookingDialog
