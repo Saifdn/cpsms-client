@@ -1,14 +1,18 @@
+import { useState } from "react";
 import Avatar from "react-avatar";
-import { MailIcon, PhoneIcon, ShieldIcon, KeyRoundIcon } from "lucide-react";
+import { MailIcon, PhoneIcon, ShieldIcon, KeyRoundIcon, PencilIcon } from "lucide-react";
 
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Field, FieldLabel } from "@/components/ui/field";
+import { EditDialog } from "@/components/dialog/EditDialog";
 
 import { useAuth } from "@/context/useAuth";
-import { useProfile } from "@/hooks/user/useProfile";
+import { useProfile, useUpdateProfile } from "@/hooks/user/useProfile";
 import { useForgotPassword } from "@/hooks/auth/useForgotPassword";
 
 const ROLE_LABELS = {
@@ -34,11 +38,26 @@ const ProfilePage = () => {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
   const { mutate: sendResetLink, isPending } = useForgotPassword();
+  const { mutate: updateProfile, isPending: isUpdating } = useUpdateProfile();
 
-  const displayName = profile?.fullName || user?.fullName || "";
-  const email = profile?.email || user?.email || "";
-  const phone = profile?.phone || "";
-  const role = profile?.role || user?.role || "";
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [formData, setFormData] = useState({ fullName: "", phone: "" });
+
+  const displayName = profile?.data.fullName || user?.fullName || "";
+  const email = profile?.data.email || user?.email || "";
+  const phone = profile?.data.phone || "";
+  const role = profile?.data.role || user?.role || "";
+
+  const handleEditClick = () => {
+    setFormData({ fullName: displayName, phone });
+    setShowEditDialog(true);
+  };
+
+  const handleSave = () => {
+    updateProfile(formData, {
+      onSuccess: () => setShowEditDialog(false),
+    });
+  };
 
   return (
     <Page>
@@ -47,8 +66,17 @@ const ProfilePage = () => {
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
         {/* Profile Details Card */}
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="text-base">Account Details</CardTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8"
+              onClick={handleEditClick}
+              disabled={isLoading}
+            >
+              <PencilIcon className="h-4 w-4" />
+            </Button>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex items-center gap-4">
@@ -104,6 +132,46 @@ const ProfilePage = () => {
           </CardContent>
         </Card>
       </div>
+
+      <EditDialog
+        open={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        title="Edit Profile"
+        description="Update your name and phone number."
+        onSave={handleSave}
+        isLoading={isUpdating}
+      >
+        <div className="space-y-4">
+          <Field>
+            <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
+            <Input
+              id="fullName"
+              value={formData.fullName}
+              onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+              placeholder="Enter your full name"
+            />
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="email">Email Address</FieldLabel>
+            <Input
+              id="email"
+              value={email}
+              disabled
+              className="cursor-not-allowed opacity-60"
+            />
+            <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
+            <Input
+              id="phone"
+              value={formData.phone}
+              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+              placeholder="Enter your phone number"
+            />
+          </Field>
+        </div>
+      </EditDialog>
     </Page>
   );
 };
