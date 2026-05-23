@@ -1,4 +1,5 @@
-import { useState } from "react";           // ← Added
+import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -9,12 +10,13 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Logo } from "@/assets/Logo";
 
-export function SignupForm({ 
-  onSubmit, 
-  loading = false, 
-  className, 
-  ...props 
+export function SignupForm({
+  onSubmit,
+  loading = false,
+  className,
+  ...props
 }) {
   const [formData, setFormData] = useState({
     fullName: "",
@@ -23,6 +25,9 @@ export function SignupForm({
     password: "",
     confirmPassword: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [validationError, setValidationError] = useState("");
 
   const handleChange = (e) => {
     const { id, value } = e.target;
@@ -31,16 +36,17 @@ export function SignupForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setValidationError("");
 
     const { fullName, email, phone, password, confirmPassword } = formData;
 
-    if (password !== confirmPassword) {
-      alert("Passwords do not match");   // You can replace this with toast later
+    if (password.length < 8) {
+      setValidationError("Password must be at least 8 characters long.");
       return;
     }
 
-    if (password.length < 8) {
-      alert("Password must be at least 8 characters long");
+    if (password !== confirmPassword) {
+      setValidationError("Passwords do not match.");
       return;
     }
 
@@ -49,16 +55,27 @@ export function SignupForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden p-0 shadow-lg">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form onSubmit={handleSubmit} className="p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="p-8 md:p-10">
             <FieldGroup>
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Create your account</h1>
-                <p className="text-sm text-balance text-muted-foreground">
-                  Enter your details below to create your account
-                </p>
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="flex items-center justify-center">
+                  <Logo size={36} />
+                </div>
+                <div className="space-y-1">
+                  <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Enter your details to get started
+                  </p>
+                </div>
               </div>
+
+              {validationError && (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {validationError}
+                </div>
+              )}
 
               <Field>
                 <FieldLabel htmlFor="fullName">Full Name</FieldLabel>
@@ -70,19 +87,21 @@ export function SignupForm({
                   onChange={handleChange}
                   required
                   disabled={loading}
+                  className="h-10"
                 />
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <FieldLabel htmlFor="email">Email address</FieldLabel>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   value={formData.email}
                   onChange={handleChange}
                   required
                   disabled={loading}
+                  className="h-10"
                 />
               </Field>
 
@@ -96,6 +115,7 @@ export function SignupForm({
                   onChange={handleChange}
                   required
                   disabled={loading}
+                  className="h-10"
                 />
               </Field>
 
@@ -103,25 +123,57 @@ export function SignupForm({
                 <div className="grid grid-cols-2 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        value={formData.password}
+                        onChange={handleChange}
+                        required
+                        disabled={loading}
+                        className="h-10 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </Field>
                   <Field>
                     <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      required
-                      disabled={loading}
-                    />
+                    <div className="relative">
+                      <Input
+                        id="confirmPassword"
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        required
+                        disabled={loading}
+                        className="h-10 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
+                        tabIndex={-1}
+                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </Field>
                 </div>
                 <FieldDescription>
@@ -130,18 +182,18 @@ export function SignupForm({
               </Field>
 
               <Field>
-                <Button 
-                  type="submit" 
-                  className="w-full" 
+                <Button
+                  type="submit"
+                  className="w-full h-10"
                   disabled={loading}
                 >
-                  {loading ? "Creating account..." : "Create Account"}
+                  {loading ? "Creating account..." : "Create account"}
                 </Button>
               </Field>
 
               <FieldDescription className="text-center">
                 Already have an account?{" "}
-                <a href="/sign-in" className="hover:underline">
+                <a href="/sign-in" className="font-medium text-foreground hover:text-primary transition-colors">
                   Sign in
                 </a>
               </FieldDescription>
@@ -152,14 +204,14 @@ export function SignupForm({
             <img
               src="/signup.svg"
               alt="Signup background"
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover dark:brightness-75"
             />
           </div>
         </CardContent>
       </Card>
 
-      <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our{" "}
+      <FieldDescription className="px-6 text-center text-xs">
+        By creating an account, you agree to our{" "}
         <a href="#" className="hover:underline">Terms of Service</a> and{" "}
         <a href="#" className="hover:underline">Privacy Policy</a>.
       </FieldDescription>
