@@ -16,7 +16,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   Plus,
-  Search,
   Building2,
   CheckCircle2,
   XCircle,
@@ -95,7 +94,6 @@ const Studio = () => {
   const studios = useMemo(() => data?.data || data || [], [data]);
 
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     location: "",
@@ -111,16 +109,6 @@ const Studio = () => {
     }),
     [studios],
   );
-
-  const filteredStudios = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return studios;
-    return studios.filter(
-      (s) =>
-        s.name?.toLowerCase().includes(q) ||
-        s.location?.toLowerCase().includes(q),
-    );
-  }, [studios, searchQuery]);
 
   const handleCreate = () => {
     createStudio.mutate(formData, {
@@ -205,17 +193,8 @@ const Studio = () => {
             />
           </div>
 
-          {/* Search + Add Row */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                placeholder="Search by name or location..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
-            </div>
+          {/* Add Row */}
+          <div className="flex justify-end">
             <Button
               onClick={() => setShowCreateDialog(true)}
               className="gap-2 shrink-0"
@@ -241,17 +220,9 @@ const Studio = () => {
                 Add New Studio
               </Button>
             </div>
-          ) : filteredStudios.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-              <Search className="h-10 w-10 text-muted-foreground" />
-              <p className="font-medium">No studios match your search</p>
-              <p className="text-sm text-muted-foreground">
-                Try a different name or location.
-              </p>
-            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredStudios.map((studio) => (
+              {studios.map((studio) => (
                 <StudioCard
                   key={studio._id}
                   studio={studio}

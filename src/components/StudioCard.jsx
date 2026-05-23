@@ -1,13 +1,6 @@
 import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
@@ -21,29 +14,24 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel } from "@/components/ui/field";
 
-import { 
-  Aperture, 
-  MapPin, 
-  Users, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  Eye 
+import {
+  Aperture,
+  MapPin,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Eye,
+  Circle,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { DeleteAlertDialog } from "@/components/dialog/DeleteAlertDialog";
 import { EditDialog } from "@/components/dialog/EditDialog";
 import { ViewDetailsDialog } from "@/components/dialog/ViewDetailsDialog";
 
-const StudioCard = ({ 
-  studio, 
-  onToggleAvailability,
-  onEdit,
-  onDelete 
-}) => {
+const StudioCard = ({ studio, onToggleAvailability, onEdit, onDelete }) => {
   const isAvailable = studio.isAvailable !== false;
   const isOccupied = studio.isOccupied || false;
-  const bookingNumber = studio.currentBooking;
 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -61,106 +49,138 @@ const StudioCard = ({
     setShowEditDialog(true);
   };
 
-  const handleViewClick = () => {
-    setShowViewDialog(true);
-  };
-
   const handleEditSave = () => {
-    if (onEdit && editData) {
-      onEdit(editData);
-    }
+    if (onEdit && editData) onEdit(editData);
     setShowEditDialog(false);
     setEditData(null);
   };
 
   const handleDeleteConfirm = () => {
-    if (onDelete) {
-      onDelete(studio._id || studio.id);
-    }
+    if (onDelete) onDelete(studio._id || studio.id);
     setShowDeleteDialog(false);
   };
 
   return (
     <>
-      <Card className="bg-background overflow-hidden hover:shadow-md transition-all">
-        <CardHeader className="pb-4 border-b">
-          <div className="flex items-start justify-between">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-muted rounded-lg">
-                <Aperture className="h-5 w-5 text-primary" />
+      <Card
+        className={cn(
+          "overflow-hidden transition-shadow hover:shadow-md border-l-4",
+          isAvailable ? "border-l-green-500" : "border-l-muted-foreground/40",
+        )}
+      >
+        <CardContent className="p-0">
+          {/* Header */}
+          <div className="flex items-start justify-between px-5 pt-5 pb-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className={cn(
+                  "shrink-0 p-2 rounded-lg",
+                  isAvailable
+                    ? "bg-green-100 dark:bg-green-900/30"
+                    : "bg-muted",
+                )}
+              >
+                <Aperture
+                  className={cn(
+                    "h-5 w-5",
+                    isAvailable ? "text-green-600 dark:text-green-400" : "text-muted-foreground",
+                  )}
+                />
               </div>
-              <div>
-                <CardTitle className="text-lg">{studio.name}</CardTitle>
-                <div className="flex items-center gap-1 text-sm text-muted-foreground mt-1">
-                  <MapPin className="h-4 w-4" />
-                  <CardDescription className="m-0">{studio.location}</CardDescription>
+              <div className="min-w-0">
+                <p className="font-semibold text-base leading-tight truncate">
+                  {studio.name}
+                </p>
+                <div className="flex items-center gap-1 mt-0.5 text-muted-foreground">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />
+                  <span className="text-xs truncate">{studio.location}</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-end gap-1">
-                <Switch 
-                  checked={isAvailable} 
-                  onCheckedChange={handleToggle}
-                />
-                <Label className="text-xs font-medium">
-                  {isAvailable ? "Available" : "Unavailable"}
-                </Label>
-              </div>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleViewClick} className="cursor-pointer">
-                    <Eye className="mr-2 h-4 w-4" />
-                    View Details
-                  </DropdownMenuItem>
-
-                  <DropdownMenuItem onClick={handleEditClick} className="cursor-pointer">
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit
-                  </DropdownMenuItem>
-
-                  <DropdownMenuSeparator />
-
-                  <DropdownMenuItem 
-                    onClick={() => setShowDeleteDialog(true)}
-                    className="text-destructive cursor-pointer"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 shrink-0 -mr-1"
+                >
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => setShowViewDialog(true)}
+                  className="cursor-pointer"
+                >
+                  <Eye className="mr-2 h-4 w-4" />
+                  View Details
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={handleEditClick}
+                  className="cursor-pointer"
+                >
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => setShowDeleteDialog(true)}
+                  className="text-destructive cursor-pointer"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </CardHeader>
 
-        <CardContent className="pt-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Current Status</span>
+          {/* Divider */}
+          <div className="border-t mx-5" />
+
+          {/* Status rows */}
+          <div className="px-5 py-4 space-y-3">
+            {/* Occupancy */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Session status</span>
+              <Badge
+                className={cn(
+                  "gap-1.5 text-xs font-medium",
+                  isOccupied
+                    ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800"
+                    : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800",
+                )}
+                variant="outline"
+              >
+                <Circle
+                  className={cn(
+                    "h-1.5 w-1.5 fill-current",
+                    isOccupied ? "text-red-500" : "text-green-500",
+                  )}
+                />
+                {isOccupied ? "Occupied" : "Free"}
+              </Badge>
             </div>
 
-            <Badge 
-              variant={isOccupied ? "destructive" : "default"}
-              className={isOccupied ? "bg-red-600" : "bg-green-600"}
-            >
-              {isOccupied 
-                ? `Occupied` 
-                : "Free / Available"}
-            </Badge>
+            {/* Availability toggle */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Availability</span>
+              <div className="flex items-center gap-2">
+                <span
+                  className={cn(
+                    "text-xs font-medium",
+                    isAvailable ? "text-green-600 dark:text-green-400" : "text-muted-foreground",
+                  )}
+                >
+                  {isAvailable ? "Open" : "Closed"}
+                </span>
+                <Switch checked={isAvailable} onCheckedChange={handleToggle} />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Delete Dialog */}
       <DeleteAlertDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
@@ -168,7 +188,6 @@ const StudioCard = ({
         itemName={studio.name}
       />
 
-      {/* Edit Dialog */}
       <EditDialog
         open={showEditDialog}
         onOpenChange={setShowEditDialog}
@@ -186,29 +205,30 @@ const StudioCard = ({
               onChange={(e) => setEditData({ ...editData, name: e.target.value })}
             />
           </Field>
-
           <Field>
             <FieldLabel htmlFor="location">Location</FieldLabel>
             <Input
               id="location"
               value={editData?.location || ""}
-              onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, location: e.target.value })
+              }
             />
           </Field>
-
           <Field>
             <FieldLabel htmlFor="description">Description</FieldLabel>
             <Textarea
               id="description"
               value={editData?.description || ""}
-              onChange={(e) => setEditData({ ...editData, description: e.target.value })}
+              onChange={(e) =>
+                setEditData({ ...editData, description: e.target.value })
+              }
               rows={3}
             />
           </Field>
         </div>
       </EditDialog>
 
-      {/* View Details Dialog */}
       <ViewDetailsDialog
         open={showViewDialog}
         onOpenChange={setShowViewDialog}
