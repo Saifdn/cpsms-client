@@ -1,6 +1,8 @@
-// pages/booking/steps/Step4_ReviewPayment.jsx
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { CalendarDays, Clock, Package, PlusCircle, MapPin, Lock, Loader2 } from "lucide-react";
 
 const malaysiaStates = {
   "MY-01": "Johor",
@@ -21,146 +23,162 @@ const malaysiaStates = {
   "MY-16": "Wilayah Persekutuan Putrajaya",
 };
 
+const SummaryRow = ({ label, value }) => (
+  <div className="flex justify-between gap-4 text-sm">
+    <span className="text-muted-foreground">{label}</span>
+    <span className="font-medium text-right">{value || "-"}</span>
+  </div>
+);
+
+const SectionCard = ({ icon: Icon, title, children }) => (
+  <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
+    <div className="flex items-center gap-2">
+      <Icon className="h-4 w-4 text-primary" />
+      <span className="text-sm font-semibold">{title}</span>
+    </div>
+    <div className="space-y-2">{children}</div>
+  </div>
+);
+
 const formatDate = (date) => {
   if (!date) return "-";
-  const normalizedDate = date instanceof Date ? date : new Date(date);
-
-  if (Number.isNaN(normalizedDate.getTime())) return "-";
-
-  return normalizedDate.toDateString();
+  const d = date instanceof Date ? date : new Date(date);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleDateString("en-MY", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 };
 
-const Step4_ReviewPayment = ({ data, onPrev, onComplete }) => {
-  const deliveryAddress = data.deliveryAddress.receiver || {};
+const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
+  const delivery = data.deliveryAddress?.receiver || {};
   const session = data.selectedSession || {};
   const selectedPackage = data.selectedPackage || {};
   const selectedAddons = data.selectedAddons || [];
 
   const packagePrice = Number(selectedPackage.price) || 0;
-  const addonsTotal = selectedAddons.reduce((sum, addon) => sum + (Number(addon.price) || 0), 0);
+  const addonsTotal = selectedAddons.reduce((sum, a) => sum + (Number(a.price) || 0), 0);
   const totalPrice = packagePrice + addonsTotal;
 
+  const stateName = delivery.subdivision_code
+    ? malaysiaStates[delivery.subdivision_code] || delivery.subdivision_code
+    : null;
+
+  const addressLines = [
+    delivery.address_1,
+    delivery.address_2,
+    [delivery.postcode, delivery.city].filter(Boolean).join(", "),
+    stateName,
+  ].filter(Boolean);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Step 4: Review & Payment</CardTitle>
+    <Card className="border-0 shadow-md">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-xl">Review Your Booking</CardTitle>
+        <p className="text-sm text-muted-foreground">
+          Please review all details before proceeding to payment.
+        </p>
       </CardHeader>
-      <CardContent className="space-y-8">
-        <div className="space-y-4">
-          <h3 className="font-semibold">Booking Summary</h3>
 
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4 text-sm">
-            <div className="rounded-lg border p-4 space-y-2">
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Session Details
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Date</span>
-                  <span className="font-medium text-right">{formatDate(session.date)}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Time</span>
-                  <span className="font-medium text-right">
-                    {session.startTime && session.endTime ? `${session.startTime} - ${session.endTime}` : "-"}
-                  </span>
-                </div>
-              </div>
+      <CardContent className="space-y-4 pt-4">
+        {/* Session */}
+        <SectionCard icon={CalendarDays} title="Session Details">
+          <SummaryRow label="Date" value={formatDate(session.date)} />
+          <SummaryRow
+            label="Time"
+            value={
+              session.startTime && session.endTime
+                ? `${session.startTime} – ${session.endTime}`
+                : null
+            }
+          />
+        </SectionCard>
+
+        {/* Package */}
+        <SectionCard icon={Package} title="Package">
+          <SummaryRow label="Name" value={selectedPackage.name} />
+          <SummaryRow
+            label="Price"
+            value={selectedPackage.price ? `RM ${selectedPackage.price}` : null}
+          />
+          {selectedPackage.services?.length > 0 && (
+            <div className="pt-1 space-y-1">
+              <span className="text-xs text-muted-foreground">Includes:</span>
+              <ul className="space-y-1">
+                {selectedPackage.services.map((s, i) => (
+                  <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
+                    <span className="mt-0.5 text-green-500">•</span>
+                    {s}
+                  </li>
+                ))}
+              </ul>
             </div>
+          )}
+        </SectionCard>
 
-            <div className="rounded-lg border p-4 space-y-2">
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Package Details
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Name</span>
-                  <span className="font-medium text-right">{selectedPackage.name || "-"}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Price</span>
-                  <span className="font-medium text-right">
-                    {selectedPackage.price ? `RM ${selectedPackage.price}` : "-"}
-                  </span>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-muted-foreground">Services</div>
-                  <div className="text-xs leading-5 text-right space-y-1">
-                    {selectedPackage.services?.length > 0 ? (
-                      selectedPackage.services.map((service, index) => (
-                        <div key={index}>{service}</div>
-                      ))
-                    ) : (
-                      <div>-</div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
+        {/* Add-ons */}
+        <SectionCard icon={PlusCircle} title="Add-ons">
+          {selectedAddons.length > 0 ? (
+            selectedAddons.map((addon) => (
+              <SummaryRow key={addon._id} label={addon.name} value={`RM ${addon.price || 0}`} />
+            ))
+          ) : (
+            <p className="text-sm text-muted-foreground">No add-ons selected.</p>
+          )}
+        </SectionCard>
 
-            <div className="rounded-lg border p-4 space-y-2">
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Add-on Details
-              </div>
-              <div className="space-y-2">
-                {selectedAddons.length > 0 ? (
-                  selectedAddons.map((addon) => (
-                    <div key={addon._id} className="flex justify-between gap-4">
-                      <span className="text-muted-foreground">{addon.name}</span>
-                      <span className="font-medium text-right">RM {addon.price || 0}</span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-muted-foreground">No add-ons selected</div>
-                )}
-              </div>
-            </div>
-
-            <div className="rounded-lg border p-4 space-y-2">
-              <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                Delivery Details
-              </div>
-              <div className="space-y-1">
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Name</span>
-                  <span className="font-medium text-right">{deliveryAddress.name || "-"}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Phone</span>
-                  <span className="font-medium text-right">{("+60") + (deliveryAddress.phone_number || "-")}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Email</span>
-                  <span className="font-medium text-right break-all">{deliveryAddress.email || "-"}</span>
-                </div>
-                <div className="space-y-1">
-                  <div className="text-muted-foreground">Address</div>
-                  <div className="text-right leading-5">
-                    <div>{deliveryAddress.address_1 || "-"}</div>
-                    {deliveryAddress.address_2 ? <div>{deliveryAddress.address_2}</div> : null}
-                    <div>
-                      {[deliveryAddress.postcode, deliveryAddress.city].filter(Boolean).join(", ") || "-"}
-                    </div>
-                    <div>
-                      {deliveryAddress.subdivision_code ? `${deliveryAddress.subdivision_code} - ${malaysiaStates[deliveryAddress.subdivision_code] || deliveryAddress.subdivision_code}` : "-"}
-                    </div>
-                  </div>
-                </div>
-              </div>
+        {/* Delivery */}
+        <SectionCard icon={MapPin} title="Delivery Address">
+          <SummaryRow label="Name" value={delivery.name} />
+          <SummaryRow
+            label="Phone"
+            value={delivery.phone_number ? `+60 ${delivery.phone_number}` : null}
+          />
+          <SummaryRow label="Email" value={delivery.email} />
+          <div className="flex justify-between gap-4 text-sm">
+            <span className="text-muted-foreground shrink-0">Address</span>
+            <div className="text-right space-y-0.5">
+              {addressLines.map((line, i) => (
+                <div key={i} className="font-medium">{line}</div>
+              ))}
             </div>
           </div>
+        </SectionCard>
 
-          <div className="rounded-lg bg-muted/40 p-4 text-sm flex justify-between gap-4">
-            <span className="font-medium">Total</span>
-            <span className="font-bold">RM {totalPrice}</span>
+        {/* Pricing breakdown */}
+        <div className="rounded-xl border p-4 space-y-2">
+          <SummaryRow label="Package" value={`RM ${packagePrice.toFixed(2)}`} />
+          {selectedAddons.length > 0 && (
+            <SummaryRow label="Add-ons" value={`RM ${addonsTotal.toFixed(2)}`} />
+          )}
+          <Separator className="my-1" />
+          <div className="flex justify-between gap-4">
+            <span className="font-semibold">Total</span>
+            <span className="text-lg font-bold text-primary">RM {totalPrice.toFixed(2)}</span>
           </div>
         </div>
 
-        <div className="border-t pt-6">
-          <Button onClick={onComplete} className="w-full" size="lg">
-            Proceed to Payment
+        {/* Actions */}
+        <div className="space-y-3 pt-2">
+          <Button
+            onClick={onComplete}
+            className="w-full"
+            size="lg"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing…
+              </>
+            ) : (
+              "Proceed to Payment"
+            )}
           </Button>
-          <Button variant="outline" onClick={onPrev} className="w-full mt-3">
+
+          <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+            <Lock className="h-3 w-3" />
+            <span>Secure payment — your information is protected</span>
+          </div>
+
+          <Button variant="outline" onClick={onPrev} className="w-full">
             Back
           </Button>
         </div>

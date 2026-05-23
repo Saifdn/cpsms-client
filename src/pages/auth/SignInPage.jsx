@@ -1,24 +1,25 @@
+import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useLogin } from "@/hooks/auth/useLogin";
+import { useAuth } from "@/context/useAuth";
 import { LoginForm } from "@/components/auth/SignInForm";
 
 export default function SignIn() {
   const navigate = useNavigate();
   const location = useLocation();
   const loginMutation = useLogin();
+  const { user } = useAuth();
 
-  const from = location.state?.from?.pathname || "/";
+  const from = location.state?.from?.pathname;
+
+  useEffect(() => {
+    if (!user) return;
+    const defaultPath = user.role === "graduate" ? "/" : "/dashboard";
+    navigate(from || defaultPath, { replace: true });
+  }, [user]);
 
   const handleLogin = ({ email, password }) => {
-    loginMutation.mutate(
-      { email, password },
-      {
-        onSuccess: () => {
-          // Redirect after successful login
-          navigate(from, { replace: true });
-        },
-      }
-    );
+    loginMutation.mutate({ email, password });
   };
 
   return (
