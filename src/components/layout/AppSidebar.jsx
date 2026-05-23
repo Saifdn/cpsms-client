@@ -1,6 +1,6 @@
 // components/layout/AppSidebar.jsx
 import { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   Sidebar,
@@ -33,12 +33,13 @@ import { LogoutAlertDialog } from "@/components/auth/SignOutDialog";
 import { Logo } from "@/assets/Logo";
 import { cn } from "@/lib/utils";
 import { UserMenu } from "./UserMenu";
-import { APP_SIDEBAR } from "/constants-index";
+import { APP_SIDEBAR } from "@/components/sidebar/navItems";
 
 export const AppSidebar = () => {
   const { isMobile, toggleSidebar, open } = useSidebar();
   const { logout, user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
@@ -84,7 +85,7 @@ export const AppSidebar = () => {
         const isActive = item.children.some(
           (child) =>
             location.pathname === child.url ||
-            location.pathname.startsWith(child.url)
+            location.pathname.startsWith(child.url + "/")
         );
         if (isActive) {
           result[item.title] = true;
@@ -207,7 +208,7 @@ export const AppSidebar = () => {
           </SidebarGroup>
 
           {/* Mobile Secondary Nav */}
-          {isMobile && (
+          {/* {isMobile && (
             <SidebarGroup className="mt-auto">
               <SidebarGroupContent>
                 <SidebarMenu>
@@ -224,7 +225,7 @@ export const AppSidebar = () => {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-          )}
+          )} */}
         </SidebarContent>
 
         {/* Footer */}
@@ -233,7 +234,13 @@ export const AppSidebar = () => {
             <SidebarMenuItem className={cn(isMobile && "p-2")}>
               {isMobile || open ? (
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0">
+                  <button
+                    onClick={() => {
+                      if (isMobile) toggleSidebar();
+                      navigate("/profile");
+                    }}
+                    className="flex items-center gap-3 min-w-0 flex-1 text-left hover:opacity-80 transition-opacity"
+                  >
                     <Avatar
                       name={user?.fullName || user?.email || "User"}
                       size="36px"
@@ -247,7 +254,7 @@ export const AppSidebar = () => {
                         {user?.email}
                       </p>
                     </div>
-                  </div>
+                  </button>
 
                   <Button
                     onClick={() => setShowLogoutDialog(true)}

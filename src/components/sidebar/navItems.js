@@ -1,22 +1,14 @@
 import {
   BookOpenIcon,
+  CalendarCheck,
   ChartPieIcon,
-  CopyCheckIcon,
-  CopyIcon,
-  FolderKanbanIcon,
+  ClockAlert,
   HomeIcon,
   LayoutDashboardIcon,
-  LifeBuoyIcon,
-  LogOutIcon,
-  PencilIcon,
-  SettingsIcon,
-  TrashIcon,
-  UserIcon,
+  ScanQrCode,
+  Truck,
   UsersIcon,
   Camera,
-  CalendarCheck,
-  ClockAlert,
-  ScanQrCode,
 } from 'lucide-react';
 
 export const APP_SIDEBAR = {
@@ -25,110 +17,72 @@ export const APP_SIDEBAR = {
       title: 'Home',
       url: '/',
       Icon: HomeIcon,
-      roles: ["admin", "staff"]
+      allowedRoles: ['graduate'],
+    },
+    {
+      title: 'My Bookings',
+      url: '/my-bookings',
+      Icon: BookOpenIcon,
+      allowedRoles: ['graduate'],
     },
     {
       title: 'Dashboard',
       url: '/dashboard',
       Icon: LayoutDashboardIcon,
-      roles: ["admin", "staff"]
+      allowedRoles: ['superadmin', 'admin', 'staff'],
     },
     {
       title: 'Studio',
       url: '#',
       Icon: Camera,
       children: [
-        { title: "Location", url: "/studio"},
-        { title: "Package", url: "/package"},
-        { title: "Session", url: "/session"}
-      ]
+        { title: 'Location', url: '/studio',  allowedRoles: ['superadmin', 'admin', 'staff'] },
+        { title: 'Package',  url: '/package', allowedRoles: ['superadmin', 'admin', 'staff'] },
+        { title: 'Session',  url: '/session', allowedRoles: ['superadmin', 'admin', 'staff'] },
+      ],
     },
     {
       title: 'Booking',
-      url: '#',
+      url: '/booking',
       Icon: CalendarCheck,
+      allowedRoles: ['superadmin', 'admin', 'staff'],
     },
     {
-      title: 'Counter',
+      title: 'Check-In / Out',
       url: '#',
       Icon: ScanQrCode,
       children: [
-        { title: "Registration Counter", url: "/registration-counter"},
-        { title: "Studio Counter", url: "/studio-counter"},
-      ]
+        { title: 'Registration Counter', url: '/registration-counter', allowedRoles: ['superadmin', 'admin', 'staff'] },
+        { title: 'Studio Counter',       url: '/studio-counter',       allowedRoles: ['superadmin', 'admin', 'staff'] },
+      ],
     },
     {
       title: 'Live Queue',
       url: '/live-queue',
       Icon: ClockAlert,
+      allowedRoles: ['superadmin', 'admin', 'staff'],
     },
     {
-      title: 'Reporting',
-      url: '#',
-      Icon: ChartPieIcon,
+      title: 'Shipment',
+      url: '/shipment',
+      Icon: Truck,
+      allowedRoles: ['superadmin', 'admin', 'staff'],
     },
     {
       title: 'Users',
-      url: '/staff',
+      url: '#',
       Icon: UsersIcon,
       children: [
-        { title: "Staff", url: "/staff"},
-        { title: "Gradaute", url: "/graduate"},
-        { title: "Admin", url: "/admin"}
-      ]
+        { title: 'Staff',     url: '/staff',    allowedRoles: ['superadmin', 'admin', 'staff'] },
+        { title: 'Graduate',  url: '/graduate', allowedRoles: ['superadmin', 'admin', 'staff'] },
+        { title: 'Admin',     url: '/admin',    allowedRoles: ['superadmin'] },
+      ],
     },
+    // {
+    //   title: 'Reporting',
+    //   url: '#',
+    //   Icon: ChartPieIcon,
+    //   allowedRoles: ['superadmin', 'admin', 'staff'],
+    // },
   ],
-  secondaryNav: [
-    {
-      title: 'Support',
-      url: '#',
-      Icon: LifeBuoyIcon,
-    },
-    {
-      title: 'Settings',
-      url: '#',
-      Icon: SettingsIcon,
-    },
-  ],
-  curProfile: {
-    src: 'https://randomuser.me/api/portraits/men/47.jpg',
-    name: 'Ahmad Saifudin',
-    email: 'sai@utm.my',
-  },
-  allProfiles: [
-    {
-      src: 'https://randomuser.me/api/portraits/men/47.jpg',
-      name: 'Salvador Pearson',
-      email: 'salvador.pearson@example.com',
-    },
-    {
-      src: 'https://randomuser.me/api/portraits/women/43.jpg',
-      name: 'Violet Hicks',
-      email: 'violet.hicks@example.com',
-    },
-  ],
-  userMenu: {
-    itemsPrimary: [
-      {
-        title: 'View profile',
-        url: '#',
-        Icon: UserIcon,
-        kbd: '⌘K->P',
-      },
-      {
-        title: 'Account settings',
-        url: '#',
-        Icon: SettingsIcon,
-        kbd: '⌘S',
-      },
-    ],
-    itemsSecondary: [
-      {
-        title: 'Sign out',
-        url: '#',
-        Icon: LogOutIcon,
-        kbd: '⌥⇧Q',
-      },
-    ],
-  },
 };

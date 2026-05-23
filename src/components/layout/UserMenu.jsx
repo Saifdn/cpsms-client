@@ -1,46 +1,38 @@
 import Avatar from "react-avatar"
+import { useNavigate } from "react-router-dom"
+import { UserIcon, SettingsIcon } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Button } from "@/components/ui/button"
-
-import { PlusIcon } from "lucide-react"
-
-import { APP_SIDEBAR } from "/constants-index"	
 import { useAuth } from "@/context/useAuth"
 
 
 export const UserMenu = () => {
     const { user } = useAuth()
+    const navigate = useNavigate()
 
     return (
         <DropdownMenu>
             <DropdownMenuTrigger>
                 <div className="relative">
                     <Avatar name={user?.fullName || user?.email || "User"} size="32px" round="8px"/>
-                    {/* <div className="absolute bottom-0 right-0 size-2 rounded-full bg-emerald-500 dark:bg-emerald-400 ring-sidebar ring-1"></div> */}
                   </div>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent side="right" align="end" className="w-60">
                 <DropdownMenuGroup>
-                    {APP_SIDEBAR.userMenu.itemsPrimary.map((item) => (
-                        <DropdownMenuItem key={item.title}>
-                            <item.Icon />
-                            <span>{item.title}</span>
-                        </DropdownMenuItem>
-                    ))}
+                    <DropdownMenuItem onClick={() => navigate("/profile")}>
+                        <UserIcon />
+                        <span>View profile</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => navigate("/profile")}>
+                        <SettingsIcon />
+                        <span>Account settings</span>
+                    </DropdownMenuItem>
                 </DropdownMenuGroup>
             </DropdownMenuContent>
         </DropdownMenu>

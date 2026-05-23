@@ -9,6 +9,7 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Logo } from "@/assets/Logo";
 
 export function ForgotPasswordForm({
   className,
@@ -27,43 +28,49 @@ export function ForgotPasswordForm({
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <Card className="overflow-hidden p-0">
+      <Card className="overflow-hidden p-0 shadow-lg">
         <CardContent className="grid p-0 md:grid-cols-2">
-          <form onSubmit={handleSubmit} className="p-6 md:p-8">
+          <form onSubmit={handleSubmit} className="p-8 md:p-10">
             <FieldGroup>
-              <div className="flex flex-col items-center gap-2 text-center">
-                <h1 className="text-2xl font-bold">Forgot Password?</h1>
-                <p className="text-balance text-muted-foreground">
-                  Enter your email and we'll send you a reset link
-                </p>
+              <div className="flex flex-col items-center gap-4 text-center">
+                <div className="flex items-center justify-center">
+                  <Logo size={36} />
+                </div>
+                <div className="space-y-1">
+                  <h1 className="text-2xl font-bold tracking-tight">Forgot your password?</h1>
+                  <p className="text-sm text-muted-foreground">
+                    Enter your email and we&apos;ll send you a reset link
+                  </p>
+                </div>
               </div>
 
               <Field>
-                <FieldLabel htmlFor="email">Email Address</FieldLabel>
+                <FieldLabel htmlFor="email">Email address</FieldLabel>
                 <Input
                   id="email"
                   type="email"
-                  placeholder="m@example.com"
+                  placeholder="you@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   disabled={loading}
+                  className="h-10"
                 />
               </Field>
 
               <Field>
-                <Button 
-                  type="submit" 
-                  disabled={loading || !email.trim()} 
-                  className="w-full"
+                <Button
+                  type="submit"
+                  disabled={loading || !email.trim()}
+                  className="w-full h-10"
                 >
-                  {loading ? "Sending reset link..." : "Send Reset Link"}
+                  {loading ? "Sending reset link..." : "Send reset link"}
                 </Button>
               </Field>
 
               <FieldDescription className="text-center">
                 Remember your password?{" "}
-                <a href="/sign-in" className="hover:underline">
+                <a href="/sign-in" className="font-medium text-foreground hover:text-primary transition-colors">
                   Sign in
                 </a>
               </FieldDescription>
@@ -74,14 +81,14 @@ export function ForgotPasswordForm({
             <img
               src="/signup.svg"
               alt="Forgot password background"
-              className="absolute inset-0 h-full w-full object-cover"
+              className="absolute inset-0 h-full w-full object-cover dark:brightness-75"
             />
           </div>
         </CardContent>
       </Card>
 
-      <FieldDescription className="px-6 text-center">
-        By clicking continue, you agree to our{" "}
+      <FieldDescription className="px-6 text-center text-xs">
+        By submitting, you agree to our{" "}
         <a href="#" className="hover:underline">Terms of Service</a> and{" "}
         <a href="#" className="hover:underline">Privacy Policy</a>.
       </FieldDescription>

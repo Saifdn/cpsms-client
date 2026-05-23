@@ -102,7 +102,7 @@
   --sidebar-primary-foreground: oklch(1.0000 0 0);
   --sidebar-accent: oklch(0.9619 0.0580 95.6174);
   --sidebar-accent-foreground: oklch(0.3958 0.1331 25.7230);
-  --sidebar-border: oklch(0.9355 0.0324 80.9937);
+  --sidebar-border: oklch(0.8500 0.0324 80.9937);
   --sidebar-ring: oklch(0.4650 0.1470 24.9381);
   --destructive-foreground: oklch(1.0000 0 0);
   --font-sans: Poppins, sans-serif;

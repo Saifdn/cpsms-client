@@ -32,7 +32,8 @@ export const ProtectedRoute = ({ allowedRoles = [] }) => {
     return <Outlet />;
   }
 
-  // Role not allowed
+  // Role not allowed — redirect to the user's own home
   console.warn(`Access denied. User role "${userRole}" not in allowed roles:`, allowedRoles);
-  return <Navigate to="/dashboard" replace />;
+  const homeForRole = userRole === "graduate" ? "/" : "/dashboard";
+  return <Navigate to={homeForRole} replace />;
 };

@@ -31,6 +31,7 @@ import PaymentResult from "@/pages/graduates/PaymentResult";
 import MyBookings from "@/pages/graduates/MyBookings";
 import BookingDetails from "@/pages/graduates/BookingDetails";
 
+import ProfilePage from "@/pages/profile/ProfilePage";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 
 const App = () => {
@@ -46,6 +47,8 @@ const App = () => {
         {/* All Protected Routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<MainLayout />}>
+            {/* Accessible by all authenticated roles */}
+            <Route path="/profile" element={<ProfilePage />} />
 
             <Route element={<ProtectedRoute allowedRoles={["graduate"]} />}>
               <Route path="/" element={<GraduateHome />} />
