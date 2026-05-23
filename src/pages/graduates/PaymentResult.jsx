@@ -219,14 +219,14 @@ const PaymentResult = () => {
             <div className="space-y-3">
               <Button
                 className="w-full"
-                onClick={() => navigate(status === "success" ? "/" : "/book")}
+                onClick={() => navigate(status === "success" ? "/my-bookings" : "/book")}
               >
                 {status === "success" ? "View My Bookings" : "Try Again"}
               </Button>
 
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full"ç
                 onClick={() => navigate("/")}
               >
                 Back to Home

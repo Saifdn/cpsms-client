@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
 import { CalendarDays, Clock, ChevronRight } from "lucide-react";
@@ -19,7 +19,18 @@ const Step1_SessionSelection = ({ data, updateData, onNext }) => {
     data.selectedSession?._id || "",
   );
 
+  const [userNavigatedMonth, setUserNavigatedMonth] = useState(
+    data.selectedSession?.date ? new Date(data.selectedSession.date) : undefined,
+  );
+
   const { data: availableDates = [] } = useSessionDates();
+
+  const firstAvailableDate = useMemo(() => {
+    if (availableDates.length === 0) return undefined;
+    return [...availableDates].sort((a, b) => a - b)[0];
+  }, [availableDates]);
+
+  const calendarMonth = userNavigatedMonth ?? firstAvailableDate;
 
   const formattedDate = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
   const { data: sessionsData, isLoading: sessionsLoading } = useSessions(formattedDate);
@@ -63,6 +74,8 @@ const Step1_SessionSelection = ({ data, updateData, onNext }) => {
             <Calendar
               className="w-60"
               mode="single"
+              month={calendarMonth}
+              onMonthChange={setUserNavigatedMonth}
               selected={selectedDate}
               onSelect={(date) => {
                 if (date) {
