@@ -176,7 +176,6 @@ const ShipmentManagement = () => {
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
-                className="w-50"
                 mode="single"
                 selected={selectedDate}
                 onSelect={handleDateSelect}

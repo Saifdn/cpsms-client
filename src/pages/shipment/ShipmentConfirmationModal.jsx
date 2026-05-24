@@ -204,7 +204,6 @@ const ShipmentConfirmationModal = ({
 
             <PopoverContent className="w-auto p-0" align="start">
               <Calendar
-                className="w-60"
                 mode="single"
                 selected={date}
                 onSelect={setDate}
