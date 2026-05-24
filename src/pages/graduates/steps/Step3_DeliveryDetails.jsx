@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -12,7 +13,12 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 import { useAuth } from "@/context/useAuth";
+import { useProfile } from "@/hooks/user/useProfile";
 import { MapPin, User, Info } from "lucide-react";
+
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 const malaysiaStates = [
   { code: "MY-01", name: "Johor" },
@@ -33,13 +39,11 @@ const malaysiaStates = [
   { code: "MY-16", name: "Wilayah Persekutuan Putrajaya" },
 ];
 
-const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
-  const { user } = useAuth();
-
+const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
   const [formData, setFormData] = useState({
-    name: data.deliveryAddress?.receiver?.name || user?.fullName || "",
-    phone_number: data.deliveryAddress?.receiver?.phone_number || user?.phone?.replace("+60", "") || "",
-    email: data.deliveryAddress?.receiver?.email || user?.email || "",
+    name: profile?.fullName || user?.fullName || "",
+    phone_number: profile?.phone || "",
+    email: profile?.email || user?.email || "",
     address_1: data.deliveryAddress?.receiver?.address_1 || "",
     address_2: data.deliveryAddress?.receiver?.address_2 || "",
     postcode: data.deliveryAddress?.receiver?.postcode || "",
@@ -70,10 +74,18 @@ const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
   const handleContinue = () => {
     if (!isFormValid) return;
 
+    let phoneNational = formData.phone_number;
+    let phoneCountryCode = formData.country_code;
+    const parsed = parsePhoneNumberFromString(formData.phone_number);
+    if (parsed) {
+      phoneNational = parsed.nationalNumber;
+      phoneCountryCode = parsed.country;
+    }
+
     const receiverData = {
       name: formData.name,
-      phone_number_country_code: "MY",
-      phone_number: formData.phone_number,
+      phone_number_country_code: phoneCountryCode,
+      phone_number: phoneNational,
       email: formData.email,
       address_1: formData.address_1,
       address_2: formData.address_2 || "",
@@ -133,19 +145,25 @@ const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
 
             <div className="space-y-1.5">
               <Label htmlFor="phone_number">Phone Number <span className="text-destructive">*</span></Label>
-              <div className="flex">
-                <div className="flex items-center rounded-l-md border border-r-0 border-input bg-muted px-3 text-sm text-muted-foreground">
-                  +60
-                </div>
-                <Input
-                  id="phone_number"
-                  name="phone_number"
-                  placeholder="123456789"
-                  value={formData.phone_number}
-                  onChange={handleChange}
-                  className="rounded-l-none"
-                />
-              </div>
+              <PhoneInput
+                international
+                defaultCountry="MY"
+                countryCallingCodeEditable={false}
+                placeholder="Enter phone number"
+                value={formData.phone_number}
+                onChange={(value) =>
+                  setFormData((prev) => ({ ...prev, phone_number: value || "" }))
+                }
+                onCountryChange={(country) =>
+                  setFormData((prev) => ({ ...prev, country_code: country || "MY" }))
+                }
+                className={cn(
+                  "flex h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm transition-colors",
+                  "focus-within:outline-none focus-within:ring-1 focus-within:ring-ring",
+                  "[&_.PhoneInputInput]:flex-1 [&_.PhoneInputInput]:min-w-0 [&_.PhoneInputInput]:border-0 [&_.PhoneInputInput]:bg-transparent [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:ring-0 [&_.PhoneInputInput]:text-sm [&_.PhoneInputInput]:placeholder:text-muted-foreground",
+                  "[&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-0 [&_.PhoneInputCountrySelect]:outline-none"
+                )}
+              />
             </div>
           </div>
 
@@ -248,6 +266,24 @@ const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
         </div>
       </CardContent>
     </Card>
+  );
+};
+
+const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
+  const { user } = useAuth();
+  const { data: profile, isLoading } = useProfile();
+
+  if (isLoading) return null;
+
+  return (
+    <DeliveryForm
+      profile={profile?.data}
+      user={user}
+      data={data}
+      updateData={updateData}
+      onNext={onNext}
+      onPrev={onPrev}
+    />
   );
 };
 

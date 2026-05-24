@@ -11,13 +11,10 @@ import {
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Logo } from "@/assets/Logo";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
-export function SignupForm({
-  onSubmit,
-  loading = false,
-  className,
-  ...props
-}) {
+export function SignupForm({ onSubmit, loading = false, className, ...props }) {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -31,14 +28,14 @@ export function SignupForm({
 
   const handleChange = (e) => {
     const { id, value } = e.target;
-    setFormData(prev => ({ ...prev, [id]: value }));
+    setFormData((prev) => ({ ...prev, [id]: value }));
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setValidationError("");
 
-    const { fullName, email, phone, password, confirmPassword } = formData;
+    const { fullName, email, phone, countryCode, password, confirmPassword } = formData;
 
     if (password.length < 8) {
       setValidationError("Password must be at least 8 characters long.");
@@ -50,7 +47,7 @@ export function SignupForm({
       return;
     }
 
-    onSubmit({ fullName, email, phone, password });
+    onSubmit({ fullName, email, phone, countryCode, password });
   };
 
   return (
@@ -64,7 +61,9 @@ export function SignupForm({
                   <Logo size={36} />
                 </div>
                 <div className="space-y-1">
-                  <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
+                  <h1 className="text-2xl font-bold tracking-tight">
+                    Create your account
+                  </h1>
                   <p className="text-sm text-muted-foreground">
                     Enter your details to get started
                   </p>
@@ -107,20 +106,38 @@ export function SignupForm({
 
               <Field>
                 <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
-                <Input
-                  id="phone"
-                  type="tel"
-                  placeholder="012-345 6789"
+
+                <PhoneInput
+                  international
+                  defaultCountry="MY"
+                  countryCallingCodeEditable={false}
+                  placeholder="Enter phone number"
                   value={formData.phone}
-                  onChange={handleChange}
-                  required
+                  onChange={(value) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      phone: value || "",
+                    }))
+                  }
+                  onCountryChange={(country) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      countryCode: country || "MY",
+                    }))
+                  }
                   disabled={loading}
-                  className="h-10"
+                  className={cn(
+                    "flex h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm transition-colors",
+                    "focus-within:outline-none focus-within:ring-1 focus-within:ring-ring",
+                    "[&_.PhoneInputInput]:flex-1 [&_.PhoneInputInput]:min-w-0 [&_.PhoneInputInput]:border-0 [&_.PhoneInputInput]:bg-transparent [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:ring-0 [&_.PhoneInputInput]:text-sm [&_.PhoneInputInput]:placeholder:text-muted-foreground",
+                    "[&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-0 [&_.PhoneInputCountrySelect]:outline-none",
+                    loading && "cursor-not-allowed opacity-50"
+                  )}
                 />
               </Field>
 
               <Field>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                   <Field>
                     <FieldLabel htmlFor="password">Password</FieldLabel>
                     <div className="relative">
@@ -138,7 +155,9 @@ export function SignupForm({
                         onClick={() => setShowPassword((prev) => !prev)}
                         className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
                         tabIndex={-1}
-                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-label={
+                          showPassword ? "Hide password" : "Show password"
+                        }
                       >
                         {showPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -149,7 +168,9 @@ export function SignupForm({
                     </div>
                   </Field>
                   <Field>
-                    <FieldLabel htmlFor="confirmPassword">Confirm Password</FieldLabel>
+                    <FieldLabel htmlFor="confirmPassword">
+                      Confirm Password
+                    </FieldLabel>
                     <div className="relative">
                       <Input
                         id="confirmPassword"
@@ -165,7 +186,11 @@ export function SignupForm({
                         onClick={() => setShowConfirmPassword((prev) => !prev)}
                         className="absolute inset-y-0 right-0 flex items-center px-3 text-muted-foreground hover:text-foreground transition-colors"
                         tabIndex={-1}
-                        aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                        aria-label={
+                          showConfirmPassword
+                            ? "Hide password"
+                            : "Show password"
+                        }
                       >
                         {showConfirmPassword ? (
                           <EyeOff className="h-4 w-4" />
@@ -193,7 +218,10 @@ export function SignupForm({
 
               <FieldDescription className="text-center">
                 Already have an account?{" "}
-                <a href="/sign-in" className="font-medium text-foreground hover:text-primary transition-colors">
+                <a
+                  href="/sign-in"
+                  className="font-medium text-foreground hover:text-primary transition-colors"
+                >
                   Sign in
                 </a>
               </FieldDescription>
@@ -212,8 +240,14 @@ export function SignupForm({
 
       <FieldDescription className="px-6 text-center text-xs">
         By creating an account, you agree to our{" "}
-        <a href="#" className="hover:underline">Terms of Service</a> and{" "}
-        <a href="#" className="hover:underline">Privacy Policy</a>.
+        <a href="#" className="hover:underline">
+          Terms of Service
+        </a>{" "}
+        and{" "}
+        <a href="#" className="hover:underline">
+          Privacy Policy
+        </a>
+        .
       </FieldDescription>
     </div>
   );
