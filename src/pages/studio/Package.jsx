@@ -38,6 +38,7 @@ import { usePromoAds, useCreatePromoAd } from "@/hooks/studio/usePromoAds";
 
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import imageCompression from "browser-image-compression";
 
 function StatCard({ label, value, icon, iconClass }) {
@@ -160,6 +161,7 @@ const Package = () => {
     description: "",
     price: "",
     services: "",
+    isPopular: false,
   });
 
   const [addonForm, setAddonForm] = useState({
@@ -187,11 +189,12 @@ const Package = () => {
         description: packageForm.description,
         price: Number(packageForm.price),
         services: servicesArray,
+        isPopular: packageForm.isPopular,
       },
       {
         onSuccess: () => {
           setShowCreatePackage(false);
-          setPackageForm({ name: "", description: "", price: "", services: "" });
+          setPackageForm({ name: "", description: "", price: "", services: "", isPopular: false });
         },
       },
     );
@@ -476,6 +479,19 @@ const Package = () => {
               }
               rows={3}
             />
+          </Field>
+
+          <Field>
+            <div className="flex items-center justify-between">
+              <FieldLabel htmlFor="new-pkg-popular">Popular Package</FieldLabel>
+              <Switch
+                id="new-pkg-popular"
+                checked={packageForm.isPopular}
+                onCheckedChange={(checked) =>
+                  setPackageForm({ ...packageForm, isPopular: checked })
+                }
+              />
+            </div>
           </Field>
         </div>
       </CreateDialog>
