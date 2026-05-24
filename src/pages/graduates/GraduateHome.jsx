@@ -43,64 +43,73 @@ const PromoCarousel = ({ promoAds }) => {
   return (
     <>
       <div
-        className="relative h-[380px] md:h-auto md:aspect-video rounded-2xl overflow-hidden group cursor-pointer"
+        className="relative w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto rounded-2xl overflow-hidden group cursor-pointer shadow-lg"
         onMouseEnter={() => setIsPaused(true)}
         onMouseLeave={() => setIsPaused(false)}
         onClick={() => setLightboxOpen(true)}
       >
-        <img
-          src={current.imageBase64}
-          alt={current.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        {/* Fixed 3:4 Aspect Ratio */}
+        <div className="aspect-[3/4] relative">
+          <img
+            src={current.imageBase64}
+            alt={current.name}
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+          />
+          
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-        <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
-          <ZoomIn className="h-5 w-5 text-white" />
-        </div>
+          {/* Zoom Icon */}
+          <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+            <ZoomIn className="h-5 w-5 text-white" />
+          </div>
 
-        <div className="absolute bottom-14 left-6 right-16 text-white">
-          <h3 className="text-2xl font-bold drop-shadow-lg">{current.name}</h3>
-          {current.description && (
-            <p className="text-sm text-white/85 mt-1 drop-shadow">{current.description}</p>
+          {/* Content */}
+          <div className="absolute bottom-12 left-6 right-6 text-white">
+            <h3 className="text-2xl font-bold drop-shadow-lg">{current.name}</h3>
+            {current.description && (
+              <p className="text-sm text-white/85 mt-1 drop-shadow">{current.description}</p>
+            )}
+          </div>
+
+          {/* Indicators */}
+          {promoAds.length > 1 && (
+            <div
+              className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {promoAds.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentIndex(i)}
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    i === currentIndex ? "w-6 bg-white" : "w-2 bg-white/50"
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          {promoAds.length > 1 && (
+            <>
+              <button
+                className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
+                onClick={(e) => { e.stopPropagation(); prev(); }}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+              <button
+                className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
+                onClick={(e) => { e.stopPropagation(); next(); }}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </button>
+            </>
           )}
         </div>
-
-        {promoAds.length > 1 && (
-          <div
-            className="absolute bottom-5 left-1/2 -translate-x-1/2 flex gap-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {promoAds.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => setCurrentIndex(i)}
-                className={`h-2 rounded-full transition-all duration-300 ${
-                  i === currentIndex ? "w-6 bg-white" : "w-2 bg-white/50"
-                }`}
-              />
-            ))}
-          </div>
-        )}
-
-        {promoAds.length > 1 && (
-          <>
-            <button
-              className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
-              onClick={(e) => { e.stopPropagation(); prev(); }}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
-              onClick={(e) => { e.stopPropagation(); next(); }}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </>
-        )}
       </div>
 
+      {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-none">
           <img
@@ -484,13 +493,18 @@ const GraduateHome = () => {
 
       {/* ── Promo Ads Carousel ────────────────────────────────────────────── */}
       {!promoLoading && ads.length > 0 && (
-        <div className="mb-14">
-          <div className="flex items-center justify-between mb-6">
+        <div className="mb-12 md:mb-16">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-3">
             <div>
-              <h2 className="text-2xl font-bold">Special Promotions</h2>
-              <p className="text-muted-foreground text-sm mt-0.5">Click any slide to view full image</p>
+              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+                Special Promotions
+              </h2>
+              <p className="text-muted-foreground text-sm mt-1">
+                Click any slide to view full image
+              </p>
             </div>
-            <Badge className="gap-1.5 bg-amber-500/10 text-amber-600 border-amber-500/20">
+            
+            <Badge className="gap-1.5 bg-amber-500/10 text-amber-600 border-amber-500/20 self-start sm:self-auto">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-400" />
@@ -498,7 +512,10 @@ const GraduateHome = () => {
               Live Offers
             </Badge>
           </div>
-          <PromoCarousel promoAds={ads} />
+
+          <div className="max-w-md md:max-w-2xl lg:max-w-3xl mx-auto"> 
+            <PromoCarousel promoAds={ads} />
+          </div>
         </div>
       )}
 

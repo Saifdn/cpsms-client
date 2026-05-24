@@ -72,7 +72,6 @@ const Step1_SessionSelection = ({ data, updateData, onNext }) => {
         <div className="flex flex-col items-center gap-3">
           <div className="rounded-xl border bg-muted/30 p-4">
             <Calendar
-              className="w-60"
               mode="single"
               month={calendarMonth}
               onMonthChange={setUserNavigatedMonth}

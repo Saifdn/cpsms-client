@@ -10,6 +10,7 @@ import { DeleteAlertDialog } from "@/components/dialog/DeleteAlertDialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 
 export function PackageCard({ package: pkg, onEdit, onDelete }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
@@ -19,6 +20,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
     description: pkg.description || "",
     price: pkg.price || "",
     services: pkg.services?.join(", ") || "",
+    isPopular: pkg.isPopular ?? false,
   });
 
   const handleEditSave = () => {
@@ -33,6 +35,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
       description: editForm.description,
       price: Number(editForm.price),
       services: servicesArray,
+      isPopular: editForm.isPopular,
     });
 
     setShowEditDialog(false);
@@ -159,6 +162,19 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
               onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
               rows={3}
             />
+          </Field>
+
+          <Field>
+            <div className="flex items-center justify-between">
+              <FieldLabel htmlFor="pkg-popular">Popular Package</FieldLabel>
+              <Switch
+                id="pkg-popular"
+                checked={editForm.isPopular}
+                onCheckedChange={(checked) =>
+                  setEditForm({ ...editForm, isPopular: checked })
+                }
+              />
+            </div>
           </Field>
         </div>
       </EditDialog>
