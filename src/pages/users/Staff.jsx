@@ -9,6 +9,9 @@ import { useState, useEffect } from "react";
 import { CreateDialog } from "@/components/dialog/CreateDialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 const Staff = () => {
   // Pagination State
@@ -157,14 +160,21 @@ const Staff = () => {
 
           <Field>
             <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
-            <Input
-              id="phone"
-              type="tel"
-              placeholder="012-345 6789"
+            <PhoneInput
+              international
+              defaultCountry="MY"
+              countryCallingCodeEditable={false}
+              placeholder="Enter phone number"
               value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              required
+              onChange={(value) => setFormData({ ...formData, phone: value || "" })}
               disabled={createStaff.isPending}
+              className={cn(
+                "flex h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm transition-colors",
+                "focus-within:outline-none focus-within:ring-1 focus-within:ring-ring",
+                "[&_.PhoneInputInput]:flex-1 [&_.PhoneInputInput]:min-w-0 [&_.PhoneInputInput]:border-0 [&_.PhoneInputInput]:bg-transparent [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:ring-0 [&_.PhoneInputInput]:text-sm [&_.PhoneInputInput]:placeholder:text-muted-foreground",
+                "[&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-0 [&_.PhoneInputCountrySelect]:outline-none",
+                createStaff.isPending && "cursor-not-allowed opacity-50"
+              )}
             />
           </Field>
 

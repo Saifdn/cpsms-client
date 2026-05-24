@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { CalendarDays, Clock, Package, PlusCircle, MapPin, Lock, Loader2 } from "lucide-react";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 const malaysiaStates = {
   "MY-01": "Johor",
@@ -129,7 +130,11 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
           <SummaryRow label="Name" value={delivery.name} />
           <SummaryRow
             label="Phone"
-            value={delivery.phone_number ? `+60 ${delivery.phone_number}` : null}
+            value={
+              delivery.phone_number
+                ? (parsePhoneNumberFromString(delivery.phone_number, delivery.phone_number_country_code || "MY")?.formatInternational() ?? `+60 ${delivery.phone_number}`)
+                : null
+            }
           />
           <SummaryRow label="Email" value={delivery.email} />
           <div className="flex justify-between gap-4 text-sm">

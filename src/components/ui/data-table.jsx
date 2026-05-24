@@ -89,7 +89,7 @@ export function DataTable({
 
   return (
     <Card className="bg-background">
-      <CardHeader className="border-b flex flex-row items-start justify-between gap-4">
+      <CardHeader className="border-b flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="space-y-1">
           <CardTitle>{title}</CardTitle>
           <CardDescription>{description}</CardDescription>
@@ -100,7 +100,7 @@ export function DataTable({
           onChange={(e) =>
             onSearchChange ? onSearchChange(e.target.value) : setGlobalFilter(e.target.value)
           }
-          className="max-w-sm"
+          className="w-full sm:max-w-sm"
         />
       </CardHeader>
 
@@ -171,7 +171,7 @@ export function DataTable({
           </div>
 
           {/* Pagination Controls */}
-          <div className="flex items-center justify-end gap-8 px-2">
+          <div className="flex flex-col items-center gap-3 px-2 sm:flex-row sm:justify-end sm:gap-8">
             <div className="flex items-center space-x-2">
               <p className="text-sm font-medium">Rows per page</p>
               <Select
