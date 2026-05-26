@@ -2,6 +2,7 @@ import {
   BookOpenIcon,
   CalendarCheck,
   ChartPieIcon,
+  ClipboardList,
   ClockAlert,
   HomeIcon,
   LayoutDashboardIcon,
@@ -46,6 +47,18 @@ export const APP_SIDEBAR = {
       url: '/booking',
       Icon: CalendarCheck,
       allowedRoles: ['superadmin', 'admin', 'staff'],
+    },
+    {
+      title: 'Tasks',
+      url: '/tasks',
+      Icon: ClipboardList,
+      allowedRoles: ['superadmin', 'admin'],
+    },
+    {
+      title: 'My Tasks',
+      url: '/tasks/my',
+      Icon: ClipboardList,
+      allowedRoles: ['staff'],
     },
     {
       title: 'Check-In / Out',
