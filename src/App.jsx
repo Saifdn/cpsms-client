@@ -32,6 +32,8 @@ import MyBookings from "@/pages/graduates/MyBookings";
 import BookingDetails from "@/pages/graduates/BookingDetails";
 
 import ProfilePage from "@/pages/profile/ProfilePage";
+import AdminTasks from "@/pages/tasks/AdminTasks";
+import MyTasks from "@/pages/tasks/MyTasks";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 
 const App = () => {
@@ -71,6 +73,12 @@ const App = () => {
               <Route path="/shipment" element={<ShipmentManagement />} />
               <Route path="/staff" element={<Staff />} />
               <Route path="/graduate" element={<Graduate />} />
+              <Route path="/tasks/my" element={<MyTasks />} />
+            </Route>
+
+            {/* Admin task management */}
+            <Route element={<ProtectedRoute allowedRoles={["superadmin", "admin"]} />}>
+              <Route path="/tasks" element={<AdminTasks />} />
             </Route>
 
             {/* Only superadmin */}

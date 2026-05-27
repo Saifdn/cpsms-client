@@ -10,7 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePackages } from "@/hooks/studio/usePackages";
 import { useAddons } from "@/hooks/studio/useAddons";
 import { useState } from "react";
-import { CheckCircle2, Star, Package, PlusCircle } from "lucide-react";
+import { CheckCircle2, Star, Package, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
@@ -27,13 +27,23 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
     updateData({ selectedPackage: pkg });
   };
 
-  const handleToggleAddon = (addon) => {
-    const exists = selectedAddons.some((item) => item._id === addon._id);
-    const updatedAddons = exists
-      ? selectedAddons.filter((item) => item._id !== addon._id)
-      : [...selectedAddons, addon];
-    setSelectedAddons(updatedAddons);
-    updateData({ selectedAddons: updatedAddons });
+  const getAddonQty = (addon) =>
+    selectedAddons.filter((item) => item._id === addon._id).length;
+
+  const incrementAddon = (addon) => {
+    const updated = [...selectedAddons, addon];
+    setSelectedAddons(updated);
+    updateData({ selectedAddons: updated });
+  };
+
+  const decrementAddon = (addon) => {
+    let removed = false;
+    const updated = selectedAddons.filter((item) => {
+      if (!removed && item._id === addon._id) { removed = true; return false; }
+      return true;
+    });
+    setSelectedAddons(updated);
+    updateData({ selectedAddons: updated });
   };
 
   const handleContinue = () => {
@@ -162,43 +172,48 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
           ) : (
             <div className="grid gap-3 md:grid-cols-2">
               {addons.map((addon) => {
-                const isSelected = selectedAddons.some((item) => item._id === addon._id);
+                const qty = getAddonQty(addon);
+                const isSelected = qty > 0;
                 return (
-                  <button
+                  <div
                     key={addon._id}
-                    type="button"
-                    onClick={() => handleToggleAddon(addon)}
                     className={cn(
-                      "flex items-center gap-4 rounded-xl border p-4 text-left transition-all",
+                      "flex items-center gap-4 rounded-xl border p-4 transition-all",
                       isSelected
                         ? "border-primary bg-primary/5 ring-2 ring-primary"
-                        : "bg-background hover:border-primary/40 hover:shadow-sm",
+                        : "bg-background",
                     )}
                   >
-                    <div
-                      className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 transition-colors",
-                        isSelected
-                          ? "border-primary bg-primary text-primary-foreground"
-                          : "border-muted-foreground/30 text-muted-foreground",
-                      )}
-                    >
-                      {isSelected ? (
-                        <CheckCircle2 className="h-4 w-4" />
-                      ) : (
-                        <PlusCircle className="h-4 w-4" />
-                      )}
-                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold">{addon.name}</div>
                       {addon.description && (
                         <div className="text-xs text-muted-foreground truncate">{addon.description}</div>
                       )}
+                      <div className="text-sm font-bold text-primary mt-0.5">+RM {addon.price}</div>
                     </div>
-                    <div className="shrink-0 text-sm font-bold text-primary">
-                      +RM {addon.price}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => decrementAddon(addon)}
+                        disabled={qty === 0}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-5 text-center text-sm font-semibold">{qty}</span>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => incrementAddon(addon)}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
                     </div>
-                  </button>
+                  </div>
                 );
               })}
             </div>

@@ -20,6 +20,20 @@ export const useCreatePromoAd = () => {
   });
 };
 
+export const useUpdatePromoAd = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }) => packageService.updatePromoAd(id, data),
+    onSuccess: () => {
+      toast.success("Promo Ad updated successfully");
+      queryClient.invalidateQueries({ queryKey: ["promoAds"] });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to update Promo Ad");
+    },
+  });
+};
+
 export const useDeletePromoAd = () => {
   const queryClient = useQueryClient();
   return useMutation({

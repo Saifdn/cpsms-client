@@ -54,6 +54,13 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
   const selectedPackage = data.selectedPackage || {};
   const selectedAddons = data.selectedAddons || [];
 
+  const groupedAddons = selectedAddons.reduce((acc, addon) => {
+    const existing = acc.find((a) => a._id === addon._id);
+    if (existing) { existing.qty += 1; }
+    else { acc.push({ ...addon, qty: 1 }); }
+    return acc;
+  }, []);
+
   const packagePrice = Number(selectedPackage.price) || 0;
   const addonsTotal = selectedAddons.reduce((sum, a) => sum + (Number(a.price) || 0), 0);
   const totalPrice = packagePrice + addonsTotal;
@@ -116,9 +123,13 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
 
         {/* Add-ons */}
         <SectionCard icon={PlusCircle} title="Add-ons">
-          {selectedAddons.length > 0 ? (
-            selectedAddons.map((addon) => (
-              <SummaryRow key={addon._id} label={addon.name} value={`RM ${addon.price || 0}`} />
+          {groupedAddons.length > 0 ? (
+            groupedAddons.map((addon) => (
+              <SummaryRow
+                key={addon._id}
+                label={`${addon.name}${addon.qty > 1 ? ` ×${addon.qty}` : ""}`}
+                value={`RM ${(Number(addon.price) * addon.qty).toFixed(2)}`}
+              />
             ))
           ) : (
             <p className="text-sm text-muted-foreground">No add-ons selected.</p>

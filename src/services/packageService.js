@@ -16,5 +16,6 @@ export const packageService = {
   // Promo Ads
   getAllPromoAds: () => axios.get("/promos"),
   createPromoAd: (data) => axios.post("/promos", data),
+  updatePromoAd: (id, data) => axios.put(`/promos/${id}`, data),
   deletePromoAd: (id) => axios.delete(`/promos/${id}`),
 };

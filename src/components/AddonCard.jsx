@@ -18,6 +18,7 @@ export function AddonCard({ addon, onEdit, onDelete }) {
     name: addon.name || "",
     description: addon.description || "",
     price: addon.price || "",
+    normalPrice: addon.normalPrice || "",
   });
 
   const handleEditSave = () => {
@@ -26,6 +27,7 @@ export function AddonCard({ addon, onEdit, onDelete }) {
       name: editForm.name,
       description: editForm.description,
       price: Number(editForm.price),
+      normalPrice: Number(editForm.normalPrice),
     });
     setShowEditDialog(false);
   };
@@ -54,9 +56,6 @@ export function AddonCard({ addon, onEdit, onDelete }) {
               </p>
             </div>
             <div className="flex items-center gap-1 shrink-0">
-              <Badge variant="secondary" className="font-semibold text-xs">
-                + RM {addon.price}
-              </Badge>
               <Button
                 variant="ghost"
                 size="icon"
@@ -78,11 +77,19 @@ export function AddonCard({ addon, onEdit, onDelete }) {
         </CardHeader>
 
         <CardContent className="pt-0">
-          {addon.description && (
-            <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-              {addon.description}
-            </p>
-          )}
+          <div className="flex items-center gap-1 shrink-0">
+            <Badge variant="secondary" className="font-semibold text-xs">
+              + RM {addon.price}
+            </Badge>
+            <Badge variant="secondary" className="font-semibold text-xs">
+              RM {addon.normalPrice} (normal)
+            </Badge>
+            {addon.description && (
+              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                {addon.description}
+              </p>
+            )}
+          </div>
         </CardContent>
       </Card>
 
@@ -101,17 +108,35 @@ export function AddonCard({ addon, onEdit, onDelete }) {
             <Input
               id="addon-name"
               value={editForm.name}
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              onChange={(e) =>
+                setEditForm({ ...editForm, name: e.target.value })
+              }
             />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="addon-price">Price (RM)</FieldLabel>
+            <FieldLabel htmlFor="addon-price">Addon Price (RM)</FieldLabel>
             <Input
               id="addon-price"
               type="number"
               value={editForm.price}
-              onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+              onChange={(e) =>
+                setEditForm({ ...editForm, price: e.target.value })
+              }
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="addon-normal-price">
+              Normal Price (RM)
+            </FieldLabel>
+            <Input
+              id="addon-normal-price"
+              type="number"
+              value={editForm.normalPrice}
+              onChange={(e) =>
+                setEditForm({ ...editForm, normalPrice: e.target.value })
+              }
             />
           </Field>
 
@@ -120,7 +145,9 @@ export function AddonCard({ addon, onEdit, onDelete }) {
             <Textarea
               id="addon-description"
               value={editForm.description}
-              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              onChange={(e) =>
+                setEditForm({ ...editForm, description: e.target.value })
+              }
               rows={3}
             />
           </Field>

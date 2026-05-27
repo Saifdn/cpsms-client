@@ -15,9 +15,9 @@ import {
 } from "lucide-react";
 import { useState, useMemo } from "react";
 
-import { PackageCarousel } from "@/components/PackageCarousel";
 import { PackageCard } from "@/components/PackageCard";
 import { AddonCard } from "@/components/AddonCard";
+import { PromoAdCard } from "@/components/PromoAdCard";
 import { CreateDialog } from "@/components/dialog/CreateDialog";
 
 import {
@@ -34,7 +34,12 @@ import {
   useDeleteAddon,
 } from "@/hooks/studio/useAddons";
 
-import { usePromoAds, useCreatePromoAd } from "@/hooks/studio/usePromoAds";
+import {
+  usePromoAds,
+  useCreatePromoAd,
+  useUpdatePromoAd,
+  useDeletePromoAd,
+} from "@/hooks/studio/usePromoAds";
 
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Textarea } from "@/components/ui/textarea";
@@ -143,6 +148,8 @@ const Package = () => {
   const updateAddon = useUpdateAddon();
   const deleteAddon = useDeleteAddon();
   const createPromoImage = useCreatePromoAd();
+  const updatePromoAd = useUpdatePromoAd();
+  const deletePromoAd = useDeletePromoAd();
 
   const packages = useMemo(() => packagesData?.data || [], [packagesData]);
   const addons = useMemo(() => addonsData?.data || [], [addonsData]);
@@ -168,6 +175,7 @@ const Package = () => {
     name: "",
     description: "",
     price: "",
+    normalPrice: "",
   });
 
   const [promoImageForm, setPromoImageForm] = useState({
@@ -206,11 +214,12 @@ const Package = () => {
         name: addonForm.name,
         description: addonForm.description,
         price: Number(addonForm.price),
+        normalPrice: Number(addonForm.normalPrice),
       },
       {
         onSuccess: () => {
           setShowCreateAddon(false);
-          setAddonForm({ name: "", description: "", price: "" });
+          setAddonForm({ name: "", description: "", price: "", normalPrice: "" });
         },
       },
     );
@@ -230,6 +239,14 @@ const Package = () => {
 
   const handleDeleteAddon = (id) => {
     deleteAddon.mutate(id);
+  };
+
+  const handleEditPromoAd = ({ id, data }) => {
+    updatePromoAd.mutate({ id, data });
+  };
+
+  const handleDeletePromoAd = (id) => {
+    deletePromoAd.mutate(id);
   };
 
   const handleImageChange = async (e) => {
@@ -281,7 +298,39 @@ const Package = () => {
                 Add Promo
               </Button>
             </div>
-            <PackageCarousel promoAds={promoAds} />
+            {promoAds.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12 text-center gap-3 rounded-lg border border-dashed">
+                <Image className="h-9 w-9 text-muted-foreground" />
+                <div>
+                  <p className="font-medium text-sm">No promo ads yet</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Add a promotional image to display to graduates.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowCreatePromoImage(true)}
+                  className="gap-2 mt-1"
+                >
+                  <ImagePlus className="h-4 w-4" />
+                  Add Promo
+                </Button>
+              </div>
+            ) : (
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+                {promoAds.map((promo) => (
+                  <PromoAdCard
+                    key={promo._id}
+                    promoAd={promo}
+                    onEdit={handleEditPromoAd}
+                    onDelete={handleDeletePromoAd}
+                    isEditLoading={updatePromoAd.isPending}
+                    isDeleteLoading={deletePromoAd.isPending}
+                  />
+                ))}
+              </div>
+            )}
           </div>
 
           {/* RIGHT - Stats + Packages + Addons */}
@@ -519,13 +568,25 @@ const Package = () => {
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="new-addon-price">Price (RM)</FieldLabel>
+            <FieldLabel htmlFor="new-addon-price">Addon Price (RM)</FieldLabel>
             <Input
               id="new-addon-price"
               type="number"
               value={addonForm.price}
               onChange={(e) =>
                 setAddonForm({ ...addonForm, price: e.target.value })
+              }
+            />
+          </Field>
+
+          <Field>
+            <FieldLabel htmlFor="new-addon-normal-price">Normal Price (RM)</FieldLabel>
+            <Input
+              id="new-addon-normal-price"
+              type="number"
+              value={addonForm.normalPrice}
+              onChange={(e) =>
+                setAddonForm({ ...addonForm, normalPrice: e.target.value })
               }
             />
           </Field>
