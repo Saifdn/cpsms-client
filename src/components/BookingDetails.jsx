@@ -20,6 +20,7 @@ import {
   Hash,
   Receipt,
   QrCode,
+  AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -43,7 +44,9 @@ const STATUS_CONFIG = {
   },
 };
 
-function InfoRow({ icon: Icon, label, value }) {
+
+function InfoRow({ icon, label, value }) {
+  const Icon = icon;
   return (
     <div className="flex items-start gap-3">
       <div className="mt-0.5 shrink-0 text-muted-foreground">
@@ -246,17 +249,32 @@ const BookingDetails = ({
         </div>
       </CardContent>
 
-      {showConfirmButton && (
-        <CardFooter className="p-4 border-t bg-background">
-          <Button
-            onClick={onConfirm}
-            className="w-full h-11 text-base font-semibold"
-            disabled={!booking || confirmLoading}
-          >
-            {confirmLoading ? "Processing..." : "Confirm Check-In"}
-          </Button>
-        </CardFooter>
-      )}
+      {showConfirmButton && (() => {
+        const canCheckIn = booking.status === "booked";
+
+        return (
+          <>
+            {!canCheckIn && (
+              <div className="px-5 py-3 bg-muted border-t flex items-start gap-2.5">
+                <AlertTriangle size={15} className="shrink-0 mt-0.5 text-muted-foreground" />
+                <p className="text-xs text-muted-foreground">
+                  Check-in is only allowed for <span className="font-semibold">Booked</span> status.
+                  This booking is currently <span className="font-semibold">{statusConfig.label}</span>.
+                </p>
+              </div>
+            )}
+            <CardFooter className="p-4 border-t bg-background">
+              <Button
+                onClick={onConfirm}
+                className="w-full h-11 text-base font-semibold"
+                disabled={!canCheckIn || confirmLoading}
+              >
+                {confirmLoading ? "Processing…" : "Confirm Check-In"}
+              </Button>
+            </CardFooter>
+          </>
+        );
+      })()}
     </Card>
   );
 };

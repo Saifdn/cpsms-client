@@ -52,7 +52,7 @@ export const submittedColumns = [
     header: "Courier",
     cell: ({ row }) => (
       <div className="font-medium">
-        {row.original.courierName || "—"}
+        {row.original.shipment.courierName || "—"}
       </div>
     ),
   },
@@ -61,9 +61,9 @@ export const submittedColumns = [
     header: "AWB / Tracking",
     cell: ({ row }) => (
       <div className="font-mono text-sm">
-        {row.original.awb_number ? (
+        {row.original.shipment.awb_number ? (
           <span className="text-green-600 font-medium">
-            {row.original.awb_number}
+            {row.original.shipment.awb_number}
           </span>
         ) : (
           <span className="text-muted-foreground">Not Generated</span>

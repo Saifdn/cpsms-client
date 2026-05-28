@@ -7,32 +7,35 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Edit, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { MoreHorizontal, Eye, XCircle } from "lucide-react";
 
-import { DeleteAlertDialog } from "@/components/dialog/DeleteAlertDialog";
-import { ViewDetailsDialog } from "@/components/dialog/ViewDetailsDialog";
-
-import { useDeleteBooking, useUpdateBooking } from "@/hooks/studio/useBookings";
+import { BookingViewSheet } from "@/components/booking/BookingViewSheet";
+import { useCancelBooking } from "@/hooks/studio/useBookings";
 
 export function BookingActionsCell({ row }) {
   const booking = row.original;
-  const deleteBooking = useDeleteBooking();
-  const updateBooking = useUpdateBooking();
+  const cancelBooking = useCancelBooking();
 
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showViewDialog, setShowViewDialog] = useState(false);
+  const [showViewSheet, setShowViewSheet] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
-  // Handle Cancel Booking (change status)
-  const handleCancelBooking = () => {
-    updateBooking.mutate({
-      id: booking._id,
-      status: "cancelled",
+  const isCancellable =
+    booking.status !== "cancelled" && booking.status !== "completed";
+
+  const handleConfirmCancel = () => {
+    cancelBooking.mutate(booking._id, {
+      onSuccess: () => setShowCancelDialog(false),
     });
-  };
-
-  // Handle Hard Delete
-  const handleDelete = () => {
-    deleteBooking.mutate(booking._id);
   };
 
   return (
@@ -45,8 +48,8 @@ export function BookingActionsCell({ row }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              onClick={() => setShowViewDialog(true)} 
+            <DropdownMenuItem
+              onClick={() => setShowViewSheet(true)}
               className="cursor-pointer"
             >
               <Eye className="mr-2 h-4 w-4" />
@@ -55,51 +58,54 @@ export function BookingActionsCell({ row }) {
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem 
-              onClick={handleCancelBooking}
-              className="cursor-pointer text-amber-600"
-              disabled={booking.status === "cancelled" || booking.status === "completed"}
+            <DropdownMenuItem
+              onClick={() => setShowCancelDialog(true)}
+              className="cursor-pointer text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950/30"
+              disabled={!isCancellable}
             >
+              <XCircle className="mr-2 h-4 w-4" />
               Cancel Booking
             </DropdownMenuItem>
-
-            {/* <DropdownMenuItem 
-              onClick={() => setShowDeleteDialog(true)}
-              className="text-destructive cursor-pointer"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem> */}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {/* View Details Dialog */}
-      <ViewDetailsDialog
-        open={showViewDialog}
-        onOpenChange={setShowViewDialog}
-        title={`Booking #${booking.bookingNumber}`}
-        data={booking}
-        fields={[
-          { key: "bookingNumber", label: "Booking Number" },
-          { key: "graduate.fullName", label: "Graduate" },
-          { key: "package.name", label: "Package" },
-          { key: "session.date", label: "Date", isDate: true },
-          { key: "session.startTime", label: "Start Time" },
-          { key: "session.endTime", label: "End Time" },
-          { key: "status", label: "Status", isBadge: true },
-          { key: "bookedAt", label: "Booked At", isDate: true },
-          { key: "checkInTime", label: "Check-in Time", isDate: true },
-        ]}
+      <BookingViewSheet
+        open={showViewSheet}
+        onOpenChange={setShowViewSheet}
+        booking={booking}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <DeleteAlertDialog
-        open={showDeleteDialog}
-        onOpenChange={setShowDeleteDialog}
-        onConfirm={handleDelete}
-        itemName={`Booking #${booking.bookingNumber}`}
-      />
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-amber-100 dark:bg-amber-900/30 text-amber-600 rounded-full">
+                <XCircle className="h-5 w-5" />
+              </div>
+              <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>
+              Are you sure you want to cancel booking{" "}
+              <strong>#{booking.bookingNumber}</strong> for{" "}
+              <strong>{booking.graduate?.fullName}</strong>? This cannot be
+              undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={cancelBooking.isPending}>
+              Keep Booking
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmCancel}
+              disabled={cancelBooking.isPending}
+              className="bg-amber-600 hover:bg-amber-700 focus:ring-amber-600"
+            >
+              {cancelBooking.isPending ? "Cancelling…" : "Yes, Cancel"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

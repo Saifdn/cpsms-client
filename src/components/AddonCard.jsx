@@ -11,7 +11,12 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-export function AddonCard({ addon, onEdit, onDelete }) {
+function getDiscountPercent(price, normalPrice) {
+  if (!normalPrice || normalPrice <= price) return null;
+  return Math.round(((normalPrice - price) / normalPrice) * 100);
+}
+
+export function AddonCard({ addon, onEdit, onDelete, isLoading, isDeleteLoading }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -37,6 +42,8 @@ export function AddonCard({ addon, onEdit, onDelete }) {
     setShowDeleteDialog(false);
   };
 
+  const discount = getDiscountPercent(addon.price, addon.normalPrice);
+
   return (
     <>
       <Card
@@ -51,7 +58,7 @@ export function AddonCard({ addon, onEdit, onDelete }) {
               <div className="rounded-md bg-muted p-1.5 shrink-0">
                 <Puzzle className="h-3.5 w-3.5 text-muted-foreground" />
               </div>
-              <p className="font-semibold text-sm leading-tight">
+              <p className="font-semibold text-sm leading-tight truncate">
                 {addon.name}
               </p>
             </div>
@@ -76,20 +83,28 @@ export function AddonCard({ addon, onEdit, onDelete }) {
           </div>
         </CardHeader>
 
-        <CardContent className="pt-0">
-          <div className="flex items-center gap-1 shrink-0">
+        <CardContent className="pt-0 space-y-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <Badge variant="secondary" className="font-semibold text-xs">
               + RM {addon.price}
             </Badge>
-            <Badge variant="secondary" className="font-semibold text-xs">
-              RM {addon.normalPrice} (normal)
-            </Badge>
-            {addon.description && (
-              <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                {addon.description}
-              </p>
+            {addon.normalPrice > 0 && (
+              <span className="text-xs text-muted-foreground line-through">
+                RM {addon.normalPrice}
+              </span>
+            )}
+            {discount && (
+              <Badge variant="outline" className="text-[10px] font-semibold text-green-600 border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-800 dark:text-green-400">
+                {discount}% off
+              </Badge>
             )}
           </div>
+
+          {addon.description && (
+            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+              {addon.description}
+            </p>
+          )}
         </CardContent>
       </Card>
 
@@ -99,7 +114,7 @@ export function AddonCard({ addon, onEdit, onDelete }) {
         title="Edit Add-on"
         description="Update add-on details"
         onSave={handleEditSave}
-        isLoading={false}
+        isLoading={isLoading}
         saveLabel="Save Changes"
       >
         <div className="space-y-6">
@@ -109,33 +124,33 @@ export function AddonCard({ addon, onEdit, onDelete }) {
               id="addon-name"
               value={editForm.name}
               onChange={(e) =>
-                setEditForm({ ...editForm, name: e.target.value })
+                setEditForm((prev) => ({ ...prev, name: e.target.value }))
               }
             />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="addon-price">Addon Price (RM)</FieldLabel>
+            <FieldLabel htmlFor="addon-price">Promo Price (RM)</FieldLabel>
             <Input
               id="addon-price"
               type="number"
+              min="0"
               value={editForm.price}
               onChange={(e) =>
-                setEditForm({ ...editForm, price: e.target.value })
+                setEditForm((prev) => ({ ...prev, price: e.target.value }))
               }
             />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="addon-normal-price">
-              Normal Price (RM)
-            </FieldLabel>
+            <FieldLabel htmlFor="addon-normal-price">Normal Price (RM)</FieldLabel>
             <Input
               id="addon-normal-price"
               type="number"
+              min="0"
               value={editForm.normalPrice}
               onChange={(e) =>
-                setEditForm({ ...editForm, normalPrice: e.target.value })
+                setEditForm((prev) => ({ ...prev, normalPrice: e.target.value }))
               }
             />
           </Field>
@@ -146,7 +161,7 @@ export function AddonCard({ addon, onEdit, onDelete }) {
               id="addon-description"
               value={editForm.description}
               onChange={(e) =>
-                setEditForm({ ...editForm, description: e.target.value })
+                setEditForm((prev) => ({ ...prev, description: e.target.value }))
               }
               rows={3}
             />
@@ -158,6 +173,7 @@ export function AddonCard({ addon, onEdit, onDelete }) {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleDelete}
+        isLoading={isDeleteLoading}
         itemName={addon.name}
       />
     </>

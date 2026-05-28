@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import {
   Card,
@@ -8,120 +8,197 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Field, FieldGroup } from "@/components/ui/field";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { ScanQrCode } from "lucide-react"
+import { ScanQrCode, Keyboard, VideoOff, Loader2 } from "lucide-react";
+
+const SCANNER_ELEMENT_ID = "qr-reader-viewport";
 
 const QrScanner = ({ onScan }) => {
-  const [open, setOpen] = useState(false);
-  const [bookingId, setBookingId] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [manualId, setManualId] = useState("");
+  const [cameraState, setCameraState] = useState("idle"); // "idle" | "starting" | "ready" | "error"
+  const [cameraError, setCameraError] = useState(null);
+
   const scannerRef = useRef(null);
+  // Ref so the QR success callback always calls the latest onScan without being a dep of useEffect
+  const onScanRef = useRef(onScan);
+  useEffect(() => { onScanRef.current = onScan; }, [onScan]);
+
+  const stopScanner = useCallback(async () => {
+    const scanner = scannerRef.current;
+    if (!scanner) return;
+    try {
+      if (scanner.isScanning) await scanner.stop();
+      await scanner.clear();
+    } catch {
+      // Ignore cleanup errors — the scanner may already be stopped
+    } finally {
+      scannerRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
-    if (!open) return;
+    if (!dialogOpen) {
+      stopScanner();
+      setCameraState("idle");
+      setCameraError(null);
+      return;
+    }
 
-    const scanner = new Html5Qrcode("reader");
-    scannerRef.current = scanner;
+    setCameraState("starting");
 
-    const start = async () => {
+    // Delay to let the Dialog finish mounting and the DOM element to appear
+    const timer = setTimeout(async () => {
       try {
+        const scanner = new Html5Qrcode(SCANNER_ELEMENT_ID);
+        scannerRef.current = scanner;
+
         await scanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: 250 },
+          { fps: 10, qrbox: { width: 240, height: 240 } },
           (decodedText) => {
-            handleSubmit(decodedText); // use same handler
-            stop();
+            onScanRef.current(decodedText);
+            setDialogOpen(false);
           }
         );
+        setCameraState("ready");
       } catch (err) {
-        console.error(err);
+        const isPermission =
+          err?.message?.toLowerCase().includes("permission") ||
+          err?.message?.toLowerCase().includes("notallowed");
+        setCameraError(
+          isPermission
+            ? "Camera access denied. Please allow camera permission in your browser settings and try again."
+            : "Could not start camera. Make sure no other app is using it, then try again."
+        );
+        setCameraState("error");
       }
-    };
-
-    const stop = async () => {
-      try {
-        await scanner.stop();
-        await scanner.clear();
-      } catch {}
-      setOpen(false);
-    };
-
-    start();
+    }, 150);
 
     return () => {
-      stop();
+      clearTimeout(timer);
+      stopScanner();
     };
-  }, [open]);
+  }, [dialogOpen, stopScanner]);
 
-  const handleSubmit = (id) => {
-    if (!id) return;
+  const handleManualSubmit = () => {
+    const value = manualId.trim();
+    if (!value) return;
+    onScanRef.current(value);
+    setManualId("");
+  };
 
-    onScan(id);          // send to page
-    setBookingId("");    // reset input
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") handleManualSubmit();
   };
 
   return (
-    <Card className="bg-background">
-      <CardHeader className="border-b">
-        <CardTitle>QR Scanner</CardTitle>
-        <CardDescription>
-          Scan the QR or Enter the Booking ID
-        </CardDescription>
-      </CardHeader>
+    <>
+      <Card>
+        <CardHeader className="border-b">
+          <CardTitle>QR Scanner</CardTitle>
+          <CardDescription>
+            Scan the graduate's QR code or enter the booking number manually.
+          </CardDescription>
+        </CardHeader>
 
-      <CardContent className="p-10 space-y-5">
-        {/* Scan Button */}
-        <Button className="w-full" onClick={() => setOpen(true)}>
-          <ScanQrCode />
-          Scan QR
-        </Button>
+        <CardContent className="p-6 space-y-5">
+          <Button className="w-full h-11" onClick={() => setDialogOpen(true)}>
+            <ScanQrCode className="mr-2 h-4 w-4" />
+            Open Camera Scanner
+          </Button>
 
-        {/* Manual Input */}
-        <FieldGroup>
-          <Field orientation="horizontal">
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">or enter manually</span>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
             <Input
-              placeholder="Booking ID"
-              value={bookingId}
-              onChange={(e) => setBookingId(e.target.value)}
+              placeholder="e.g. BK-000001"
+              value={manualId}
+              onChange={(e) => setManualId(e.target.value)}
+              onKeyDown={handleKeyDown}
+              className="flex-1"
             />
             <Button
               type="button"
-              onClick={() => handleSubmit(bookingId)}
+              variant="outline"
+              onClick={handleManualSubmit}
+              disabled={!manualId.trim()}
             >
               Submit
             </Button>
-          </Field>
-        </FieldGroup>
+          </div>
+        </CardContent>
 
-        {/* Modal Scanner */}
-        {open && (
-          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
-            <div className="bg-background p-6 rounded-xl w-[400px]">
-              <h2 className="text-lg font-semibold mb-4">
-                Scan QR Code
-              </h2>
+        <CardFooter className="border-t pt-4">
+          <p className="text-xs text-muted-foreground flex items-center gap-1.5">
+            <Keyboard size={13} />
+            Press Enter after typing the booking number to submit quickly.
+          </p>
+        </CardFooter>
+      </Card>
 
-              <div id="reader" />
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Scan QR Code</DialogTitle>
+          </DialogHeader>
 
-              <Button
-                onClick={() => setOpen(false)}
-                variant="destructive"
-                className="mt-4 w-full"
-              >
+          {cameraState === "error" ? (
+            <div className="flex flex-col items-center gap-4 py-8 text-center">
+              <div className="rounded-full bg-destructive/10 p-4">
+                <VideoOff size={26} className="text-destructive" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium text-sm">Camera Unavailable</p>
+                <p className="text-sm text-muted-foreground max-w-xs">{cameraError}</p>
+              </div>
+              <Button variant="outline" onClick={() => setDialogOpen(false)}>
                 Close
               </Button>
             </div>
-          </div>
-        )}
-      </CardContent>
+          ) : (
+            <div className="space-y-4">
+              {/*
+                Html5Qrcode MUST be visible in the DOM when start() is called —
+                it reads the element's dimensions to size the QR box.
+                The loading overlay sits on top while the camera initialises.
+              */}
+              <div className="relative min-h-[260px]">
+                {cameraState === "starting" && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-muted rounded-lg z-10">
+                    <Loader2 size={28} className="animate-spin text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">Starting camera…</p>
+                  </div>
+                )}
+                <div id={SCANNER_ELEMENT_ID} className="w-full rounded-lg overflow-hidden" />
+              </div>
 
-      <CardFooter className="border-t pt-4">
-        <p className="text-sm text-muted-foreground">
-          Use QR scan or manual input for check-in / check-out.
-        </p>
-      </CardFooter>
-    </Card>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 

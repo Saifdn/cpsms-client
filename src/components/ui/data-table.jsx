@@ -3,7 +3,6 @@ import {
   useReactTable,
   getCoreRowModel,
   getSortedRowModel,
-  getPaginationRowModel,
   getFilteredRowModel,
   flexRender,
 } from "@tanstack/react-table";
@@ -19,6 +18,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -31,10 +31,11 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+
+const SKELETON_ROW_COUNT = 6;
 
 export function DataTable({
   title,
@@ -42,18 +43,15 @@ export function DataTable({
   columns,
   data = [],
   isLoading = false,
-  onRefresh,
   enableRowSelection = false,
   rowSelection,
   onRowSelectionChange,
   getRowId,
-  // --- new props for server-side pagination
   currentPage = 1,
   totalPages = 1,
   onPageChange,
   limit = 20,
   onLimitChange,
-  // --- optional controlled search (server-side); falls back to local globalFilter
   searchValue,
   onSearchChange,
 }) {
@@ -67,9 +65,8 @@ export function DataTable({
       sorting,
       globalFilter,
       rowSelection,
-      // tell tanstack the current page index
       pagination: {
-        pageIndex: currentPage - 1, // tanstack is 0-based
+        pageIndex: currentPage - 1,
         pageSize: limit,
       },
     },
@@ -78,13 +75,11 @@ export function DataTable({
     onRowSelectionChange,
     enableRowSelection,
     getRowId,
-    // --- this is the key switch
     manualPagination: true,
     pageCount: totalPages,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
-    // removed getPaginationRowModel — not needed for server-side
   });
 
   return (
@@ -114,20 +109,13 @@ export function DataTable({
                     {headerGroup.headers.map((header) => (
                       <TableHead
                         key={header.id}
-                        className={
-                          header.column.columnDef.meta?.className || ""
-                        }
+                        className={header.column.columnDef.meta?.className || ""}
                         onClick={header.column.getToggleSortingHandler()}
                       >
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                        {{ asc: " ↑", desc: " ↓" }[
-                          header.column.getIsSorted()
-                        ] ?? null}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
+                        {{ asc: " ↑", desc: " ↓" }[header.column.getIsSorted()] ?? null}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -135,34 +123,29 @@ export function DataTable({
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      Loading...
-                    </TableCell>
-                  </TableRow>
+                  Array.from({ length: SKELETON_ROW_COUNT }).map((_, i) => (
+                    <TableRow key={`skeleton-${i}`}>
+                      {columns.map((_col, j) => (
+                        <TableCell key={j}>
+                          <Skeleton className="h-4 w-full max-w-[180px]" />
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
                 ) : table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
                     <TableRow key={row.id}>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-24 text-center"
-                    >
-                      No results.
+                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                      No results found.
                     </TableCell>
                   </TableRow>
                 )}

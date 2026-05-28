@@ -3,6 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useState, useMemo } from "react";
 import {
   Play,
@@ -32,9 +43,52 @@ import {
 import QrScanner from "@/components/QrScanner";
 import { cn } from "@/lib/utils";
 
+// ── Sub-components ─────────────────────────────────────────────────────────────
+
+function StudioSkeletonList() {
+  return Array.from({ length: 4 }).map((_, i) => (
+    <div key={i} className="rounded-lg border bg-card p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-1.5 flex-1">
+          <Skeleton className="h-4 w-3/5" />
+          <Skeleton className="h-3 w-2/5" />
+        </div>
+        <Skeleton className="h-5 w-14 rounded-full" />
+      </div>
+    </div>
+  ));
+}
+
+function ControlPanelSkeleton() {
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-muted/40 border-b pb-4">
+        <div className="flex justify-between items-start gap-3">
+          <div className="space-y-2 flex-1">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-20" />
+            <Skeleton className="h-3 w-32" />
+          </div>
+          <Skeleton className="h-6 w-14 rounded-full" />
+        </div>
+      </CardHeader>
+      <CardContent className="p-5 space-y-3">
+        <Skeleton className="h-10 w-full rounded-md" />
+        <div className="rounded-xl border p-4 space-y-2">
+          <Skeleton className="h-3 w-20" />
+          <Skeleton className="h-5 w-44" />
+          <Skeleton className="h-3 w-32" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ── Main component ─────────────────────────────────────────────────────────────
+
 const StudioCounter = () => {
-  const { data: studiosData } = useStudios();
-  const { activeQueue, isConnected } = useLiveQueue();
+  const { data: studiosData, isLoading: studiosLoading } = useStudios();
+  const { activeQueue, isConnected, isLoading: queueLoading } = useLiveQueue();
 
   const callNextMutation = useCallNext();
   const confirmArrivalMutation = useConfirmArrival();
@@ -44,6 +98,14 @@ const StudioCounter = () => {
   const studios = studiosData?.data || [];
   const [selectedStudio, setSelectedStudio] = useState(null);
   const [showScanner, setShowScanner] = useState(false);
+  const [skipDialogOpen, setSkipDialogOpen] = useState(false);
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+
+  const isActionPending =
+    callNextMutation.isPending ||
+    confirmArrivalMutation.isPending ||
+    checkOutMutation.isPending ||
+    skipMutation.isPending;
 
   // Derive occupancy from live queue — avoids stale REST data
   const occupiedStudioIds = useMemo(() => {
@@ -51,43 +113,54 @@ const StudioCounter = () => {
     activeQueue.forEach((q) => {
       if (q.status === "in-progress") {
         const id = q.studio?._id || q.studio;
-        ids.add(id);
+        if (id) ids.add(id);
       }
     });
     return ids;
   }, [activeQueue]);
 
-  // Queue waiting count per studio
+  // Waiting count per studio
   const waitingCountByStudio = useMemo(() => {
     const map = {};
     activeQueue.forEach((q) => {
       if (q.status === "waiting") {
         const id = q.studio?._id || q.studio;
-        map[id] = (map[id] || 0) + 1;
+        if (id) map[id] = (map[id] || 0) + 1;
       }
     });
     return map;
   }, [activeQueue]);
 
+  const selectedId = selectedStudio?._id || selectedStudio?.id;
+
   const calledCustomer = useMemo(() => {
-    if (!selectedStudio) return null;
+    if (!selectedId) return null;
     return activeQueue.find((q) => {
       const queueStudioId = q.studio?._id || q.studio;
-      const selectedId = selectedStudio._id || selectedStudio.id;
       return queueStudioId === selectedId && q.status === "called";
     });
-  }, [activeQueue, selectedStudio]);
+  }, [activeQueue, selectedId]);
 
   const currentUser = useMemo(() => {
-    if (!selectedStudio) return null;
+    if (!selectedId) return null;
     return activeQueue.find((q) => {
       const queueStudioId = q.studio?._id || q.studio;
-      const selectedId = selectedStudio._id || selectedStudio.id;
       return queueStudioId === selectedId && q.status === "in-progress";
     });
-  }, [activeQueue, selectedStudio]);
+  }, [activeQueue, selectedId]);
 
-  const nextInQueue = activeQueue.find((q) => q.status === "waiting");
+  // Any waiting item — studio is assigned by the backend on callNext,
+  // so waiting entries don't have a studio field yet.
+  const nextInQueue = useMemo(
+    () => activeQueue.find((q) => q.status === "waiting"),
+    [activeQueue]
+  );
+
+  const waitingCount = selectedStudio
+    ? (waitingCountByStudio[selectedStudio._id] ?? 0)
+    : 0;
+
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleCallNext = () => {
     if (!selectedStudio) return;
@@ -114,9 +187,17 @@ const StudioCounter = () => {
     }
   };
 
-  const handleCheckOut = () => {
+  const handleConfirmCheckOut = () => {
     if (!currentUser) return;
     checkOutMutation.mutate({ queueId: currentUser._id });
+    setCheckoutDialogOpen(false);
+  };
+
+  const handleConfirmSkip = () => {
+    if (!calledCustomer) return;
+    setShowScanner(false);
+    skipMutation.mutate(calledCustomer.booking?._id);
+    setSkipDialogOpen(false);
   };
 
   const handleSelectStudio = (studio) => {
@@ -124,6 +205,8 @@ const StudioCounter = () => {
     setSelectedStudio(studio);
     setShowScanner(false);
   };
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <Page>
@@ -136,102 +219,129 @@ const StudioCounter = () => {
         {/* ── Studios Panel ─────────────────────────────── */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold text-foreground">
-              Studios
-            </h2>
-            <span className="text-xs text-muted-foreground">
-              {studios.filter((s) => s.isAvailable).length} active
-            </span>
+            <h2 className="text-base font-semibold text-foreground">Studios</h2>
+            {studiosLoading ? (
+              <Skeleton className="h-3 w-14" />
+            ) : (
+              <span className="text-xs text-muted-foreground">
+                {studios.filter((s) => s.isAvailable).length} active
+              </span>
+            )}
           </div>
 
           <div className="grid gap-2">
-            {studios.map((studio) => {
-              const isInactive = !studio.isAvailable;
-              const isSelected = selectedStudio?._id === studio._id;
-              const waitingCount =
-                waitingCountByStudio[studio._id] ?? 0;
-
-              return (
-                <button
-                  key={studio._id}
-                  type="button"
-                  disabled={isInactive}
-                  onClick={() => handleSelectStudio(studio)}
-                  className={cn(
-                    "w-full text-left rounded-lg border bg-card p-4 transition-all",
-                    isInactive
-                      ? "opacity-50 cursor-not-allowed"
-                      : "cursor-pointer hover:shadow-sm hover:border-border/80",
-                    isSelected &&
-                      "ring-2 ring-primary border-primary bg-primary/5"
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className={cn("font-medium text-base truncate", isSelected && "text-primary")}>
-                        {studio.name}
-                      </p>
-                      {studio.location && (
-                        <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5 truncate">
-                          <MapPin size={10} className="shrink-0" />
-                          {studio.location}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      {isInactive ? (
-                        <Badge className="text-xs px-1.5 py-0 bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border-gray-200">
-                          Inactive
-                        </Badge>
-                      ) : occupiedStudioIds.has(studio._id) ? (
-                        <Badge className="text-xs px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200">
-                          Occupied
-                        </Badge>
-                      ) : (
-                        <Badge className="text-xs px-1.5 py-0 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200">
-                          Free
-                        </Badge>
-                      )}
-
-                      {!isInactive && waitingCount > 0 && (
-                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Users size={11} />
-                          {waitingCount} waiting
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </button>
-              );
-            })}
-
-            {studios.length === 0 && (
+            {studiosLoading ? (
+              <StudioSkeletonList />
+            ) : studios.length === 0 ? (
               <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-lg">
                 No studios available
               </div>
+            ) : (
+              studios.map((studio) => {
+                const isInactive = !studio.isAvailable;
+                const isSelected = selectedStudio?._id === studio._id;
+                const count = waitingCountByStudio[studio._id] ?? 0;
+
+                return (
+                  <button
+                    key={studio._id}
+                    type="button"
+                    disabled={isInactive}
+                    onClick={() => handleSelectStudio(studio)}
+                    className={cn(
+                      "w-full text-left rounded-lg border bg-card p-4 transition-all",
+                      isInactive
+                        ? "opacity-50 cursor-not-allowed"
+                        : "cursor-pointer hover:shadow-sm hover:border-border/80",
+                      isSelected && "ring-2 ring-primary border-primary bg-primary/5"
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className={cn("font-medium text-base truncate", isSelected && "text-primary")}>
+                          {studio.name}
+                        </p>
+                        {studio.location && (
+                          <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5 truncate">
+                            <MapPin size={10} className="shrink-0" />
+                            {studio.location}
+                          </p>
+                        )}
+                      </div>
+
+                      <div className="flex flex-col items-end gap-1.5 shrink-0">
+                        {isInactive ? (
+                          <Badge className="text-xs px-1.5 py-0 bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400 border-gray-200">
+                            Inactive
+                          </Badge>
+                        ) : occupiedStudioIds.has(studio._id) ? (
+                          <Badge className="text-xs px-1.5 py-0 bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200">
+                            Occupied
+                          </Badge>
+                        ) : (
+                          <Badge className="text-xs px-1.5 py-0 bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200">
+                            Free
+                          </Badge>
+                        )}
+
+                        {!isInactive && count > 0 && (
+                          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                            <Users size={11} />
+                            {count} waiting
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                );
+              })
             )}
           </div>
         </div>
 
         {/* ── Control Panel ─────────────────────────────── */}
         <div>
-          {selectedStudio ? (
+          {!selectedStudio ? (
+            <Card className="flex items-center justify-center border-dashed min-h-[320px]">
+              <div className="text-center space-y-2 text-muted-foreground p-8">
+                <div className="mx-auto mb-3 rounded-full bg-muted p-4 w-fit">
+                  <Camera size={28} className="opacity-40" />
+                </div>
+                <p className="font-medium">No studio selected</p>
+                <p className="text-xs max-w-xs">
+                  Select an active studio from the list to start managing the queue
+                </p>
+              </div>
+            </Card>
+          ) : queueLoading ? (
+            <ControlPanelSkeleton />
+          ) : (
             <Card className="overflow-hidden">
               {/* Card Header */}
               <CardHeader className="bg-muted/40 border-b pb-4">
                 <div className="flex items-start justify-between gap-3">
-                  <div>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <Camera size={15} className="text-muted-foreground" />
-                      <CardTitle className="text-base">{selectedStudio.name}</CardTitle>
+                      <Camera size={15} className="text-muted-foreground shrink-0" />
+                      <CardTitle className="text-base truncate">{selectedStudio.name}</CardTitle>
                     </div>
                     {selectedStudio.location && (
                       <p className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <MapPin size={11} />
+                        <MapPin size={11} className="shrink-0" />
                         {selectedStudio.location}
                       </p>
                     )}
+                    {/* Queue stats strip */}
+                    <div className="flex items-center gap-3 mt-2">
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Users size={11} />
+                        {waitingCount} waiting
+                      </span>
+                      <span className="text-muted-foreground/40 text-xs">·</span>
+                      <span className="text-xs text-muted-foreground">
+                        {occupiedStudioIds.has(selectedStudio._id) ? "Studio occupied" : "Studio free"}
+                      </span>
+                    </div>
                   </div>
 
                   {/* Connection pill */}
@@ -264,7 +374,7 @@ const StudioCounter = () => {
                       </div>
                       <div>
                         <p className="font-semibold text-blue-700 dark:text-blue-300 text-sm">
-                          Customer Called
+                          Customer Called — #{calledCustomer.queueNumber}
                         </p>
                         <p className="text-xs text-blue-600/70 dark:text-blue-400/70">
                           Waiting for QR scan confirmation
@@ -276,28 +386,25 @@ const StudioCounter = () => {
                       {calledCustomer.booking?.graduate?.fullName || "Unknown"}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Queue #{calledCustomer.queueNumber} ·{" "}
                       {calledCustomer.booking?.bookingNumber}
                     </p>
 
-                    <div className="mt-4 flex items-center gap-2">
+                    <div className="mt-4 flex items-center gap-2 flex-wrap">
                       <Button
                         onClick={() => setShowScanner((v) => !v)}
+                        disabled={isActionPending}
                       >
                         <ScanQrCode size={16} className="mr-2" />
-                        {showScanner ? "Close Scanner" : "Open QR Scanner"}
+                        {showScanner ? "Close Scanner" : "Scan QR to Confirm"}
                       </Button>
                       <Button
                         variant="outline"
                         className="text-amber-600 border-amber-300 hover:bg-amber-50 hover:text-amber-700 dark:text-amber-400 dark:border-amber-700 dark:hover:bg-amber-950/40"
-                        disabled={skipMutation.isPending}
-                        onClick={() => {
-                          setShowScanner(false);
-                          skipMutation.mutate(calledCustomer.booking?._id);
-                        }}
+                        disabled={isActionPending}
+                        onClick={() => setSkipDialogOpen(true)}
                       >
                         <SkipForward size={15} className="mr-2" />
-                        {skipMutation.isPending ? "Skipping..." : "Skip Customer"}
+                        Skip Customer
                       </Button>
                     </div>
                   </div>
@@ -306,7 +413,6 @@ const StudioCounter = () => {
                 {/* ── In Progress State ── */}
                 {currentUser && (
                   <div className="rounded-xl border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/40 overflow-hidden">
-                    {/* Header */}
                     <div className="px-5 py-3 border-b border-amber-200 dark:border-amber-700">
                       <p className="text-sm font-semibold text-amber-600 dark:text-amber-400">
                         Currently in Studio
@@ -381,11 +487,11 @@ const StudioCounter = () => {
 
                       <Button
                         variant="destructive"
-                        onClick={handleCheckOut}
-                        disabled={checkOutMutation.isPending}
+                        onClick={() => setCheckoutDialogOpen(true)}
+                        disabled={isActionPending}
                       >
                         <LogOut size={15} className="mr-2" />
-                        {checkOutMutation.isPending ? "Checking out..." : "Check Out Customer"}
+                        Check Out Customer
                       </Button>
                     </div>
                   </div>
@@ -393,23 +499,38 @@ const StudioCounter = () => {
 
                 {/* ── Idle State ── */}
                 {!calledCustomer && !currentUser && (
-                  <>
-                    {nextInQueue ? (
+                  nextInQueue ? (
+                    <div className="space-y-3">
                       <Button
+                        className="w-full"
                         onClick={handleCallNext}
-                        disabled={callNextMutation.isPending}
+                        disabled={isActionPending}
                       >
                         <Play size={16} className="mr-2" />
                         {callNextMutation.isPending ? "Calling..." : "Call Next Customer"}
                       </Button>
-                    ) : (
-                      <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground border border-dashed rounded-xl">
-                        <Users size={28} className="opacity-40" />
-                        <p className="text-sm font-medium">Queue is empty</p>
-                        <p className="text-xs">No customers waiting at the moment</p>
+
+                      {/* Next-up preview */}
+                      <div className="rounded-lg border bg-muted/30 p-3">
+                        <p className="text-xs text-muted-foreground mb-0.5">Next up</p>
+                        <p className="font-medium text-sm">
+                          {nextInQueue.booking?.graduate?.fullName || "Unknown"}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          #{nextInQueue.queueNumber}
+                          {nextInQueue.booking?.bookingNumber && (
+                            <> · {nextInQueue.booking.bookingNumber}</>
+                          )}
+                        </p>
                       </div>
-                    )}
-                  </>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 py-12 text-center text-muted-foreground border border-dashed rounded-xl">
+                      <Users size={28} className="opacity-40" />
+                      <p className="text-sm font-medium">Queue is empty</p>
+                      <p className="text-xs">No customers waiting for this studio</p>
+                    </div>
+                  )
                 )}
 
                 {/* ── QR Scanner (inline) ── */}
@@ -421,21 +542,58 @@ const StudioCounter = () => {
                 )}
               </CardContent>
             </Card>
-          ) : (
-            <Card className="flex items-center justify-center border-dashed min-h-[320px]">
-              <div className="text-center space-y-2 text-muted-foreground p-8">
-                <div className="mx-auto mb-3 rounded-full bg-muted p-4 w-fit">
-                  <Camera size={28} className="opacity-40" />
-                </div>
-                <p className="font-medium">No studio selected</p>
-                <p className="text-xs max-w-xs">
-                  Select an active studio from the list to start managing the queue
-                </p>
-              </div>
-            </Card>
           )}
         </div>
       </div>
+
+      {/* ── Skip Confirmation Dialog ── */}
+      <AlertDialog open={skipDialogOpen} onOpenChange={setSkipDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Skip this customer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-semibold text-foreground">
+                {calledCustomer?.booking?.graduate?.fullName || "This customer"}
+              </span>{" "}
+              (Queue #{calledCustomer?.queueNumber}) will be moved to the end of the queue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-amber-600 hover:bg-amber-700 text-white"
+              onClick={handleConfirmSkip}
+            >
+              Skip Customer
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ── Checkout Confirmation Dialog ── */}
+      <AlertDialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Check out customer?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will end the session for{" "}
+              <span className="font-semibold text-foreground">
+                {currentUser?.booking?.graduate?.fullName || "this customer"}
+              </span>{" "}
+              and mark the studio as free.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive hover:bg-destructive/90 text-white"
+              onClick={handleConfirmCheckOut}
+            >
+              Check Out
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Page>
   );
 };

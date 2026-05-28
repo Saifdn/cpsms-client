@@ -9,23 +9,21 @@ export const Page = ({ children }) => {
   );
 };
 
-export const PageHeader = ({ title, description }) => {
+export const PageHeader = ({ title, description, actions }) => {
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:justify-between">
-        <div className="">
-            <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
-            {description && (
-                <p className="text-muted-foreground">{description}</p>
-            )}
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+        {description && (
+          <p className="text-muted-foreground">{description}</p>
+        )}
+      </div>
+      <div className="flex items-center gap-3">
+        {actions}
+        <div className="max-lg:hidden">
+          <ThemeToggle />
         </div>
-        <div className="">
-            <div className="flex max-lg:hidden">
-                <ThemeToggle />
-
-            </div>
-        </div>
+      </div>
     </div>
-    
-
   );
 };

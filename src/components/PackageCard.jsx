@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2, CheckCircle2 } from "lucide-react";
+import { Edit, Trash2, CheckCircle2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { EditDialog } from "@/components/dialog/EditDialog";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 
-export function PackageCard({ package: pkg, onEdit, onDelete }) {
+export function PackageCard({ package: pkg, onEdit, onDelete, isLoading, isDeleteLoading }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -50,10 +50,20 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
     <>
       <Card
         className={cn(
-          "hover:shadow-lg transition-all duration-200",
-          "border-l-4 border-l-primary/40",
+          "hover:shadow-lg transition-all duration-200 relative",
+          "border-l-4",
+          pkg.isPopular ? "border-l-amber-400" : "border-l-primary/40",
         )}
       >
+        {pkg.isPopular && (
+          <div className="absolute -top-2 -right-2 z-10">
+            <Badge className="bg-amber-400 text-amber-950 hover:bg-amber-400 gap-1 px-2 py-0.5 text-[10px] font-semibold shadow-sm">
+              <Star className="h-2.5 w-2.5 fill-current" />
+              Popular
+            </Badge>
+          </div>
+        )}
+
         <CardHeader className="pb-3">
           <div className="flex items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -121,7 +131,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
         title="Edit Package"
         description="Update package details"
         onSave={handleEditSave}
-        isLoading={false}
+        isLoading={isLoading}
         saveLabel="Save Changes"
       >
         <div className="space-y-6">
@@ -130,7 +140,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
             <Input
               id="pkg-name"
               value={editForm.name}
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, name: e.target.value }))}
             />
           </Field>
 
@@ -139,8 +149,9 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
             <Input
               id="pkg-price"
               type="number"
+              min="0"
               value={editForm.price}
-              onChange={(e) => setEditForm({ ...editForm, price: e.target.value })}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, price: e.target.value }))}
             />
           </Field>
 
@@ -149,7 +160,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
             <Textarea
               id="pkg-services"
               value={editForm.services}
-              onChange={(e) => setEditForm({ ...editForm, services: e.target.value })}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, services: e.target.value }))}
               rows={4}
             />
           </Field>
@@ -159,7 +170,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
             <Textarea
               id="pkg-description"
               value={editForm.description}
-              onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+              onChange={(e) => setEditForm((prev) => ({ ...prev, description: e.target.value }))}
               rows={3}
             />
           </Field>
@@ -171,7 +182,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
                 id="pkg-popular"
                 checked={editForm.isPopular}
                 onCheckedChange={(checked) =>
-                  setEditForm({ ...editForm, isPopular: checked })
+                  setEditForm((prev) => ({ ...prev, isPopular: checked }))
                 }
               />
             </div>
@@ -183,6 +194,7 @@ export function PackageCard({ package: pkg, onEdit, onDelete }) {
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}
         onConfirm={handleDelete}
+        isLoading={isDeleteLoading}
         itemName={pkg.name}
       />
     </>

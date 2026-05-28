@@ -7,7 +7,7 @@ export const useBookingDetails = (bookingNumber) => {
     queryFn: () => queueService.getBookingByNumber(bookingNumber).then(res => res.data),
     enabled: !!bookingNumber,           // Only run when bookingNumber exists
     staleTime: 0,                       // Always fetch fresh data on scan
-    cacheTime: 5 * 60 * 1000,           // Keep in cache for 5 minutes
+    gcTime: 5 * 60 * 1000,             // Keep in cache for 5 minutes
     retry: 1,
   });
 };
