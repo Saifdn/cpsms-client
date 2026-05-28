@@ -1,51 +1,21 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { CalendarDays, Clock, Package, PlusCircle, MapPin, Lock, Loader2 } from "lucide-react";
+import { CalendarDays, Package, PlusCircle, MapPin, Lock, Loader2 } from "lucide-react";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
-
-const malaysiaStates = {
-  "MY-01": "Johor",
-  "MY-02": "Kedah",
-  "MY-03": "Kelantan",
-  "MY-04": "Melaka",
-  "MY-05": "Negeri Sembilan",
-  "MY-06": "Pahang",
-  "MY-07": "Pulau Pinang",
-  "MY-08": "Perak",
-  "MY-09": "Perlis",
-  "MY-10": "Selangor",
-  "MY-11": "Terengganu",
-  "MY-12": "Sabah",
-  "MY-13": "Sarawak",
-  "MY-14": "Wilayah Persekutuan Kuala Lumpur",
-  "MY-15": "Wilayah Persekutuan Labuan",
-  "MY-16": "Wilayah Persekutuan Putrajaya",
-};
-
-const SummaryRow = ({ label, value }) => (
-  <div className="flex justify-between gap-4 text-sm">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium text-right">{value || "-"}</span>
-  </div>
-);
-
-const SectionCard = ({ icon: Icon, title, children }) => (
-  <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
-    <div className="flex items-center gap-2">
-      <Icon className="h-4 w-4 text-primary" />
-      <span className="text-sm font-semibold">{title}</span>
-    </div>
-    <div className="space-y-2">{children}</div>
-  </div>
-);
+import { MALAYSIA_STATES_MAP } from "@/lib/malaysia";
+import { SummaryRow, SectionCard } from "@/components/booking/BookingSummaryParts";
 
 const formatDate = (date) => {
-  if (!date) return "-";
+  if (!date) return null;
   const d = date instanceof Date ? date : new Date(date);
-  if (Number.isNaN(d.getTime())) return "-";
-  return d.toLocaleDateString("en-MY", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toLocaleDateString("en-MY", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
 };
 
 const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
@@ -56,8 +26,11 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
 
   const groupedAddons = selectedAddons.reduce((acc, addon) => {
     const existing = acc.find((a) => a._id === addon._id);
-    if (existing) { existing.qty += 1; }
-    else { acc.push({ ...addon, qty: 1 }); }
+    if (existing) {
+      existing.qty += 1;
+    } else {
+      acc.push({ ...addon, qty: 1 });
+    }
     return acc;
   }, []);
 
@@ -66,7 +39,7 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
   const totalPrice = packagePrice + addonsTotal;
 
   const stateName = delivery.subdivision_code
-    ? malaysiaStates[delivery.subdivision_code] || delivery.subdivision_code
+    ? MALAYSIA_STATES_MAP[delivery.subdivision_code] || delivery.subdivision_code
     : null;
 
   const addressLines = [
@@ -143,7 +116,10 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
             label="Phone"
             value={
               delivery.phone_number
-                ? (parsePhoneNumberFromString(delivery.phone_number, delivery.phone_number_country_code || "MY")?.formatInternational() ?? `+60 ${delivery.phone_number}`)
+                ? (parsePhoneNumberFromString(
+                    delivery.phone_number,
+                    delivery.phone_number_country_code || "MY",
+                  )?.formatInternational() ?? `+60 ${delivery.phone_number}`)
                 : null
             }
           />
@@ -173,12 +149,7 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
 
         {/* Actions */}
         <div className="space-y-3 pt-2">
-          <Button
-            onClick={onComplete}
-            className="w-full"
-            size="lg"
-            disabled={isLoading}
-          >
+          <Button onClick={onComplete} className="w-full" size="lg" disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -194,7 +165,7 @@ const Step4_ReviewPayment = ({ data, onPrev, onComplete, isLoading }) => {
             <span>Secure payment — your information is protected</span>
           </div>
 
-          <Button variant="outline" onClick={onPrev} className="w-full">
+          <Button variant="outline" size="lg" onClick={onPrev} className="w-full">
             Back
           </Button>
         </div>

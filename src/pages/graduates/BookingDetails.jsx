@@ -18,6 +18,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useMyBookingById, useCancelBooking } from "@/hooks/studio/useBookings";
+import { getBookingStatus, getPaymentStatus } from "@/lib/bookingStatus";
 import { getShipmentStatus } from "@/lib/easyparcelStatus";
 import {
   CheckCircle,
@@ -40,50 +41,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import QRCode from "react-qr-code";
-
-// ─── Status Config ───────────────────────────────────────────────────────────
-
-const STATUS_CONFIG = {
-  pending:      { label: "Pending",     className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-700" },
-  booked:       { label: "Booked",      className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800" },
-  "checked-in": { label: "Checked In",  className: "bg-cyan-100 text-cyan-700 dark:bg-cyan-900/30 dark:text-cyan-400 border-cyan-200 dark:border-cyan-800" },
-  "in-progress":{ label: "In Progress", className: "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800" },
-  completed:    { label: "Completed",   className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800" },
-  preparing:    { label: "Preparing",   className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200 dark:border-amber-800" },
-  delivery:     { label: "Delivery",    className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800" },
-  shipped:      { label: "Shipped",     className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400 border-purple-200 dark:border-purple-800" },
-  cancelled:    { label: "Cancelled",   className: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400 border-red-200 dark:border-red-800" },
-};
-
-const PAYMENT_STATUS_CONFIG = {
-  paid:    { label: "Paid",    className: "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200" },
-  unpaid:  { label: "Unpaid",  className: "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 border-amber-200" },
-  pending: { label: "Pending", className: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400 border-gray-200" },
-};
-
-// ─── Helpers ─────────────────────────────────────────────────────────────────
-
-const SummaryRow = ({ label, value }) => (
-  <div className="flex justify-between gap-4 text-sm">
-    <span className="text-muted-foreground">{label}</span>
-    <span className="font-medium text-right">{value || "—"}</span>
-  </div>
-);
-
-const SectionCard = ({ icon, title, children }) => {
-  const SectionIcon = icon;
-  return (
-    <div className="rounded-xl border bg-muted/20 p-4 space-y-3">
-      <div className="flex items-center gap-2">
-        <div className="rounded-md p-1.5 bg-primary/10 text-primary shrink-0">
-          <SectionIcon className="h-4 w-4" />
-        </div>
-        <span className="text-sm font-semibold">{title}</span>
-      </div>
-      <div className="space-y-2">{children}</div>
-    </div>
-  );
-};
+import { SummaryRow, SectionCard } from "@/components/booking/BookingSummaryParts";
 
 // ─── Delivery Sub-Stepper ────────────────────────────────────────────────────
 
@@ -94,9 +52,7 @@ const DeliverySubStepper = ({ shipment }) => {
     (a, b) => new Date(a.timestamp) - new Date(b.timestamp)
   );
   const latestCode = shipment.latest_shipment_status_code;
-  const latestIndex = sortedLogs.findIndex(
-    (l) => l.shipment_status_code === latestCode
-  );
+  const latestIndex = sortedLogs.findIndex((l) => l.shipment_status_code === latestCode);
 
   return (
     <div className="ml-10 mt-3 pl-4 border-l-2 border-dashed border-muted flex flex-col gap-4">
@@ -111,7 +67,7 @@ const DeliverySubStepper = ({ shipment }) => {
             key={log._id}
             className={`flex gap-3 items-start transition-opacity ${isFuture ? "opacity-40" : ""}`}
           >
-            <div className="flex-shrink-0 mt-0.5 -ml-[0.4rem]">
+            <div className="shrink-0 mt-0.5 -ml-[0.4rem]">
               <div
                 className={`w-2.5 h-2.5 rounded-full border-2 ${
                   isLatest
@@ -154,7 +110,7 @@ const DeliverySubStepper = ({ shipment }) => {
 
 const LoadingSkeleton = () => (
   <Page>
-    <PageHeader title="Booking Details" description="Loading…" />
+    <PageHeader title="Booking Details" description="Loading your booking…" />
     <div className="max-w-3xl mx-auto space-y-6">
       <Card>
         <div className="h-1.5 w-full bg-primary/20 rounded-t-xl" />
@@ -217,9 +173,9 @@ const BookingDetails = () => {
           <p className="text-muted-foreground mb-6">
             We couldn't load this booking. It may have been removed or you may not have permission to view it.
           </p>
-          <Button onClick={() => navigate(-1)}>
+          <Button onClick={() => navigate("/my-bookings")}>
             <ChevronLeft className="mr-2 h-4 w-4" />
-            Go Back
+            My Bookings
           </Button>
         </div>
       </Page>
@@ -231,8 +187,8 @@ const BookingDetails = () => {
   const isInDelivery = DELIVERY_STATUSES.includes(booking.status);
   const isCancellable = ["pending", "booked"].includes(booking.status);
 
-  const statusInfo = STATUS_CONFIG[booking.status] ?? { label: booking.status, className: "bg-muted text-muted-foreground" };
-  const paymentInfo = PAYMENT_STATUS_CONFIG[booking.paymentStatus] ?? { label: booking.paymentStatus, className: "bg-muted text-muted-foreground" };
+  const statusInfo = getBookingStatus(booking.status);
+  const paymentInfo = getPaymentStatus(booking.paymentStatus);
 
   const statusSteps = [
     { key: "pending",      label: "Pending",      icon: Clock,        description: "Booking request received" },
@@ -250,6 +206,7 @@ const BookingDetails = () => {
   const addons = booking.addons ?? booking.selectedAddons ?? [];
   const packagePrice = Number(booking.package?.price) || 0;
   const addonsTotal = addons.reduce((sum, a) => sum + (Number(a.price) || 0), 0);
+  const totalPrice = Number(booking.totalPrice) || packagePrice + addonsTotal;
 
   const bookedDate = booking.createdAt ?? booking.bookedAt;
   const delivery = booking.deliveryAddress?.receiver ?? booking.deliveryAddress ?? null;
@@ -262,7 +219,7 @@ const BookingDetails = () => {
 
   const handleConfirmCancel = () => {
     cancelBooking.mutate(booking._id, {
-      onSuccess: () => navigate("/graduate/my-bookings"),
+      onSuccess: () => navigate("/my-bookings"),
     });
   };
 
@@ -291,6 +248,7 @@ const BookingDetails = () => {
                     onClick={handleCopyBookingNumber}
                     className="text-muted-foreground hover:text-foreground transition-colors ml-1"
                     title="Copy booking number"
+                    aria-label="Copy booking number"
                   >
                     <Copy className="h-3.5 w-3.5" />
                   </button>
@@ -303,9 +261,7 @@ const BookingDetails = () => {
                     })}
                   </p>
                 )}
-                <Badge
-                  className={`text-sm px-4 py-1.5 font-semibold border capitalize ${statusInfo.className}`}
-                >
+                <Badge className={`text-sm px-4 py-1.5 font-semibold border capitalize ${statusInfo.className}`}>
                   {statusInfo.label}
                 </Badge>
               </div>
@@ -354,9 +310,7 @@ const BookingDetails = () => {
               </div>
             ) : (
               <div className="relative">
-                {/* Vertical connecting line */}
                 <div className="absolute left-[18px] top-4 bottom-4 w-0.5 bg-muted" />
-
                 <div className="space-y-6">
                   {statusSteps.map((step, index) => {
                     const isCompleted = index <= currentStatusIndex;
@@ -366,7 +320,6 @@ const BookingDetails = () => {
                     return (
                       <div key={step.key}>
                         <div className="relative flex gap-4 items-start">
-                          {/* Circle */}
                           <div
                             className={`relative z-10 w-9 h-9 rounded-full flex items-center justify-center shrink-0 border-2 transition-all ${
                               isCurrent
@@ -382,8 +335,6 @@ const BookingDetails = () => {
                               <step.icon className="h-4 w-4" />
                             )}
                           </div>
-
-                          {/* Content */}
                           <div className="pt-1.5 min-w-0 flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className={`font-medium leading-none ${isCurrent ? "text-primary" : isCompleted ? "" : "text-muted-foreground"}`}>
@@ -395,13 +346,12 @@ const BookingDetails = () => {
                                 </span>
                               )}
                             </div>
-                            <p className={`text-sm mt-0.5 ${isCompleted && !isCurrent ? "text-muted-foreground" : "text-muted-foreground"}`}>
+                            <p className="text-sm mt-0.5 text-muted-foreground">
                               {step.description}
                             </p>
                           </div>
                         </div>
 
-                        {/* Delivery sub-stepper */}
                         {isDeliveryStep && isInDelivery && booking.shipment && (
                           <DeliverySubStepper shipment={booking.shipment} />
                         )}
@@ -426,13 +376,16 @@ const BookingDetails = () => {
           </CardHeader>
           <CardContent className="space-y-4 pb-6">
 
-            {/* Session Details */}
             <SectionCard icon={CalendarDays} title="Session Details">
               <SummaryRow
                 label="Date"
-                value={new Date(booking.session?.date).toLocaleDateString("en-GB", {
-                  weekday: "long", day: "numeric", month: "long", year: "numeric",
-                })}
+                value={
+                  booking.session?.date
+                    ? new Date(booking.session.date).toLocaleDateString("en-GB", {
+                        weekday: "long", day: "numeric", month: "long", year: "numeric",
+                      })
+                    : null
+                }
               />
               <SummaryRow
                 label="Time"
@@ -447,7 +400,6 @@ const BookingDetails = () => {
               )}
             </SectionCard>
 
-            {/* Package */}
             <SectionCard icon={Camera} title="Package">
               <SummaryRow label="Name" value={booking.package?.name} />
               <SummaryRow
@@ -469,7 +421,6 @@ const BookingDetails = () => {
               )}
             </SectionCard>
 
-            {/* Add-ons */}
             {addons.length > 0 && (
               <SectionCard icon={PlusCircle} title="Add-ons">
                 {addons.map((addon, i) => (
@@ -482,7 +433,6 @@ const BookingDetails = () => {
               </SectionCard>
             )}
 
-            {/* Delivery Address */}
             {delivery && (delivery.name || delivery.address_1) && (
               <SectionCard icon={MapPin} title="Delivery Address">
                 {delivery.name && <SummaryRow label="Recipient" value={delivery.name} />}
@@ -517,10 +467,7 @@ const BookingDetails = () => {
                 </div>
                 <span className="text-sm font-semibold">Payment Summary</span>
               </div>
-              <SummaryRow
-                label="Package"
-                value={`RM ${packagePrice.toFixed(2)}`}
-              />
+              <SummaryRow label="Package" value={`RM ${packagePrice.toFixed(2)}`} />
               {addons.length > 0 && (
                 <SummaryRow
                   label={`Add-ons (${addons.length})`}
@@ -531,7 +478,7 @@ const BookingDetails = () => {
               <div className="flex justify-between items-center gap-4">
                 <span className="font-semibold">Total</span>
                 <span className="text-xl font-bold text-primary">
-                  RM {booking.totalPrice.toFixed(2)}
+                  RM {totalPrice.toFixed(2)}
                 </span>
               </div>
               <div className="flex justify-between items-center gap-4 pt-1">
@@ -546,13 +493,9 @@ const BookingDetails = () => {
 
         {/* ── Action Buttons ────────────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row gap-3 pb-4">
-          <Button variant="outline" onClick={() => navigate(-1)} className="flex-1">
+          <Button variant="outline" onClick={() => navigate("/my-bookings")} className="flex-1">
             <ChevronLeft className="mr-2 h-4 w-4" />
-            Back
-          </Button>
-          <Button onClick={() => navigate("/my-bookings")} className="flex-1">
-            <List className="mr-2 h-4 w-4" />
-            View All Bookings
+            My Bookings
           </Button>
           {isCancellable && (
             <Button

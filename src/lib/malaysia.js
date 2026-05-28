@@ -1,0 +1,22 @@
+export const MALAYSIA_STATES = [
+  { code: "MY-01", name: "Johor" },
+  { code: "MY-02", name: "Kedah" },
+  { code: "MY-03", name: "Kelantan" },
+  { code: "MY-04", name: "Melaka" },
+  { code: "MY-05", name: "Negeri Sembilan" },
+  { code: "MY-06", name: "Pahang" },
+  { code: "MY-07", name: "Pulau Pinang" },
+  { code: "MY-08", name: "Perak" },
+  { code: "MY-09", name: "Perlis" },
+  { code: "MY-10", name: "Selangor" },
+  { code: "MY-11", name: "Terengganu" },
+  { code: "MY-12", name: "Sabah" },
+  { code: "MY-13", name: "Sarawak" },
+  { code: "MY-14", name: "Wilayah Persekutuan Kuala Lumpur" },
+  { code: "MY-15", name: "Wilayah Persekutuan Labuan" },
+  { code: "MY-16", name: "Wilayah Persekutuan Putrajaya" },
+];
+
+export const MALAYSIA_STATES_MAP = Object.fromEntries(
+  MALAYSIA_STATES.map(({ code, name }) => [code, name])
+);

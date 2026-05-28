@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import {
   Select,
@@ -15,29 +16,72 @@ import { useState } from "react";
 import { useAuth } from "@/context/useAuth";
 import { useProfile } from "@/hooks/user/useProfile";
 import { MapPin, User, Info } from "lucide-react";
+import { MALAYSIA_STATES } from "@/lib/malaysia";
 
 import PhoneInput from "react-phone-number-input";
 import "react-phone-number-input/style.css";
 import { parsePhoneNumberFromString } from "libphonenumber-js";
 
-const malaysiaStates = [
-  { code: "MY-01", name: "Johor" },
-  { code: "MY-02", name: "Kedah" },
-  { code: "MY-03", name: "Kelantan" },
-  { code: "MY-04", name: "Melaka" },
-  { code: "MY-05", name: "Negeri Sembilan" },
-  { code: "MY-06", name: "Pahang" },
-  { code: "MY-07", name: "Pulau Pinang" },
-  { code: "MY-08", name: "Perak" },
-  { code: "MY-09", name: "Perlis" },
-  { code: "MY-10", name: "Selangor" },
-  { code: "MY-11", name: "Terengganu" },
-  { code: "MY-12", name: "Sabah" },
-  { code: "MY-13", name: "Sarawak" },
-  { code: "MY-14", name: "Wilayah Persekutuan Kuala Lumpur" },
-  { code: "MY-15", name: "Wilayah Persekutuan Labuan" },
-  { code: "MY-16", name: "Wilayah Persekutuan Putrajaya" },
-];
+// ─── Loading Skeleton ─────────────────────────────────────────────────────────
+
+const DeliveryFormSkeleton = ({ onPrev }) => (
+  <Card className="border-0 shadow-md">
+    <CardHeader className="pb-2">
+      <Skeleton className="h-6 w-52" />
+      <Skeleton className="h-4 w-80 mt-1" />
+    </CardHeader>
+    <CardContent className="space-y-8 pt-4">
+      <Skeleton className="h-14 rounded-xl" />
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-40" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-10 rounded-md" />
+          </div>
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-10 rounded-md" />
+          </div>
+        </div>
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-10 rounded-md" />
+        </div>
+      </div>
+      <Skeleton className="h-px w-full" />
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-36" />
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 rounded-md" />
+        </div>
+        <div className="space-y-1.5">
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-10 rounded-md" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="space-y-1.5">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 rounded-md" />
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex gap-3 pt-2">
+        <Button variant="outline" size="lg" onClick={onPrev} className="flex-1">
+          Back
+        </Button>
+        <Button size="lg" disabled className="flex-1">
+          Continue to Review
+        </Button>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+// ─── Delivery Form ────────────────────────────────────────────────────────────
 
 const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
   const [formData, setFormData] = useState({
@@ -82,21 +126,21 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
       phoneCountryCode = parsed.country;
     }
 
-    const receiverData = {
-      name: formData.name,
-      phone_number_country_code: phoneCountryCode,
-      phone_number: phoneNational,
-      email: formData.email,
-      address_1: formData.address_1,
-      address_2: formData.address_2 || "",
-      postcode: formData.postcode,
-      city: formData.city,
-      subdivision_code: formData.subdivision_code,
-      country_code: "MY",
-    };
-
     updateData({
-      deliveryAddress: { receiver: receiverData },
+      deliveryAddress: {
+        receiver: {
+          name: formData.name,
+          phone_number_country_code: phoneCountryCode,
+          phone_number: phoneNational,
+          email: formData.email,
+          address_1: formData.address_1,
+          address_2: formData.address_2 || "",
+          postcode: formData.postcode,
+          city: formData.city,
+          subdivision_code: formData.subdivision_code,
+          country_code: "MY",
+        },
+      },
       notes: formData.notes,
     });
 
@@ -133,7 +177,9 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="name">Full Name <span className="text-destructive">*</span></Label>
+              <Label htmlFor="name">
+                Full Name <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="name"
                 name="name"
@@ -144,7 +190,9 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="phone_number">Phone Number <span className="text-destructive">*</span></Label>
+              <Label htmlFor="phone_number">
+                Phone Number <span className="text-destructive">*</span>
+              </Label>
               <PhoneInput
                 international
                 defaultCountry="MY"
@@ -161,14 +209,16 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
                   "flex h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm transition-colors",
                   "focus-within:outline-none focus-within:ring-1 focus-within:ring-ring",
                   "[&_.PhoneInputInput]:flex-1 [&_.PhoneInputInput]:min-w-0 [&_.PhoneInputInput]:border-0 [&_.PhoneInputInput]:bg-transparent [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:ring-0 [&_.PhoneInputInput]:text-sm [&_.PhoneInputInput]:placeholder:text-muted-foreground",
-                  "[&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-0 [&_.PhoneInputCountrySelect]:outline-none"
+                  "[&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-0 [&_.PhoneInputCountrySelect]:outline-none",
                 )}
               />
             </div>
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="email">Email Address <span className="text-destructive">*</span></Label>
+            <Label htmlFor="email">
+              Email Address <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               name="email"
@@ -190,7 +240,9 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="address_1">Address Line 1 <span className="text-destructive">*</span></Label>
+            <Label htmlFor="address_1">
+              Address Line 1 <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="address_1"
               name="address_1"
@@ -216,7 +268,9 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
 
           <div className="grid gap-4 md:grid-cols-3">
             <div className="space-y-1.5">
-              <Label htmlFor="postcode">Postcode <span className="text-destructive">*</span></Label>
+              <Label htmlFor="postcode">
+                Postcode <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="postcode"
                 name="postcode"
@@ -227,7 +281,9 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="city">City <span className="text-destructive">*</span></Label>
+              <Label htmlFor="city">
+                City <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="city"
                 name="city"
@@ -238,13 +294,15 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="subdivision_code">State <span className="text-destructive">*</span></Label>
+              <Label htmlFor="subdivision_code">
+                State <span className="text-destructive">*</span>
+              </Label>
               <Select value={formData.subdivision_code} onValueChange={handleStateChange}>
                 <SelectTrigger id="subdivision_code">
                   <SelectValue placeholder="Select state" />
                 </SelectTrigger>
                 <SelectContent>
-                  {malaysiaStates.map((state) => (
+                  {MALAYSIA_STATES.map((state) => (
                     <SelectItem key={state.code} value={state.code}>
                       {state.name}
                     </SelectItem>
@@ -257,10 +315,10 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
 
         {/* Actions */}
         <div className="flex gap-3 pt-2">
-          <Button variant="outline" onClick={onPrev} className="flex-1">
+          <Button variant="outline" size="lg" onClick={onPrev} className="flex-1">
             Back
           </Button>
-          <Button onClick={handleContinue} disabled={!isFormValid} className="flex-1">
+          <Button size="lg" onClick={handleContinue} disabled={!isFormValid} className="flex-1">
             Continue to Review
           </Button>
         </div>
@@ -269,11 +327,15 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
   );
 };
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 const Step3_DeliveryDetails = ({ data, updateData, onNext, onPrev }) => {
   const { user } = useAuth();
   const { data: profile, isLoading } = useProfile();
 
-  if (isLoading) return null;
+  if (isLoading) {
+    return <DeliveryFormSkeleton onPrev={onPrev} />;
+  }
 
   return (
     <DeliveryForm

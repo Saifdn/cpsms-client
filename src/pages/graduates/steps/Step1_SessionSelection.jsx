@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useState, useMemo } from "react";
 import { format } from "date-fns";
 import { Calendar } from "@/components/ui/calendar";
@@ -10,6 +11,34 @@ import { useNavigate } from "react-router-dom";
 
 import { useSessionDates, useSessions } from "@/hooks/studio/useSessions";
 
+const CalendarSkeleton = () => (
+  <div className="rounded-xl border bg-muted/30 p-4 w-fit mx-auto">
+    <div className="flex items-center justify-between mb-4 px-1">
+      <Skeleton className="h-7 w-7 rounded-md" />
+      <Skeleton className="h-4 w-32" />
+      <Skeleton className="h-7 w-7 rounded-md" />
+    </div>
+    <div className="grid grid-cols-7 gap-1 mb-2 px-1">
+      {[...Array(7)].map((_, i) => (
+        <Skeleton key={i} className="h-4 w-8 mx-auto" />
+      ))}
+    </div>
+    <div className="grid grid-cols-7 gap-1">
+      {[...Array(35)].map((_, i) => (
+        <Skeleton key={i} className="h-9 w-9 rounded-full mx-auto" />
+      ))}
+    </div>
+  </div>
+);
+
+const SessionSlotSkeleton = () => (
+  <div className="grid gap-3 sm:grid-cols-2">
+    {[1, 2].map((n) => (
+      <Skeleton key={n} className="h-20 rounded-xl" />
+    ))}
+  </div>
+);
+
 const Step1_SessionSelection = ({ data, updateData, onNext }) => {
   const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(
@@ -18,12 +47,11 @@ const Step1_SessionSelection = ({ data, updateData, onNext }) => {
   const [selectedSessionId, setSelectedSessionId] = useState(
     data.selectedSession?._id || "",
   );
-
   const [userNavigatedMonth, setUserNavigatedMonth] = useState(
     data.selectedSession?.date ? new Date(data.selectedSession.date) : undefined,
   );
 
-  const { data: availableDates = [] } = useSessionDates();
+  const { data: availableDates = [], isLoading: datesLoading } = useSessionDates();
 
   const firstAvailableDate = useMemo(() => {
     if (availableDates.length === 0) return undefined;
@@ -70,26 +98,30 @@ const Step1_SessionSelection = ({ data, updateData, onNext }) => {
       <CardContent className="space-y-8 pt-4">
         {/* Calendar */}
         <div className="flex flex-col items-center gap-3">
-          <div className="rounded-xl border bg-muted/30 p-4">
-            <Calendar
-              mode="single"
-              month={calendarMonth}
-              onMonthChange={setUserNavigatedMonth}
-              selected={selectedDate}
-              onSelect={(date) => {
-                if (date) {
-                  setSelectedDate(date);
-                  setSelectedSessionId("");
+          {datesLoading ? (
+            <CalendarSkeleton />
+          ) : (
+            <div className="rounded-xl border bg-muted/30 p-4">
+              <Calendar
+                mode="single"
+                month={calendarMonth}
+                onMonthChange={setUserNavigatedMonth}
+                selected={selectedDate}
+                onSelect={(date) => {
+                  if (date) {
+                    setSelectedDate(date);
+                    setSelectedSessionId("");
+                  }
+                }}
+                disabled={(date) =>
+                  !availableDates.some(
+                    (availableDate) =>
+                      availableDate.toDateString() === date.toDateString(),
+                  )
                 }
-              }}
-              disabled={(date) =>
-                !availableDates.some(
-                  (availableDate) =>
-                    availableDate.toDateString() === date.toDateString(),
-                )
-              }
-            />
-          </div>
+              />
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
             Only dates with available sessions can be selected.
           </p>
@@ -111,15 +143,13 @@ const Step1_SessionSelection = ({ data, updateData, onNext }) => {
               <CalendarDays className="h-10 w-10 text-muted-foreground/40" />
               <div>
                 <p className="text-sm font-medium text-muted-foreground">No date selected</p>
-                <p className="text-xs text-muted-foreground/70">Pick a highlighted date above to see available time slots.</p>
+                <p className="text-xs text-muted-foreground/70">
+                  Pick a highlighted date above to see available time slots.
+                </p>
               </div>
             </div>
           ) : sessionsLoading ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {[1, 2].map((n) => (
-                <div key={n} className="h-20 animate-pulse rounded-xl bg-muted" />
-              ))}
-            </div>
+            <SessionSlotSkeleton />
           ) : availableSessions.length > 0 ? (
             <div className="grid gap-3 sm:grid-cols-2">
               {availableSessions.map((session) => {
