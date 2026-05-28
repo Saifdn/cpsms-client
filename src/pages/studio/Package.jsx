@@ -12,8 +12,10 @@ import {
   Image,
   PackageX,
   PuzzleIcon,
+  Search,
+  X,
 } from "lucide-react";
-import { useState, useMemo } from "react";
+import { createElement, useState, useMemo, useCallback } from "react";
 
 import { PackageCard } from "@/components/PackageCard";
 import { AddonCard } from "@/components/AddonCard";
@@ -46,8 +48,32 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import imageCompression from "browser-image-compression";
 
+// ─── Constants ───────────────────────────────────────────────────────────────
+
+const INITIAL_PACKAGE_FORM = {
+  name: "",
+  description: "",
+  price: "",
+  services: "",
+  isPopular: false,
+};
+
+const INITIAL_ADDON_FORM = {
+  name: "",
+  description: "",
+  price: "",
+  normalPrice: "",
+};
+
+const INITIAL_PROMO_FORM = {
+  name: "",
+  description: "",
+  image: null,
+};
+
+// ─── Stat Card ───────────────────────────────────────────────────────────────
+
 function StatCard({ label, value, icon, iconClass }) {
-  const Icon = icon;
   return (
     <Card>
       <CardContent className="p-5">
@@ -57,13 +83,54 @@ function StatCard({ label, value, icon, iconClass }) {
             <p className="text-2xl font-bold mt-1">{value}</p>
           </div>
           <div className={cn("mt-0.5", iconClass)}>
-            <Icon size={20} />
+            {createElement(icon, { size: 20 })}
           </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+
+// ─── Search Bar ──────────────────────────────────────────────────────────────
+
+function SearchInput({ value, onChange, placeholder }) {
+  return (
+    <div className="relative max-w-xs">
+      <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="pl-8 pr-8 h-9 text-sm"
+      />
+      {value && (
+        <button
+          onClick={() => onChange("")}
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ─── Empty State ─────────────────────────────────────────────────────────────
+
+function EmptyState({ icon, title, description, action }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 text-center gap-3 rounded-lg border border-dashed">
+      {createElement(icon, { className: "h-9 w-9 text-muted-foreground" })}
+      <div>
+        <p className="font-medium text-sm">{title}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+      </div>
+      {action}
+    </div>
+  );
+}
+
+// ─── Page Skeleton ───────────────────────────────────────────────────────────
 
 function PackagePageSkeleton() {
   return (
@@ -136,6 +203,8 @@ function PackagePageSkeleton() {
   );
 }
 
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 const Package = () => {
   const { data: packagesData, isLoading: packagesLoading } = usePackages();
   const { data: addonsData, isLoading: addonsLoading } = useAddons();
@@ -157,35 +226,36 @@ const Package = () => {
 
   const isLoading = packagesLoading || addonsLoading;
 
-  // Dialog States
+  // ─── Dialog state ─────────────────────────────────────────────────────────
   const [showCreatePackage, setShowCreatePackage] = useState(false);
   const [showCreateAddon, setShowCreateAddon] = useState(false);
   const [showCreatePromoImage, setShowCreatePromoImage] = useState(false);
 
-  // Form States
-  const [packageForm, setPackageForm] = useState({
-    name: "",
-    description: "",
-    price: "",
-    services: "",
-    isPopular: false,
-  });
+  // ─── Form state ───────────────────────────────────────────────────────────
+  const [packageForm, setPackageForm] = useState(INITIAL_PACKAGE_FORM);
+  const [addonForm, setAddonForm] = useState(INITIAL_ADDON_FORM);
+  const [promoImageForm, setPromoImageForm] = useState(INITIAL_PROMO_FORM);
+  const [promoImagePreview, setPromoImagePreview] = useState(null);
 
-  const [addonForm, setAddonForm] = useState({
-    name: "",
-    description: "",
-    price: "",
-    normalPrice: "",
-  });
+  // ─── Search state ─────────────────────────────────────────────────────────
+  const [pkgSearch, setPkgSearch] = useState("");
+  const [addonSearch, setAddonSearch] = useState("");
 
-  const [promoImageForm, setPromoImageForm] = useState({
-    name: "",
-    description: "",
-    image: null,
-  });
+  const filteredPackages = useMemo(() => {
+    const q = pkgSearch.trim().toLowerCase();
+    if (!q) return packages;
+    return packages.filter((p) => p.name.toLowerCase().includes(q));
+  }, [packages, pkgSearch]);
 
-  // Handlers
-  const handleCreatePackage = () => {
+  const filteredAddons = useMemo(() => {
+    const q = addonSearch.trim().toLowerCase();
+    if (!q) return addons;
+    return addons.filter((a) => a.name.toLowerCase().includes(q));
+  }, [addons, addonSearch]);
+
+  // ─── Handlers ─────────────────────────────────────────────────────────────
+
+  const handleCreatePackage = useCallback(() => {
     const servicesArray = packageForm.services
       .split(",")
       .map((s) => s.trim())
@@ -202,13 +272,13 @@ const Package = () => {
       {
         onSuccess: () => {
           setShowCreatePackage(false);
-          setPackageForm({ name: "", description: "", price: "", services: "", isPopular: false });
+          setPackageForm(INITIAL_PACKAGE_FORM);
         },
       },
     );
-  };
+  }, [packageForm, createPackage]);
 
-  const handleCreateAddon = () => {
+  const handleCreateAddon = useCallback(() => {
     createAddon.mutate(
       {
         name: addonForm.name,
@@ -219,47 +289,67 @@ const Package = () => {
       {
         onSuccess: () => {
           setShowCreateAddon(false);
-          setAddonForm({ name: "", description: "", price: "", normalPrice: "" });
+          setAddonForm(INITIAL_ADDON_FORM);
         },
       },
     );
-  };
+  }, [addonForm, createAddon]);
 
-  const handleEditPackage = (updatedPackage) => {
-    updatePackage.mutate({ id: updatedPackage._id, ...updatedPackage });
-  };
+  const handleEditPackage = useCallback(
+    (updatedPackage) => {
+      updatePackage.mutate({ id: updatedPackage._id, ...updatedPackage });
+    },
+    [updatePackage],
+  );
 
-  const handleDeletePackage = (id) => {
-    deletePackage.mutate(id);
-  };
+  const handleDeletePackage = useCallback(
+    (id) => {
+      deletePackage.mutate(id);
+    },
+    [deletePackage],
+  );
 
-  const handleEditAddon = (updatedAddon) => {
-    updateAddon.mutate({ id: updatedAddon._id, ...updatedAddon });
-  };
+  const handleEditAddon = useCallback(
+    (updatedAddon) => {
+      updateAddon.mutate({ id: updatedAddon._id, ...updatedAddon });
+    },
+    [updateAddon],
+  );
 
-  const handleDeleteAddon = (id) => {
-    deleteAddon.mutate(id);
-  };
+  const handleDeleteAddon = useCallback(
+    (id) => {
+      deleteAddon.mutate(id);
+    },
+    [deleteAddon],
+  );
 
-  const handleEditPromoAd = ({ id, data }) => {
-    updatePromoAd.mutate({ id, data });
-  };
+  const handleEditPromoAd = useCallback(
+    ({ id, data }) => {
+      updatePromoAd.mutate({ id, data });
+    },
+    [updatePromoAd],
+  );
 
-  const handleDeletePromoAd = (id) => {
-    deletePromoAd.mutate(id);
-  };
+  const handleDeletePromoAd = useCallback(
+    (id) => {
+      deletePromoAd.mutate(id);
+    },
+    [deletePromoAd],
+  );
 
-  const handleImageChange = async (e) => {
+  const handleImageChange = useCallback(async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     const compressedFile = await imageCompression(file, {
       maxSizeMB: 0.5,
       maxWidthOrHeight: 800,
     });
-    setPromoImageForm({ ...promoImageForm, image: compressedFile });
-  };
+    const previewUrl = URL.createObjectURL(compressedFile);
+    setPromoImageForm((prev) => ({ ...prev, image: compressedFile }));
+    setPromoImagePreview(previewUrl);
+  }, []);
 
-  const handleCreatePromoImage = () => {
+  const handleCreatePromoImage = useCallback(() => {
     const formData = new FormData();
     formData.append("name", promoImageForm.name);
     formData.append("description", promoImageForm.description);
@@ -268,10 +358,21 @@ const Package = () => {
     createPromoImage.mutate(formData, {
       onSuccess: () => {
         setShowCreatePromoImage(false);
-        setPromoImageForm({ name: "", description: "", image: null });
+        setPromoImageForm(INITIAL_PROMO_FORM);
+        setPromoImagePreview(null);
       },
     });
-  };
+  }, [promoImageForm, createPromoImage]);
+
+  const handlePromoDialogClose = useCallback((open) => {
+    setShowCreatePromoImage(open);
+    if (!open) {
+      setPromoImageForm(INITIAL_PROMO_FORM);
+      setPromoImagePreview(null);
+    }
+  }, []);
+
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
     <Page>
@@ -284,7 +385,7 @@ const Package = () => {
         <PackagePageSkeleton />
       ) : (
         <div className="grid gap-8 py-8 lg:grid-cols-12">
-          {/* LEFT - Promo Carousel */}
+          {/* LEFT — Promo Ads */}
           <div className="lg:col-span-5 space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold">Promotions</h2>
@@ -298,25 +399,24 @@ const Package = () => {
                 Add Promo
               </Button>
             </div>
+
             {promoAds.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center gap-3 rounded-lg border border-dashed">
-                <Image className="h-9 w-9 text-muted-foreground" />
-                <div>
-                  <p className="font-medium text-sm">No promo ads yet</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Add a promotional image to display to graduates.
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCreatePromoImage(true)}
-                  className="gap-2 mt-1"
-                >
-                  <ImagePlus className="h-4 w-4" />
-                  Add Promo
-                </Button>
-              </div>
+              <EmptyState
+                icon={Image}
+                title="No promo ads yet"
+                description="Add a promotional image to display to graduates."
+                action={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowCreatePromoImage(true)}
+                    className="gap-2 mt-1"
+                  >
+                    <ImagePlus className="h-4 w-4" />
+                    Add Promo
+                  </Button>
+                }
+              />
             ) : (
               <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 {promoAds.map((promo) => (
@@ -333,9 +433,9 @@ const Package = () => {
             )}
           </div>
 
-          {/* RIGHT - Stats + Packages + Addons */}
+          {/* RIGHT — Stats + Packages + Add-ons */}
           <div className="lg:col-span-7 space-y-8">
-            {/* Stats Row */}
+            {/* Stats */}
             <div className="grid grid-cols-3 gap-4">
               <StatCard
                 label="Packages"
@@ -357,7 +457,7 @@ const Package = () => {
               />
             </div>
 
-            {/* Studio Packages Section */}
+            {/* Packages */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -378,39 +478,54 @@ const Package = () => {
                 </Button>
               </div>
 
+              {packages.length > 0 && (
+                <SearchInput
+                  value={pkgSearch}
+                  onChange={setPkgSearch}
+                  placeholder="Search packages..."
+                />
+              )}
+
               {packages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center gap-3 rounded-lg border border-dashed">
-                  <PackageX className="h-9 w-9 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium text-sm">No packages yet</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Get started by creating your first studio package.
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={() => setShowCreatePackage(true)}
-                    className="gap-2 mt-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    New Package
-                  </Button>
+                <EmptyState
+                  icon={PackageX}
+                  title="No packages yet"
+                  description="Get started by creating your first studio package."
+                  action={
+                    <Button
+                      size="sm"
+                      onClick={() => setShowCreatePackage(true)}
+                      className="gap-2 mt-1"
+                    >
+                      <Plus className="h-4 w-4" />
+                      New Package
+                    </Button>
+                  }
+                />
+              ) : filteredPackages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center gap-2 rounded-lg border border-dashed">
+                  <Search className="h-7 w-7 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    No packages match &ldquo;{pkgSearch}&rdquo;
+                  </p>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {packages.map((pkg) => (
+                  {filteredPackages.map((pkg) => (
                     <PackageCard
                       key={pkg._id}
                       package={pkg}
                       onEdit={handleEditPackage}
                       onDelete={handleDeletePackage}
+                      isLoading={updatePackage.isPending}
+                      isDeleteLoading={deletePackage.isPending}
                     />
                   ))}
                 </div>
               )}
             </div>
 
-            {/* Add-ons Section */}
+            {/* Add-ons */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
@@ -432,33 +547,48 @@ const Package = () => {
                 </Button>
               </div>
 
+              {addons.length > 0 && (
+                <SearchInput
+                  value={addonSearch}
+                  onChange={setAddonSearch}
+                  placeholder="Search add-ons..."
+                />
+              )}
+
               {addons.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-center gap-3 rounded-lg border border-dashed">
-                  <PuzzleIcon className="h-9 w-9 text-muted-foreground" />
-                  <div>
-                    <p className="font-medium text-sm">No add-ons yet</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Create optional extras that graduates can add to their bookings.
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowCreateAddon(true)}
-                    className="gap-2 mt-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    New Add-on
-                  </Button>
+                <EmptyState
+                  icon={PuzzleIcon}
+                  title="No add-ons yet"
+                  description="Create optional extras that graduates can add to their bookings."
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setShowCreateAddon(true)}
+                      className="gap-2 mt-1"
+                    >
+                      <Plus className="h-4 w-4" />
+                      New Add-on
+                    </Button>
+                  }
+                />
+              ) : filteredAddons.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center gap-2 rounded-lg border border-dashed">
+                  <Search className="h-7 w-7 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    No add-ons match &ldquo;{addonSearch}&rdquo;
+                  </p>
                 </div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {addons.map((addon) => (
+                  {filteredAddons.map((addon) => (
                     <AddonCard
                       key={addon._id}
                       addon={addon}
                       onEdit={handleEditAddon}
                       onDelete={handleDeleteAddon}
+                      isLoading={updateAddon.isPending}
+                      isDeleteLoading={deleteAddon.isPending}
                     />
                   ))}
                 </div>
@@ -468,7 +598,7 @@ const Package = () => {
         </div>
       )}
 
-      {/* Create Package Dialog */}
+      {/* ── Create Package Dialog ─────────────────────────────────────────── */}
       <CreateDialog
         open={showCreatePackage}
         onOpenChange={setShowCreatePackage}
@@ -485,7 +615,7 @@ const Package = () => {
               id="new-pkg-name"
               value={packageForm.name}
               onChange={(e) =>
-                setPackageForm({ ...packageForm, name: e.target.value })
+                setPackageForm((prev) => ({ ...prev, name: e.target.value }))
               }
               placeholder="Premium Studio Package"
             />
@@ -496,22 +626,24 @@ const Package = () => {
             <Input
               id="new-pkg-price"
               type="number"
+              min="0"
               value={packageForm.price}
               onChange={(e) =>
-                setPackageForm({ ...packageForm, price: e.target.value })
+                setPackageForm((prev) => ({ ...prev, price: e.target.value }))
               }
             />
           </Field>
 
           <Field>
             <FieldLabel htmlFor="new-pkg-services">
-              Services (comma separated)
+              Services{" "}
+              <span className="text-muted-foreground font-normal">(comma separated)</span>
             </FieldLabel>
             <Textarea
               id="new-pkg-services"
               value={packageForm.services}
               onChange={(e) =>
-                setPackageForm({ ...packageForm, services: e.target.value })
+                setPackageForm((prev) => ({ ...prev, services: e.target.value }))
               }
               placeholder="Studio Access, Pro Lighting, Makeup Artist"
               rows={4}
@@ -524,7 +656,7 @@ const Package = () => {
               id="new-pkg-description"
               value={packageForm.description}
               onChange={(e) =>
-                setPackageForm({ ...packageForm, description: e.target.value })
+                setPackageForm((prev) => ({ ...prev, description: e.target.value }))
               }
               rows={3}
             />
@@ -537,7 +669,7 @@ const Package = () => {
                 id="new-pkg-popular"
                 checked={packageForm.isPopular}
                 onCheckedChange={(checked) =>
-                  setPackageForm({ ...packageForm, isPopular: checked })
+                  setPackageForm((prev) => ({ ...prev, isPopular: checked }))
                 }
               />
             </div>
@@ -545,7 +677,7 @@ const Package = () => {
         </div>
       </CreateDialog>
 
-      {/* Create Addon Dialog */}
+      {/* ── Create Add-on Dialog ──────────────────────────────────────────── */}
       <CreateDialog
         open={showCreateAddon}
         onOpenChange={setShowCreateAddon}
@@ -562,19 +694,20 @@ const Package = () => {
               id="new-addon-name"
               value={addonForm.name}
               onChange={(e) =>
-                setAddonForm({ ...addonForm, name: e.target.value })
+                setAddonForm((prev) => ({ ...prev, name: e.target.value }))
               }
             />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="new-addon-price">Addon Price (RM)</FieldLabel>
+            <FieldLabel htmlFor="new-addon-price">Promo Price (RM)</FieldLabel>
             <Input
               id="new-addon-price"
               type="number"
+              min="0"
               value={addonForm.price}
               onChange={(e) =>
-                setAddonForm({ ...addonForm, price: e.target.value })
+                setAddonForm((prev) => ({ ...prev, price: e.target.value }))
               }
             />
           </Field>
@@ -584,9 +717,10 @@ const Package = () => {
             <Input
               id="new-addon-normal-price"
               type="number"
+              min="0"
               value={addonForm.normalPrice}
               onChange={(e) =>
-                setAddonForm({ ...addonForm, normalPrice: e.target.value })
+                setAddonForm((prev) => ({ ...prev, normalPrice: e.target.value }))
               }
             />
           </Field>
@@ -597,7 +731,7 @@ const Package = () => {
               id="new-addon-description"
               value={addonForm.description}
               onChange={(e) =>
-                setAddonForm({ ...addonForm, description: e.target.value })
+                setAddonForm((prev) => ({ ...prev, description: e.target.value }))
               }
               rows={3}
             />
@@ -605,25 +739,26 @@ const Package = () => {
         </div>
       </CreateDialog>
 
-      {/* Create Promo Image Dialog */}
+      {/* ── Create Promo Image Dialog ─────────────────────────────────────── */}
       <CreateDialog
         open={showCreatePromoImage}
-        onOpenChange={setShowCreatePromoImage}
-        title="Create New Promo Image"
-        description="Upload a new promotional image"
+        onOpenChange={handlePromoDialogClose}
+        title="Add Promotional Image"
+        description="Upload an image to display in the graduate booking carousel"
         onSave={handleCreatePromoImage}
         isLoading={createPromoImage.isPending}
-        saveLabel="Create Promo Image"
+        saveLabel="Upload Promo"
       >
-        <div className="space-y-6">
+        <div className="space-y-5">
           <Field>
             <FieldLabel htmlFor="new-promo-name">Name</FieldLabel>
             <Input
               id="new-promo-name"
               value={promoImageForm.name}
               onChange={(e) =>
-                setPromoImageForm({ ...promoImageForm, name: e.target.value })
+                setPromoImageForm((prev) => ({ ...prev, name: e.target.value }))
               }
+              placeholder="Summer Promo 2025"
             />
           </Field>
 
@@ -633,11 +768,9 @@ const Package = () => {
               id="new-promo-description"
               value={promoImageForm.description}
               onChange={(e) =>
-                setPromoImageForm({
-                  ...promoImageForm,
-                  description: e.target.value,
-                })
+                setPromoImageForm((prev) => ({ ...prev, description: e.target.value }))
               }
+              placeholder="Book now and get 10% off"
             />
           </Field>
 
@@ -650,6 +783,16 @@ const Package = () => {
               onChange={handleImageChange}
             />
           </Field>
+
+          {promoImagePreview && (
+            <div className="rounded-lg overflow-hidden border">
+              <img
+                src={promoImagePreview}
+                alt="Preview"
+                className="w-full h-44 object-cover"
+              />
+            </div>
+          )}
         </div>
       </CreateDialog>
     </Page>

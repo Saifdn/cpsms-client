@@ -1,4 +1,3 @@
-// hooks/counter/useLiveQueue.js
 import { useEffect, useState } from "react";
 import { useSocket } from "../useSocket";
 
@@ -9,26 +8,16 @@ export const useLiveQueue = () => {
 
   useEffect(() => {
     const handleQueueUpdate = (payload) => {
-      console.log("Live queue update received:", payload.count || 0, "items");
       setActiveQueue(payload.data || []);
       setIsLoading(false);
     };
 
-    // Listen for live updates
     socket.on("queueUpdated", handleQueueUpdate);
 
-    // Request latest queue data whenever we connect or reconnect
-    const requestLatestQueue = () => {
-      console.log("Requesting latest queue data...");
-      socket.emit("requestQueueUpdate");   // We'll handle this on backend
-    };
+    const requestLatestQueue = () => socket.emit("requestQueueUpdate");
 
-    // Request data when connected
-    if (isConnected) {
-      requestLatestQueue();
-    }
+    if (isConnected) requestLatestQueue();
 
-    // Also request when connection is re-established
     socket.on("connect", requestLatestQueue);
 
     return () => {
@@ -37,9 +26,12 @@ export const useLiveQueue = () => {
     };
   }, [socket, isConnected]);
 
-  return {
-    activeQueue,
-    isConnected,
-    isLoading,
-  };
+  // Safety net: clear loading state if connected but server never responds
+  useEffect(() => {
+    if (!isConnected || !isLoading) return;
+    const timeout = setTimeout(() => setIsLoading(false), 4000);
+    return () => clearTimeout(timeout);
+  }, [isConnected, isLoading]);
+
+  return { activeQueue, isConnected, isLoading };
 };

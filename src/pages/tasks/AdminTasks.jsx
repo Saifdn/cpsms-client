@@ -35,7 +35,6 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 import { MoreHorizontal, ChevronsUpDown, Plus, X } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import {
@@ -45,40 +44,11 @@ import {
   useUpdateTask,
   useDeleteTask,
 } from "@/hooks/task/useTasks";
-
-const CATEGORY_CONFIG = {
-  studio: {
-    label: "Studio",
-    className: "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
-  },
-  counter: {
-    label: "Counter",
-    className: "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
-  },
-  shipment: {
-    label: "Shipment",
-    className: "bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400",
-  },
-  admin: {
-    label: "Admin",
-    className: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400",
-  },
-  other: {
-    label: "Other",
-    className: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400",
-  },
-};
-
-const CATEGORIES = Object.keys(CATEGORY_CONFIG);
-
-function CategoryBadge({ value }) {
-  const cfg = CATEGORY_CONFIG[value] ?? CATEGORY_CONFIG.other;
-  return (
-    <Badge variant="secondary" className={cn("text-xs", cfg.className)}>
-      {cfg.label}
-    </Badge>
-  );
-}
+import {
+  CategoryBadge,
+  CATEGORY_CONFIG,
+  CATEGORIES,
+} from "@/components/task/TaskCategoryBadge";
 
 function TaskActionsCell({ task, onEdit, onDelete }) {
   return (
@@ -109,7 +79,9 @@ function createTaskColumns({ onEdit, onDelete }) {
       accessorKey: "title",
       header: "Title",
       cell: ({ row }) => (
-        <div className="font-medium max-w-[200px] truncate">{row.original.title}</div>
+        <div className="font-medium max-w-[200px] truncate">
+          {row.original.title}
+        </div>
       ),
     },
     {
@@ -121,15 +93,22 @@ function createTaskColumns({ onEdit, onDelete }) {
       id: "assignedTo",
       header: "Assigned To",
       cell: ({ row }) => {
-        const names = row.original.assignedTo?.map((u) => u.fullName).join(", ") || "—";
-        return <span className="text-sm text-muted-foreground">{names}</span>;
+        const names =
+          row.original.assignedTo?.map((u) => u.fullName).join(", ") || "—";
+        return (
+          <span className="text-sm text-muted-foreground truncate max-w-[180px] block">
+            {names}
+          </span>
+        );
       },
     },
     {
       id: "assignedBy",
       header: "Created By",
       cell: ({ row }) => (
-        <span className="text-sm">{row.original.assignedBy?.fullName ?? "—"}</span>
+        <span className="text-sm">
+          {row.original.assignedBy?.fullName ?? "—"}
+        </span>
       ),
     },
     {
@@ -142,21 +121,32 @@ function createTaskColumns({ onEdit, onDelete }) {
       id: "actions",
       header: () => <div className="text-right">Actions</div>,
       cell: ({ row }) => (
-        <TaskActionsCell task={row.original} onEdit={onEdit} onDelete={onDelete} />
+        <TaskActionsCell
+          task={row.original}
+          onEdit={onEdit}
+          onDelete={onDelete}
+        />
       ),
     },
   ];
 }
 
-const EMPTY_FORM = { title: "", description: "", category: "other", assignedTo: [] };
+const EMPTY_FORM = {
+  title: "",
+  description: "",
+  category: "other",
+  assignedTo: [],
+};
 
 function TaskFormFields({ form, onChange, staffList = [], staffLoading }) {
   const [openAssign, setOpenAssign] = useState(false);
 
   const toggleStaff = (id) => {
-    onChange("assignedTo", form.assignedTo.includes(id)
-      ? form.assignedTo.filter((x) => x !== id)
-      : [...form.assignedTo, id]
+    onChange(
+      "assignedTo",
+      form.assignedTo.includes(id)
+        ? form.assignedTo.filter((x) => x !== id)
+        : [...form.assignedTo, id]
     );
   };
 
@@ -185,7 +175,10 @@ function TaskFormFields({ form, onChange, staffList = [], staffLoading }) {
 
       <div className="space-y-1.5">
         <Label htmlFor="task-category">Category</Label>
-        <Select value={form.category} onValueChange={(v) => onChange("category", v)}>
+        <Select
+          value={form.category}
+          onValueChange={(v) => onChange("category", v)}
+        >
           <SelectTrigger id="task-category">
             <SelectValue />
           </SelectTrigger>
@@ -235,7 +228,9 @@ function TaskFormFields({ form, onChange, staffList = [], staffLoading }) {
                     />
                     <div className="flex flex-col min-w-0">
                       <span className="font-medium truncate">{s.fullName}</span>
-                      <span className="text-xs text-muted-foreground truncate">{s.email}</span>
+                      <span className="text-xs text-muted-foreground truncate">
+                        {s.email}
+                      </span>
                     </div>
                   </CommandItem>
                 ))}
@@ -268,9 +263,11 @@ function TaskFormFields({ form, onChange, staffList = [], staffLoading }) {
   );
 }
 
+const EMPTY_EDIT = null;
+
 const AdminTasks = () => {
   const [showCreate, setShowCreate] = useState(false);
-  const [editTask, setEditTask] = useState(null);
+  const [editTask, setEditTask] = useState(EMPTY_EDIT);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
@@ -280,12 +277,11 @@ const AdminTasks = () => {
   const { mutate: updateTask, isPending: updatePending } = useUpdateTask();
   const { mutate: deleteTask, isPending: deletePending } = useDeleteTask();
 
-  const tasks = tasksData?.data || [];
-  const staffList = staffData?.data || [];
+  const tasks = tasksData?.data ?? [];
+  const staffList = staffData?.data ?? [];
 
-  const handleFormChange = (field, value) => {
+  const handleFormChange = (field, value) =>
     setForm((prev) => ({ ...prev, [field]: value }));
-  };
 
   const validateForm = () => {
     if (!form.title.trim()) {
@@ -312,7 +308,12 @@ const AdminTasks = () => {
   const handleCreate = () => {
     if (!validateForm()) return;
     createTask(
-      { title: form.title.trim(), description: form.description.trim(), category: form.category, assignedTo: form.assignedTo },
+      {
+        title: form.title.trim(),
+        description: form.description.trim(),
+        category: form.category,
+        assignedTo: form.assignedTo,
+      },
       { onSuccess: () => handleCloseCreate(false) }
     );
   };
@@ -322,7 +323,7 @@ const AdminTasks = () => {
       title: task.title,
       description: task.description || "",
       category: task.category || "other",
-      assignedTo: task.assignedTo?.map((u) => u._id) || [],
+      assignedTo: task.assignedTo?.map((u) => u._id) ?? [],
     });
     setEditTask(task);
   }, []);
@@ -337,7 +338,13 @@ const AdminTasks = () => {
   const handleUpdate = () => {
     if (!validateForm()) return;
     updateTask(
-      { id: editTask._id, title: form.title.trim(), description: form.description.trim(), category: form.category, assignedTo: form.assignedTo },
+      {
+        id: editTask._id,
+        title: form.title.trim(),
+        description: form.description.trim(),
+        category: form.category,
+        assignedTo: form.assignedTo,
+      },
       { onSuccess: () => handleCloseEdit(false) }
     );
   };
@@ -356,19 +363,17 @@ const AdminTasks = () => {
       <PageHeader
         title="Tasks"
         description="Manage and assign tasks to staff members"
-      />
-
-      <div className="grid gap-6 py-8">
-        <div className="flex justify-end">
+        actions={
           <Button onClick={handleOpenCreate} className="gap-2">
             <Plus className="h-4 w-4" />
             Create Task
           </Button>
-        </div>
+        }
+      />
 
-        <DataTable
+      <DataTable
         title="All Tasks"
-        description={`${tasks.length} task${tasks.length !== 1 ? "s" : ""} in total`}
+        description={`${tasks.length} task${tasks.length !== 1 ? "s" : ""} total`}
         columns={columns}
         data={tasks}
         isLoading={isLoading}
@@ -377,9 +382,7 @@ const AdminTasks = () => {
         onPageChange={() => {}}
         onLimitChange={() => {}}
       />
-      </div>
 
-      {/* Create Dialog */}
       <CreateDialog
         open={showCreate}
         onOpenChange={handleCloseCreate}
@@ -397,7 +400,6 @@ const AdminTasks = () => {
         />
       </CreateDialog>
 
-      {/* Edit Dialog */}
       <CreateDialog
         open={!!editTask}
         onOpenChange={handleCloseEdit}
@@ -415,10 +417,11 @@ const AdminTasks = () => {
         />
       </CreateDialog>
 
-      {/* Delete Confirmation */}
       <DeleteAlertDialog
         open={!!deleteTarget}
-        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null);
+        }}
         onConfirm={handleDelete}
         description="This will permanently delete the task"
         itemName={deleteTarget?.title}

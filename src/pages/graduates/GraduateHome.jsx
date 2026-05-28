@@ -1,4 +1,4 @@
-// pages/graduate/GraduateHome.jsx
+// pages/graduates/GraduateHome.jsx
 import { useState, useEffect, useCallback } from "react";
 import { Page } from "@/components/layout/Page";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,11 +14,18 @@ import {
   ArrowRight, ChevronLeft, ChevronRight,
   CheckCircle2, Star, ZoomIn, Camera,
   Users, Image, Award, Sparkles, BookOpen, Download, Truck,
+  AlertCircle, RefreshCw,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 
 // ─── Promo Carousel ──────────────────────────────────────────────────────────
+
+const PromoCarouselSkeleton = () => (
+  <div className="w-full max-w-md md:max-w-lg lg:max-w-xl mx-auto">
+    <div className="aspect-3/4 rounded-2xl bg-muted animate-pulse" />
+  </div>
+);
 
 const PromoCarousel = ({ promoAds }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -48,22 +55,18 @@ const PromoCarousel = ({ promoAds }) => {
         onMouseLeave={() => setIsPaused(false)}
         onClick={() => setLightboxOpen(true)}
       >
-        {/* Fixed 3:4 Aspect Ratio */}
         <div className="aspect-[3/4] relative">
           <img
             src={current.imageBase64}
             alt={current.name}
             className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
           />
-          
           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
 
-          {/* Zoom Icon */}
           <div className="absolute top-4 right-4 bg-white/20 backdrop-blur-sm rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <ZoomIn className="h-5 w-5 text-white" />
           </div>
 
-          {/* Content */}
           <div className="absolute bottom-12 left-6 right-6 text-white">
             <h3 className="text-2xl font-bold drop-shadow-lg">{current.name}</h3>
             {current.description && (
@@ -71,7 +74,6 @@ const PromoCarousel = ({ promoAds }) => {
             )}
           </div>
 
-          {/* Indicators */}
           {promoAds.length > 1 && (
             <div
               className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2"
@@ -81,6 +83,7 @@ const PromoCarousel = ({ promoAds }) => {
                 <button
                   key={i}
                   onClick={() => setCurrentIndex(i)}
+                  aria-label={`Go to slide ${i + 1}`}
                   className={`h-2 rounded-full transition-all duration-300 ${
                     i === currentIndex ? "w-6 bg-white" : "w-2 bg-white/50"
                   }`}
@@ -89,16 +92,17 @@ const PromoCarousel = ({ promoAds }) => {
             </div>
           )}
 
-          {/* Navigation Buttons */}
           {promoAds.length > 1 && (
             <>
               <button
+                aria-label="Previous slide"
                 className="absolute left-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
                 onClick={(e) => { e.stopPropagation(); prev(); }}
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
               <button
+                aria-label="Next slide"
                 className="absolute right-3 top-1/2 -translate-y-1/2 bg-black/40 hover:bg-black/60 backdrop-blur-sm text-white rounded-full p-2 opacity-0 group-hover:opacity-100 transition-all"
                 onClick={(e) => { e.stopPropagation(); next(); }}
               >
@@ -109,7 +113,6 @@ const PromoCarousel = ({ promoAds }) => {
         </div>
       </div>
 
-      {/* Lightbox */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
         <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-none">
           <img
@@ -230,9 +233,9 @@ const PackageSkeleton = () => (
 
 const STATS = [
   { value: "1000+", label: "Graduates Served", icon: Users },
-  { value: "5+", label: "Years Experience", icon: Award },
-  { value: "100%", label: "Satisfaction Rate", icon: Star },
-  { value: "HD", label: "Digital Gallery", icon: Image },
+  { value: "5+",    label: "Years Experience",  icon: Award },
+  { value: "100%",  label: "Satisfaction Rate", icon: Star },
+  { value: "HD",    label: "Digital Gallery",   icon: Image },
 ];
 
 const StatsBar = () => (
@@ -281,7 +284,7 @@ const FeaturesGrid = () => (
       </span>
       <h2 className="text-3xl font-bold">Why Choose KFK Studio?</h2>
     </div>
-    <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-3 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
       {FEATURES.map((feature) => {
         const Icon = feature.icon;
         return (
@@ -335,7 +338,6 @@ const HowItWorks = () => (
     </div>
 
     <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8">
-      {/* Connecting line (desktop only) */}
       <div className="absolute top-8 left-[calc(16.67%+1rem)] right-[calc(16.67%+1rem)] hidden md:block border-t-2 border-dashed border-primary/25 pointer-events-none" />
 
       {STEPS.map((step, i) => {
@@ -367,7 +369,6 @@ const HowItWorks = () => (
 const CtaBanner = ({ onBook }) => (
   <div className="relative rounded-3xl overflow-hidden mb-4">
     <div className="absolute inset-0 bg-primary" />
-    {/* Decorative circles */}
     <div className="absolute -top-10 -right-10 h-48 w-48 rounded-full bg-white/5" />
     <div className="absolute -bottom-8 -left-8 h-36 w-36 rounded-full bg-white/5" />
     <div className="absolute top-4 right-1/3 h-20 w-20 rounded-full bg-white/5" />
@@ -402,15 +403,63 @@ const CtaBanner = ({ onBook }) => (
 );
 
 
+// ─── Packages Section ─────────────────────────────────────────────────────────
+
+const PackagesSection = ({ isLoading, isError, packages, onBook, onRetry }) => {
+  if (isLoading) {
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+        {[...Array(3)].map((_, i) => <PackageSkeleton key={i} />)}
+      </div>
+    );
+  }
+
+  if (isError) {
+    return (
+      <div className="flex flex-col items-center justify-center py-14 text-center gap-4">
+        <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30">
+          <AlertCircle className="h-7 w-7 text-red-600 dark:text-red-400" />
+        </div>
+        <div>
+          <p className="font-semibold mb-1">Failed to load packages</p>
+          <p className="text-sm text-muted-foreground">Please try again.</p>
+        </div>
+        <Button variant="outline" size="sm" onClick={onRetry}>
+          <RefreshCw className="mr-2 h-4 w-4" />
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (packages.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-14 text-center gap-3">
+        <Camera className="h-10 w-10 text-muted-foreground" />
+        <p className="text-muted-foreground">No packages available at the moment.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7 items-start">
+      {packages.map((pkg) => (
+        <PackageCard key={pkg._id} pkg={pkg} onBook={onBook} />
+      ))}
+    </div>
+  );
+};
+
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 const GraduateHome = () => {
-  const { data: packagesData, isLoading } = usePackages();
+  const { data: packagesData, isLoading, isError, refetch } = usePackages();
   const { data: promoAds, isLoading: promoLoading } = usePromoAds();
   const navigate = useNavigate();
 
-  const packages = packagesData?.data || [];
-  const ads = promoAds?.data || [];
+  const packages = packagesData?.data ?? [];
+  const ads = promoAds?.data ?? [];
 
   const handleBookPackage = (pkg) =>
     navigate(`/book?packageId=${pkg._id}`, { state: { selectedPackage: pkg } });
@@ -426,12 +475,12 @@ const GraduateHome = () => {
       <div className="relative rounded-3xl overflow-hidden mb-8">
         <img
           src="/hero-studio.svg"
-          alt="KFK Studio"
+          alt=""
+          aria-hidden="true"
           className="absolute inset-0 w-full h-full object-cover"
+          onError={(e) => { e.currentTarget.style.display = "none"; }}
         />
-        {/* Layered gradient: primary tint + dark */}
-        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/55 to-primary/20" />
-        {/* Subtle dot-pattern texture */}
+        <div className="absolute inset-0 bg-linear-to-r from-black/80 via-black/55 to-primary/20" />
         <div
           className="absolute inset-0 opacity-10"
           style={{
@@ -441,7 +490,6 @@ const GraduateHome = () => {
         />
 
         <div className="relative flex flex-col justify-between min-h-[520px] py-8 px-5 md:py-10 md:px-14">
-          {/* Top: badge */}
           <div>
             <Badge className="bg-white/15 text-white border-white/25 backdrop-blur-sm gap-1.5">
               <span className="relative flex h-2 w-2">
@@ -452,7 +500,6 @@ const GraduateHome = () => {
             </Badge>
           </div>
 
-          {/* Middle: headline + CTAs */}
           <div className="max-w-2xl">
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white leading-tight mb-3 md:mb-4">
               Capture Your<br />Best Moments
@@ -476,7 +523,6 @@ const GraduateHome = () => {
             </div>
           </div>
 
-          {/* Bottom strip: trust signals */}
           <div className="flex flex-wrap gap-x-6 gap-y-1">
             {["Professional Equipment", "Expert Photographers", "HD Digital Gallery"].map((item) => (
               <div key={item} className="flex items-center gap-1.5 text-white/80 text-xs md:text-sm">
@@ -492,18 +538,27 @@ const GraduateHome = () => {
       <StatsBar />
 
       {/* ── Promo Ads Carousel ────────────────────────────────────────────── */}
-      {!promoLoading && ads.length > 0 && (
+      {(promoLoading || ads.length > 0) && (
         <div className="mb-12 md:mb-16">
           <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-6 gap-3">
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
-                Special Promotions
-              </h2>
-              <p className="text-muted-foreground text-sm mt-1">
-                Click any slide to view full image
-              </p>
+              {promoLoading ? (
+                <>
+                  <Skeleton className="h-8 w-52 mb-2" />
+                  <Skeleton className="h-4 w-40" />
+                </>
+              ) : (
+                <>
+                  <h2 className="text-2xl md:text-3xl font-bold tracking-tight">
+                    Special Promotions
+                  </h2>
+                  <p className="text-muted-foreground text-sm mt-1">
+                    Click any slide to view full image
+                  </p>
+                </>
+              )}
             </div>
-            
+
             <Badge className="gap-1.5 bg-amber-500/10 text-amber-600 border-amber-500/20 self-start sm:self-auto">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
@@ -513,8 +568,12 @@ const GraduateHome = () => {
             </Badge>
           </div>
 
-          <div className="max-w-md md:max-w-2xl lg:max-w-3xl mx-auto"> 
-            <PromoCarousel promoAds={ads} />
+          <div className="max-w-md md:max-w-2xl lg:max-w-3xl mx-auto">
+            {promoLoading ? (
+              <PromoCarouselSkeleton />
+            ) : (
+              <PromoCarousel promoAds={ads} />
+            )}
           </div>
         </div>
       )}
@@ -538,23 +597,13 @@ const GraduateHome = () => {
             </p>
           </div>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
-              <PackageSkeleton />
-              <PackageSkeleton />
-              <PackageSkeleton />
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-7 items-start">
-              {packages.map((pkg) => (
-                <PackageCard
-                  key={pkg._id}
-                  pkg={pkg}
-                  onBook={handleBookPackage}
-                />
-              ))}
-            </div>
-          )}
+          <PackagesSection
+            isLoading={isLoading}
+            isError={isError}
+            packages={packages}
+            onBook={handleBookPackage}
+            onRetry={refetch}
+          />
         </div>
       </div>
 

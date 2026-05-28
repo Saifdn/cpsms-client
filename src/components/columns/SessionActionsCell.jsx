@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -26,26 +27,43 @@ export function SessionActionsCell({ row }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showViewDialog, setShowViewDialog] = useState(false);
 
-  const [editForm, setEditForm] = useState({
-    startTime: session.startTime || "",
-    endTime: session.endTime || "",
-    duration: session.duration || 60,
-    capacity: session.capacity || 5,
+  const form = useForm({
+    defaultValues: {
+      startTime: session.startTime || "",
+      endTime: session.endTime || "",
+      duration: session.duration || 60,
+      capacity: session.capacity || 5,
+    },
   });
 
-  const handleEditSave = () => {
-    updateSession.mutate({
-      id: session._id,
-      ...editForm,
-      duration: Number(editForm.duration),
-      capacity: Number(editForm.capacity),
-    });
-    setShowEditDialog(false);
+  const handleEditOpenChange = (open) => {
+    setShowEditDialog(open);
+    if (open) {
+      form.reset({
+        startTime: session.startTime || "",
+        endTime: session.endTime || "",
+        duration: session.duration || 60,
+        capacity: session.capacity || 5,
+      });
+    }
   };
 
+  const handleEditSave = form.handleSubmit((values) => {
+    updateSession.mutate(
+      {
+        id: session._id,
+        ...values,
+        duration: Number(values.duration),
+        capacity: Number(values.capacity),
+      },
+      { onSuccess: () => setShowEditDialog(false) },
+    );
+  });
+
   const handleDelete = () => {
-    deleteSession.mutate(session._id);
-    setShowDeleteDialog(false);
+    deleteSession.mutate(session._id, {
+      onSuccess: () => setShowDeleteDialog(false),
+    });
   };
 
   return (
@@ -58,25 +76,19 @@ export function SessionActionsCell({ row }) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              onClick={() => setShowViewDialog(true)} 
-              className="cursor-pointer"
-            >
+            <DropdownMenuItem onClick={() => setShowViewDialog(true)} className="cursor-pointer">
               <Eye className="mr-2 h-4 w-4" />
               View Details
             </DropdownMenuItem>
 
-            <DropdownMenuItem 
-              onClick={() => setShowEditDialog(true)} 
-              className="cursor-pointer"
-            >
+            <DropdownMenuItem onClick={() => handleEditOpenChange(true)} className="cursor-pointer">
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
 
             <DropdownMenuSeparator />
 
-            <DropdownMenuItem 
+            <DropdownMenuItem
               onClick={() => setShowDeleteDialog(true)}
               className="text-destructive cursor-pointer"
             >
@@ -87,11 +99,10 @@ export function SessionActionsCell({ row }) {
         </DropdownMenu>
       </div>
 
-      {/* View Details Dialog */}
       <ViewDetailsDialog
         open={showViewDialog}
         onOpenChange={setShowViewDialog}
-        title={`Session - ${new Date(session.date).toLocaleDateString()}`}
+        title={`Session — ${new Date(session.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}`}
         data={session}
         fields={[
           { key: "date", label: "Date", isDate: true },
@@ -104,60 +115,96 @@ export function SessionActionsCell({ row }) {
         ]}
       />
 
-      {/* Edit Dialog */}
       <EditDialog
         open={showEditDialog}
-        onOpenChange={setShowEditDialog}
+        onOpenChange={handleEditOpenChange}
         title="Edit Session"
-        description="Update session timing and capacity"
+        description="Update session timing and capacity."
         onSave={handleEditSave}
         isLoading={updateSession.isPending}
         saveLabel="Save Changes"
       >
-        <div className="space-y-6">
-          <Field>
-            <FieldLabel htmlFor="startTime">Start Time</FieldLabel>
-            <Input
-              id="startTime"
-              type="time"
-              value={editForm.startTime}
-              onChange={(e) => setEditForm({ ...editForm, startTime: e.target.value })}
-            />
-          </Field>
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <Field>
+              <FieldLabel htmlFor="edit-startTime">
+                Start Time <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Input
+                id="edit-startTime"
+                type="time"
+                disabled={updateSession.isPending}
+                {...form.register("startTime", { required: "Required" })}
+              />
+              {form.formState.errors.startTime && (
+                <p className="text-xs text-destructive mt-1">
+                  {form.formState.errors.startTime.message}
+                </p>
+              )}
+            </Field>
 
-          <Field>
-            <FieldLabel htmlFor="endTime">End Time</FieldLabel>
-            <Input
-              id="endTime"
-              type="time"
-              value={editForm.endTime}
-              onChange={(e) => setEditForm({ ...editForm, endTime: e.target.value })}
-            />
-          </Field>
+            <Field>
+              <FieldLabel htmlFor="edit-endTime">
+                End Time <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Input
+                id="edit-endTime"
+                type="time"
+                disabled={updateSession.isPending}
+                {...form.register("endTime", { required: "Required" })}
+              />
+              {form.formState.errors.endTime && (
+                <p className="text-xs text-destructive mt-1">
+                  {form.formState.errors.endTime.message}
+                </p>
+              )}
+            </Field>
+          </div>
 
-          <Field>
-            <FieldLabel htmlFor="duration">Duration (minutes)</FieldLabel>
-            <Input
-              id="duration"
-              type="number"
-              value={editForm.duration}
-              onChange={(e) => setEditForm({ ...editForm, duration: Number(e.target.value) })}
-            />
-          </Field>
+          <div className="grid grid-cols-2 gap-4">
+            <Field>
+              <FieldLabel htmlFor="edit-duration">Duration (minutes)</FieldLabel>
+              <Input
+                id="edit-duration"
+                type="number"
+                min={15}
+                disabled={updateSession.isPending}
+                {...form.register("duration", {
+                  required: "Required",
+                  min: { value: 15, message: "Min 15" },
+                  valueAsNumber: true,
+                })}
+              />
+              {form.formState.errors.duration && (
+                <p className="text-xs text-destructive mt-1">
+                  {form.formState.errors.duration.message}
+                </p>
+              )}
+            </Field>
 
-          <Field>
-            <FieldLabel htmlFor="capacity">Capacity</FieldLabel>
-            <Input
-              id="capacity"
-              type="number"
-              value={editForm.capacity}
-              onChange={(e) => setEditForm({ ...editForm, capacity: Number(e.target.value) })}
-            />
-          </Field>
+            <Field>
+              <FieldLabel htmlFor="edit-capacity">Capacity (pax)</FieldLabel>
+              <Input
+                id="edit-capacity"
+                type="number"
+                min={1}
+                disabled={updateSession.isPending}
+                {...form.register("capacity", {
+                  required: "Required",
+                  min: { value: 1, message: "Min 1" },
+                  valueAsNumber: true,
+                })}
+              />
+              {form.formState.errors.capacity && (
+                <p className="text-xs text-destructive mt-1">
+                  {form.formState.errors.capacity.message}
+                </p>
+              )}
+            </Field>
+          </div>
         </div>
       </EditDialog>
 
-      {/* Delete Dialog */}
       <DeleteAlertDialog
         open={showDeleteDialog}
         onOpenChange={setShowDeleteDialog}

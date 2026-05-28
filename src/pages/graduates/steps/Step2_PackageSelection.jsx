@@ -7,11 +7,52 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePackages } from "@/hooks/studio/usePackages";
 import { useAddons } from "@/hooks/studio/useAddons";
 import { useState } from "react";
 import { CheckCircle2, Star, Package, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+// ─── Skeletons ────────────────────────────────────────────────────────────────
+
+const PackageCardSkeleton = () => (
+  <div className="rounded-xl border overflow-hidden">
+    <div className="h-1 w-full bg-muted" />
+    <div className="p-5 space-y-4">
+      <div className="flex justify-between items-start gap-3">
+        <div className="space-y-2 flex-1">
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-3 w-full" />
+        </div>
+        <Skeleton className="h-6 w-16 rounded-full shrink-0" />
+      </div>
+      <Skeleton className="h-8 w-1/3" />
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-5/6" />
+        <Skeleton className="h-4 w-4/5" />
+      </div>
+    </div>
+  </div>
+);
+
+const AddonSkeleton = () => (
+  <div className="rounded-xl border p-4 flex items-center gap-4">
+    <div className="flex-1 space-y-2">
+      <Skeleton className="h-4 w-32" />
+      <Skeleton className="h-3 w-48" />
+      <Skeleton className="h-4 w-16" />
+    </div>
+    <div className="flex items-center gap-2 shrink-0">
+      <Skeleton className="h-7 w-7 rounded-md" />
+      <Skeleton className="h-4 w-5" />
+      <Skeleton className="h-7 w-7 rounded-md" />
+    </div>
+  </div>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
   const { data: packagesData, isLoading: packagesLoading } = usePackages();
@@ -39,7 +80,10 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
   const decrementAddon = (addon) => {
     let removed = false;
     const updated = selectedAddons.filter((item) => {
-      if (!removed && item._id === addon._id) { removed = true; return false; }
+      if (!removed && item._id === addon._id) {
+        removed = true;
+        return false;
+      }
       return true;
     });
     setSelectedAddons(updated);
@@ -71,9 +115,7 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
 
           {packagesLoading ? (
             <div className="grid gap-4 md:grid-cols-2">
-              {[1, 2].map((n) => (
-                <div key={n} className="h-64 animate-pulse rounded-xl bg-muted" />
-              ))}
+              {[1, 2].map((n) => <PackageCardSkeleton key={n} />)}
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2">
@@ -91,11 +133,9 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
                         : "bg-background hover:border-primary/40 hover:shadow-md",
                     )}
                   >
-                    {/* Top accent stripe */}
                     <div className={cn("h-1 w-full", isSelected ? "bg-primary" : "bg-muted")} />
 
                     <div className="flex flex-1 flex-col p-5 gap-4">
-                      {/* Header row */}
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="text-base font-bold">{pkg.name}</div>
@@ -118,13 +158,11 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
                         </div>
                       </div>
 
-                      {/* Price */}
                       <div>
                         <span className="text-3xl font-bold">RM {pkg.price}</span>
                         <span className="text-sm text-muted-foreground"> / session</span>
                       </div>
 
-                      {/* Services */}
                       {pkg.services?.length > 0 && (
                         <ul className="space-y-1.5">
                           {pkg.services.slice(0, 5).map((service, i) => (
@@ -163,9 +201,7 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
 
           {addonsLoading ? (
             <div className="grid gap-3 md:grid-cols-2">
-              {[1, 2].map((n) => (
-                <div key={n} className="h-20 animate-pulse rounded-xl bg-muted" />
-              ))}
+              {[1, 2].map((n) => <AddonSkeleton key={n} />)}
             </div>
           ) : addons.length === 0 ? (
             <p className="text-sm text-muted-foreground">No add-ons available.</p>
@@ -187,9 +223,13 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
                     <div className="flex-1 min-w-0">
                       <div className="text-sm font-semibold">{addon.name}</div>
                       {addon.description && (
-                        <div className="text-xs text-muted-foreground truncate">{addon.description}</div>
+                        <div className="text-xs text-muted-foreground truncate">
+                          {addon.description}
+                        </div>
                       )}
-                      <div className="text-sm font-bold text-primary mt-0.5">+RM {addon.price}</div>
+                      <div className="text-sm font-bold text-primary mt-0.5">
+                        +RM {addon.price}
+                      </div>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       <Button
@@ -222,10 +262,10 @@ const Step2_PackageSelection = ({ data, updateData, onNext, onPrev }) => {
 
         {/* Actions */}
         <div className="flex gap-3 pt-2">
-          <Button variant="outline" onClick={onPrev} className="flex-1">
+          <Button variant="outline" size="lg" onClick={onPrev} className="flex-1">
             Back
           </Button>
-          <Button onClick={handleContinue} disabled={!selectedPackage} className="flex-1">
+          <Button size="lg" onClick={handleContinue} disabled={!selectedPackage} className="flex-1">
             Continue to Delivery
           </Button>
         </div>

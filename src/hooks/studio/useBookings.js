@@ -4,16 +4,18 @@ import toast from "react-hot-toast";
 
 export const useMyBookings = () => {
   return useQuery({
-    queryKey: ['myBookings'],
+    queryKey: ["myBookings"],
     queryFn: () => bookingService.getMyBookings().then(res => res.data),
+    staleTime: 2 * 60 * 1000,
   });
 };
 
 export const useMyBookingById = (id) => {
   return useQuery({
-    queryKey: ['myBooking', id],
-    queryFn: () => bookingService.getMyBookingById(id).then(res => res.data),
+    queryKey: ["myBooking", id],
+    queryFn: () => bookingService.getMyBookingById(id).then((res) => res.data),
     enabled: !!id,
+    staleTime: 60_000,
   });
 };
 
@@ -91,6 +93,10 @@ export const useCancelBooking = () => {
     onSuccess: () => {
       toast.success("Booking cancelled successfully");
       queryClient.invalidateQueries({ queryKey: ["bookings"] });
+      queryClient.invalidateQueries({ queryKey: ["myBookings"] });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to cancel booking");
     },
   });
 };

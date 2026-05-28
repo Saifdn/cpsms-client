@@ -1,6 +1,7 @@
 import { Page, PageHeader } from "@/components/layout/Page";
 import QrScanner from "@/components/QrScanner";
 import BookingDetails from "@/components/BookingDetails";
+import CheckInSuccessBanner from "@/components/counter/CheckInSuccessBanner";
 import { useState } from "react";
 import { format } from "date-fns";
 import { AlertTriangle } from "lucide-react";
@@ -10,12 +11,12 @@ import { useCheckIn } from "@/hooks/counter/useQueue";
 
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogFooter,
-  AlertDialogAction,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
 function isWithinSessionRange(session) {
@@ -31,14 +32,13 @@ function isWithinSessionRange(session) {
   const end = new Date(sessionDate);
   end.setHours(endH, endM, 0, 0);
 
-  const now = new Date();
-  return now >= start && now <= end;
+  return new Date() >= start && new Date() <= end;
 }
 
 const RegistrationCounter = () => {
   const [scannedBookingNumber, setScannedBookingNumber] = useState(null);
-  // Tracks whether the out-of-range alert has been dismissed for the current scan
   const [alertDismissed, setAlertDismissed] = useState(false);
+  const [successSnapshot, setSuccessSnapshot] = useState(null);
 
   const {
     data: bookingData,
@@ -50,23 +50,38 @@ const RegistrationCounter = () => {
 
   const booking = bookingData?.data ?? bookingData ?? null;
 
-  // Derived — alert shows automatically once data loads if out of range, until dismissed
   const isOutOfRange = !isLoading && !!booking && !isWithinSessionRange(booking.session);
   const showOutOfRangeAlert = isOutOfRange && !alertDismissed;
 
   const handleScan = (bookingNumber) => {
     setScannedBookingNumber(bookingNumber);
-    setAlertDismissed(false); // Reset dismissal for each new scan
+    setAlertDismissed(false);
+    setSuccessSnapshot(null);
+  };
+
+  const handleReset = () => {
+    setScannedBookingNumber(null);
+    setAlertDismissed(false);
   };
 
   const handleConfirmCheckIn = async () => {
     if (!scannedBookingNumber) return;
     try {
       await checkInMutation.mutateAsync({ bookingNumber: scannedBookingNumber });
+
+      setSuccessSnapshot({
+        bookingNumber: booking?.bookingNumber ?? scannedBookingNumber,
+        fullName: booking?.graduate?.fullName ?? "Graduate",
+        sessionTime:
+          booking?.session?.startTime && booking?.session?.endTime && booking?.session?.date
+            ? `${booking.session.startTime} — ${booking.session.endTime}, ${format(new Date(booking.session.date), "dd MMM yyyy")}`
+            : null,
+      });
+
       setScannedBookingNumber(null);
       setAlertDismissed(false);
-    } catch (err) {
-      console.error(err);
+    } catch {
+      // Error toast is handled by the mutation's onError
     }
   };
 
@@ -87,10 +102,7 @@ const RegistrationCounter = () => {
       <div className="grid gap-6 py-8 lg:grid-cols-[440px_1fr]">
         {/* Left: QR Scanner */}
         <div className="space-y-3">
-          <QrScanner
-            onScan={handleScan}
-            isScanning={!scannedBookingNumber}
-          />
+          <QrScanner onScan={handleScan} />
           {scannedBookingNumber && (
             <p className="text-xs text-center text-muted-foreground">
               Showing details for{" "}
@@ -98,10 +110,7 @@ const RegistrationCounter = () => {
               {" · "}
               <button
                 className="text-primary underline underline-offset-2 hover:no-underline"
-                onClick={() => {
-                  setScannedBookingNumber(null);
-                  setAlertDismissed(false);
-                }}
+                onClick={handleReset}
               >
                 Scan another
               </button>
@@ -109,16 +118,23 @@ const RegistrationCounter = () => {
           )}
         </div>
 
-        {/* Right: Booking Details */}
+        {/* Right: Success banner OR Booking Details */}
         <div>
-          <BookingDetails
-            booking={booking}
-            loading={isLoading}
-            error={error}
-            onConfirm={handleConfirmCheckIn}
-            confirmLoading={checkInMutation.isPending}
-            showConfirmButton={!!bookingData}
-          />
+          {successSnapshot ? (
+            <CheckInSuccessBanner
+              snapshot={successSnapshot}
+              onDismiss={() => setSuccessSnapshot(null)}
+            />
+          ) : (
+            <BookingDetails
+              booking={booking}
+              loading={isLoading}
+              error={error}
+              onConfirm={handleConfirmCheckIn}
+              confirmLoading={checkInMutation.isPending}
+              showConfirmButton={!!bookingData}
+            />
+          )}
         </div>
       </div>
 

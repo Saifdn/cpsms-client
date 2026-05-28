@@ -232,14 +232,16 @@ const ShipmentManagement = () => {
         onProceed={handleProceedWithService}
         isProcessing={bulkProcessMutation.isPending}
       />
-      <ShipmentConfirmationModal
-        open={showConfirmationModal}
-        onOpenChange={setShowConfirmationModal}
-        service={selectedService}
-        totalBookings={selectedIds.length}
-        onConfirm={handleConfirmShipment}
-        isProcessing={bulkProcessMutation.isPending}
-      />
+      {showConfirmationModal && (
+        <ShipmentConfirmationModal
+          open={showConfirmationModal}
+          onOpenChange={setShowConfirmationModal}
+          service={selectedService}
+          totalBookings={selectedIds.length}
+          onConfirm={handleConfirmShipment}
+          isProcessing={bulkProcessMutation.isPending}
+        />
+      )}
 
       {/* Pending tab */}
       {isPending && (

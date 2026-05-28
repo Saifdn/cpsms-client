@@ -3,10 +3,11 @@ import { packageService } from "@/services/packageService";
 import toast from "react-hot-toast";
 
 // ==================== QUERY ====================
-export const useAddons = () => {
+export const useAddons = (options = {}) => {
   return useQuery({
     queryKey: ["addons"],
     queryFn: () => packageService.getAllAddons().then(res => res.data),
+    ...options,
   });
 };
 

@@ -1,13 +1,11 @@
+import { useState, useEffect } from "react";
+import { Plus } from "lucide-react";
+
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
-import { useState, useEffect } from "react";
-
 import { DataTable } from "@/components/ui/data-table";
 import { bookingColumns } from "@/components/columns/BookingColumns";
-
 import { useBookings } from "@/hooks/studio/useBookings";
-
 import { CreateBookingDialog } from "@/pages/booking/CreateBookingDialog";
 
 const Booking = () => {
@@ -15,6 +13,7 @@ const Booking = () => {
   const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -24,12 +23,14 @@ const Booking = () => {
     return () => clearTimeout(timer);
   }, [search]);
 
-  const { data: bookingsData, isLoading } = useBookings({ page: currentPage, limit, search: debouncedSearch });
+  const { data: bookingsData, isLoading } = useBookings({
+    page: currentPage,
+    limit,
+    search: debouncedSearch,
+  });
 
   const bookings = bookingsData?.data || [];
   const pagination = bookingsData?.pagination;
-
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
 
   const handleLimitChange = (newLimit) => {
     setLimit(newLimit);
@@ -41,14 +42,13 @@ const Booking = () => {
       <PageHeader
         title="Booking Management"
         description="Help graduates book sessions"
+        actions={
+          <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Booking
+          </Button>
+        }
       />
-
-      <div className="mb-6 flex justify-end">
-        <Button onClick={() => setShowCreateDialog(true)} className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Booking
-        </Button>
-      </div>
 
       <DataTable
         title="All Bookings"
