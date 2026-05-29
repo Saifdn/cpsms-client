@@ -238,8 +238,7 @@ const StudioCard = ({ studio, onToggleAvailability, onEdit, onDelete }) => {
           { key: "name", label: "Studio Name" },
           { key: "location", label: "Location" },
           { key: "description", label: "Description" },
-          { key: "isAvailable", label: "Availability", isBadge: true },
-          { key: "createdAt", label: "Created At", isDate: true },
+          { key: "isAvailable", label: "Availability", isBadge: true, format: (v) => v ? "Available" : "Unavailable" },
         ]}
       />
     </>
