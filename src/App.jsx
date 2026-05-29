@@ -32,6 +32,7 @@ import MyBookings from "@/pages/graduates/MyBookings";
 import BookingDetails from "@/pages/graduates/BookingDetails";
 
 import ProfilePage from "@/pages/profile/ProfilePage";
+import SettingsPage from "@/pages/settings/SettingsPage";
 import AdminTasks from "@/pages/tasks/AdminTasks";
 import MyTasks from "@/pages/tasks/MyTasks";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
@@ -76,9 +77,10 @@ const App = () => {
               <Route path="/tasks/my" element={<MyTasks />} />
             </Route>
 
-            {/* Admin task management */}
+            {/* Admin task management + settings */}
             <Route element={<ProtectedRoute allowedRoles={["superadmin", "admin"]} />}>
               <Route path="/tasks" element={<AdminTasks />} />
+              <Route path="/settings" element={<SettingsPage />} />
             </Route>
 
             {/* Only superadmin */}

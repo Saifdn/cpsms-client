@@ -7,6 +7,7 @@ import {
   HomeIcon,
   LayoutDashboardIcon,
   ScanQrCode,
+  Settings,
   Truck,
   UsersIcon,
   Camera,
@@ -97,5 +98,13 @@ export const APP_SIDEBAR = {
     //   Icon: ChartPieIcon,
     //   allowedRoles: ['superadmin', 'admin', 'staff'],
     // },
+  ],
+  secondaryNav: [
+    {
+      title: 'Settings',
+      url: '/settings',
+      Icon: Settings,
+      allowedRoles: ['superadmin', 'admin'],
+    },
   ],
 };

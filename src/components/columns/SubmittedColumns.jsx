@@ -93,17 +93,29 @@ export const submittedColumns = [
   {
     accessorKey: "awb_number",
     header: "AWB / Tracking",
-    cell: ({ row }) => (
-      <div className="font-mono text-sm">
-        {row.original.shipment.awb_number ? (
-          <span className="text-green-600 font-medium">
-            {row.original.shipment.awb_number}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">Not Generated</span>
-        )}
-      </div>
-    ),
+    cell: ({ row }) => {
+      const { awb_number, tracking_url } = row.original.shipment;
+      return (
+        <div className="font-mono text-sm">
+          {awb_number ? (
+            tracking_url ? (
+              <a
+                href={tracking_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green-600 font-medium hover:underline"
+              >
+                {awb_number}
+              </a>
+            ) : (
+              <span className="text-green-600 font-medium">{awb_number}</span>
+            )
+          ) : (
+            <span className="text-muted-foreground">Not Generated</span>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "status",

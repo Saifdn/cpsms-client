@@ -138,22 +138,6 @@ export function ShipmentActionsCell({ row }) {
               ) : null;
             })()}
           </Section>
-
-          <div className="border-t" />
-
-          {/* Shipment */}
-          <Section title="Shipment">
-            <div>
-              <p className="text-xs text-muted-foreground">Status</p>
-              <Badge variant="secondary" className="capitalize mt-0.5">
-                {shipment.shipment?.status || shipment.status || "draft"}
-              </Badge>
-            </div>
-            <Field label="Courier" value={shipment.shipment?.courierName} />
-            <Field label="Service" value={shipment.shipment?.serviceName} />
-            <Field label="AWB / Tracking" value={shipment.awb_number || shipment.shipment?.awb_number} mono />
-            <Field label="Collection Date" value={shipment.shipment?.collectionDate} />
-          </Section>
         </div>
       </ViewDetailsDialog>
     </>

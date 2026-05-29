@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -62,7 +63,7 @@ const ShipmentConfirmationModal = ({
   const [logoErrored, setLogoErrored] = useState(false);
 
   const { data: walletData } = useWalletBalance();
-  const walletBalance = walletData?.data?.wallet[0]?.balance || 0;
+  const walletBalance = walletData?.data?.data?.wallet?.[0]?.balance || 0;
 
   const [sender, setSender] = useState({
     name: "Studio KFK",
@@ -110,10 +111,10 @@ const ShipmentConfirmationModal = ({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-xl font-semibold">Confirm Shipment Submission</DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <DialogDescription>
             Review the details below before submitting{" "}
             <span className="font-medium text-foreground">{totalBookings}</span> shipments.
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         {/* Financial Summary */}

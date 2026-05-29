@@ -1,4 +1,3 @@
-// hooks/easyparcel/useEasyParcel.js
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { easyParcelService } from "@/services/easyParcelService";
 import toast from "react-hot-toast";
@@ -6,30 +5,20 @@ import toast from "react-hot-toast";
 export const useEasyParcel = () => {
   const queryClient = useQueryClient();
 
-  // Get connection status
   const statusQuery = useQuery({
     queryKey: ["easyparcel", "status"],
     queryFn: easyParcelService.getStatus,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    staleTime: 2 * 60 * 1000,
+    retry: false,
   });
 
-  // Connect (start OAuth)
-  const connectMutation = useMutation({
-    mutationFn: easyParcelService.connect,
-    onSuccess: () => {
-      // Backend should redirect automatically, so this might not run
-      toast.success("Redirecting to EasyParcel...");
-    },
-    onError: (err) => {
-      toast.error(err.response?.data?.message || "Failed to connect EasyParcel");
-    },
-  });
+  // connect is a plain redirect — no mutation needed
+  const connect = (userId) => easyParcelService.connect(userId);
 
-  // Disconnect
   const disconnectMutation = useMutation({
     mutationFn: easyParcelService.disconnect,
     onSuccess: () => {
-      toast.success("EasyParcel account disconnected successfully");
+      toast.success("EasyParcel disconnected successfully");
       queryClient.invalidateQueries({ queryKey: ["easyparcel", "status"] });
     },
     onError: (err) => {
@@ -38,18 +27,14 @@ export const useEasyParcel = () => {
   });
 
   return {
-    // Data
     isConnected: statusQuery.data?.data?.connected || false,
     status: statusQuery.data?.data,
     isLoading: statusQuery.isLoading,
 
-    // Actions
-    connect: connectMutation.mutate,
+    connect,
     disconnect: disconnectMutation.mutate,
-    isConnecting: connectMutation.isPending,
     isDisconnecting: disconnectMutation.isPending,
 
-    // Query helpers
     refetchStatus: statusQuery.refetch,
   };
 };

@@ -44,6 +44,13 @@ export const AppSidebar = () => {
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Filter menu items based on user role (including children)
+  const filteredSecondaryNav = useMemo(() => {
+    if (!user?.role) return [];
+    return APP_SIDEBAR.secondaryNav.filter(
+      (item) => !item.allowedRoles || item.allowedRoles.includes(user.role)
+    );
+  }, [user]);
+
   const filteredNav = useMemo(() => {
     if (!user?.role) return [];
 
@@ -207,14 +214,18 @@ export const AppSidebar = () => {
             </SidebarGroupContent>
           </SidebarGroup>
 
-          {/* Mobile Secondary Nav */}
-          {/* {isMobile && (
+          {/* Secondary Nav */}
+          {filteredSecondaryNav.length > 0 && (
             <SidebarGroup className="mt-auto">
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {APP_SIDEBAR.secondaryNav.map((item) => (
+                  {filteredSecondaryNav.map((item) => (
                     <SidebarMenuItem key={item.title}>
-                      <SidebarMenuButton tooltip={item.title} asChild>
+                      <SidebarMenuButton
+                        tooltip={item.title}
+                        asChild
+                        isActive={location.pathname === item.url}
+                      >
                         <a href={item.url}>
                           <item.Icon />
                           <span>{item.title}</span>
@@ -225,7 +236,7 @@ export const AppSidebar = () => {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-          )} */}
+          )}
         </SidebarContent>
 
         {/* Footer */}

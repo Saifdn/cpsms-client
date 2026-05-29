@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
+import toast from "react-hot-toast";
 import axios from "@/api/axios";
 import { AuthContext } from "./AuthContext";
 
@@ -8,20 +9,23 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Ref so interceptors always read the latest token without re-registering
+  // Refs so interceptors always read the latest values without re-registering
   const accessTokenRef = useRef(null);
+  const userRef = useRef(null);
 
   const login = async (token) => {
     try {
       const decoded = jwtDecode(token);
-      accessTokenRef.current = token;
-      setAccessToken(token);
-      setUser({
+      const userData = {
         id: decoded.userId,
         role: decoded.role,
         fullName: decoded.fullName,
         email: decoded.email,
-      });
+      };
+      accessTokenRef.current = token;
+      userRef.current = userData;
+      setAccessToken(token);
+      setUser(userData);
       return true;
     } catch (err) {
       console.error("Token decode failed", err);
@@ -36,6 +40,7 @@ export const AuthProvider = ({ children }) => {
       console.log(err);
     }
     accessTokenRef.current = null;
+    userRef.current = null;
     setAccessToken(null);
     setUser(null);
   };
@@ -56,6 +61,7 @@ export const AuthProvider = ({ children }) => {
         await refresh();
       } catch (err) {
         accessTokenRef.current = null;
+        userRef.current = null;
         setAccessToken(null);
         setUser(null);
       } finally {
@@ -80,6 +86,18 @@ export const AuthProvider = ({ children }) => {
     const responseInterceptor = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
+        const data = error.response?.data;
+
+        if (error.response?.status === 403 && data?.code === "EP_NOT_CONNECTED") {
+          const role = userRef.current?.role;
+          if (role === "admin" || role === "superadmin") {
+            toast.error("EasyParcel is not connected. Go to Settings to connect.");
+          } else {
+            toast.error("Shipment feature unavailable. Please contact an admin.");
+          }
+          return new Promise(() => {});
+        }
+
         const prevRequest = error.config;
         if (error.response?.status === 403 && !prevRequest._retry) {
           prevRequest._retry = true;

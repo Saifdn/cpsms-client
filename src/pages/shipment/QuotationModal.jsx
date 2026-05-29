@@ -3,6 +3,7 @@ import { useState } from "react";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogFooter,
@@ -61,13 +62,13 @@ const QuotationModal = ({
           <DialogTitle className="text-xl font-semibold">
             Available Shipping Options
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">
+          <DialogDescription>
             Select a courier service to apply to all{" "}
             <span className="font-medium text-foreground">
               {quotationResult.totalBookings}
             </span>{" "}
             selected bookings
-          </p>
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-4">
@@ -126,13 +127,13 @@ const QuotationModal = ({
                     <MapPin className="h-3 w-3" />
                     {option.isPickup ? "Pickup" : "Drop-off"}
                   </Badge>
-                  <Badge
+                  {/* <Badge
                     variant="secondary"
                     className="flex items-center gap-1 text-xs"
                   >
                     <Clock className="h-3 w-3" />
                     {option.deliveryDuration ?? "2–5 days"}
-                  </Badge>
+                  </Badge> */}
                 </div>
 
                 {/* Divider */}

@@ -93,23 +93,7 @@ export const useBulkProcessShipments = () => {
 
     onError: (err) => {
       const data = err.response?.data;
-
-      // OAuth required
-      if (data?.oauthRequired) {
-        toast.loading(
-          "Redirecting to EasyParcel..."
-        );
-
-        window.location.href =
-          data.connectUrl;
-
-        return;
-      }
-
-      toast.error(
-        data?.message ||
-        "Failed to process shipments"
-      );
+      toast.error(data?.message || "Failed to process shipments");
     },
   });
 };

@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -10,9 +11,10 @@ export function ViewDetailsDialog({
   open,
   onOpenChange,
   title = "Details",
+  description = "View the details below.",
   data = {},
-  fields = [],          
-  children,             
+  fields = [],
+  children,
 }) {
   if (!data) return null;
 
@@ -25,6 +27,7 @@ export function ViewDetailsDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4 overflow-y-auto max-h-[65vh] pr-1">
