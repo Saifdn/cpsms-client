@@ -42,13 +42,13 @@ export function ViewDetailsDialog({
                 <div key={field.key}>
                   <p className="text-sm text-muted-foreground">{field.label}</p>
                   {field.isBadge ? (
-                    <Badge variant="secondary">{value}</Badge>
+                    <Badge variant="secondary">{field.format ? field.format(value) : value}</Badge>
                   ) : field.isDate ? (
                     <p className="font-medium">
-                      {new Date(value).toLocaleDateString()}
+                      {field.format ? field.format(value) : new Date(value).toLocaleDateString("en-GB")}
                     </p>
                   ) : (
-                    <p className="font-medium wrap-break-word">{value}</p>
+                    <p className="font-medium wrap-break-word">{field.format ? field.format(value) : value}</p>
                   )}
                 </div>
               );
