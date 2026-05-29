@@ -20,6 +20,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -34,7 +35,7 @@ import {
   CommandInput,
   CommandItem,
 } from "@/components/ui/command";
-import { MoreHorizontal, ChevronsUpDown, Plus, X } from "lucide-react";
+import { MoreHorizontal, ChevronsUpDown, Plus, X, Edit, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
 import {
@@ -60,11 +61,16 @@ function TaskActionsCell({ task, onEdit, onDelete }) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => onEdit(task)}>Edit</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onEdit(task)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem
             className="text-destructive focus:text-destructive"
             onClick={() => onDelete({ id: task._id, title: task.title })}
           >
+            <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </DropdownMenuItem>
         </DropdownMenuContent>

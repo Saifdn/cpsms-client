@@ -1,5 +1,6 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { jwtDecode } from "jwt-decode";
+import toast from "react-hot-toast";
 import axios from "@/api/axios";
 import { AuthContext } from "./AuthContext";
 
@@ -8,18 +9,23 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Login - Only manages state (receives token)
-  const login = async (accessToken) => {
-    try {
-      const decoded = jwtDecode(accessToken);
+  // Refs so interceptors always read the latest values without re-registering
+  const accessTokenRef = useRef(null);
+  const userRef = useRef(null);
 
-      setAccessToken(accessToken);
-      setUser({
+  const login = async (token) => {
+    try {
+      const decoded = jwtDecode(token);
+      const userData = {
         id: decoded.userId,
         role: decoded.role,
         fullName: decoded.fullName,
         email: decoded.email,
-      });
+      };
+      accessTokenRef.current = token;
+      userRef.current = userData;
+      setAccessToken(token);
+      setUser(userData);
       return true;
     } catch (err) {
       console.error("Token decode failed", err);
@@ -33,6 +39,8 @@ export const AuthProvider = ({ children }) => {
     } catch (err) {
       console.log(err);
     }
+    accessTokenRef.current = null;
+    userRef.current = null;
     setAccessToken(null);
     setUser(null);
   };
@@ -40,7 +48,7 @@ export const AuthProvider = ({ children }) => {
   const refresh = useCallback(async () => {
     const res = await axios.post("/auth/refresh");
     const token = res.data.accessToken;
-    await login(token);           // Reuse login function
+    await login(token);
     return token;
   }, []);
 
@@ -52,6 +60,8 @@ export const AuthProvider = ({ children }) => {
       try {
         await refresh();
       } catch (err) {
+        accessTokenRef.current = null;
+        userRef.current = null;
         setAccessToken(null);
         setUser(null);
       } finally {
@@ -64,11 +74,11 @@ export const AuthProvider = ({ children }) => {
     return () => { isMounted = false; };
   }, [refresh]);
 
-  // Interceptors (unchanged - still very important)
+  // Register interceptors once — reads token from ref, no re-registration needed
   useEffect(() => {
     const requestInterceptor = axios.interceptors.request.use((config) => {
-      if (accessToken) {
-        config.headers.Authorization = `Bearer ${accessToken}`;
+      if (accessTokenRef.current) {
+        config.headers.Authorization = `Bearer ${accessTokenRef.current}`;
       }
       return config;
     });
@@ -76,6 +86,18 @@ export const AuthProvider = ({ children }) => {
     const responseInterceptor = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
+        const data = error.response?.data;
+
+        if (error.response?.status === 403 && data?.code === "EP_NOT_CONNECTED") {
+          const role = userRef.current?.role;
+          if (role === "admin" || role === "superadmin") {
+            toast.error("EasyParcel is not connected. Go to Settings to connect.");
+          } else {
+            toast.error("Shipment feature unavailable. Please contact an admin.");
+          }
+          return new Promise(() => {});
+        }
+
         const prevRequest = error.config;
         if (error.response?.status === 403 && !prevRequest._retry) {
           prevRequest._retry = true;
@@ -96,7 +118,7 @@ export const AuthProvider = ({ children }) => {
       axios.interceptors.request.eject(requestInterceptor);
       axios.interceptors.response.eject(responseInterceptor);
     };
-  }, [accessToken, refresh]);
+  }, [refresh]); // no longer depends on accessToken
 
   return (
     <AuthContext.Provider

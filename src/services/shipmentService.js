@@ -36,4 +36,11 @@ export const shipmentService = {
 
   getWalletBalance: () =>
     axios.get("/shipments/wallet"),
+
+  mergeAwb: (shipmentIds = []) =>
+    axios.post(
+      "/shipments/merge-awb",
+      shipmentIds.length ? { shipmentIds } : {},
+      { responseType: "blob" }
+    ),
 };

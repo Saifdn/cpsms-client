@@ -49,9 +49,23 @@ export const shipmentColumns = [
   {
     accessorKey: "package",
     header: "Package",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.original.package?.name || "N/A"}</div>
-    ),
+    cell: ({ row }) => {
+      const addons = row.original.addons ?? [];
+      return (
+        <div>
+          <div className="font-medium">{row.original.package?.name || "N/A"}</div>
+          {addons.length > 0 && (
+            <div className="mt-0.5 flex flex-wrap gap-x-1">
+              {addons.map((addon) => (
+                <span key={addon._id} className="text-xs text-muted-foreground">
+                  + {addon.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "receiver",
@@ -80,26 +94,6 @@ export const shipmentColumns = [
       );
     },
   },
-  {
-    accessorKey: "awb_number",
-    header: "AWB / Tracking",
-    cell: ({ row }) => (
-      <div className="font-mono text-sm">
-        {row.original.awb_number ? (
-          <span className="text-green-600 font-medium">
-            {row.original.awb_number}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">Not Generated</span>
-        )}
-      </div>
-    ),
-  },
-  // {
-  //   accessorKey: "createdAt",
-  //   header: "Created",
-  //   cell: ({ row }) => new Date(row.getValue("createdAt")).toLocaleDateString("en-GB"),
-  // },
   {
     id: "actions",
     header: () => <div className="text-right">Actions</div>,

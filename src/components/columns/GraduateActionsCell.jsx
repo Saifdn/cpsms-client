@@ -1,7 +1,11 @@
 import { useState } from "react";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
+import { cn } from "@/lib/utils";
 
 import {
   DropdownMenu,
@@ -160,16 +164,21 @@ export function GraduateActionsCell({ row }) {
 
           <Field>
             <FieldLabel htmlFor="phone">Phone Number</FieldLabel>
-            <Input
-              id="phone"
-              type="tel"
+            <PhoneInput
+              international
+              defaultCountry="MY"
+              countryCallingCodeEditable={false}
+              placeholder="Enter phone number"
               value={selectedGraduate?.phone || ""}
-              onChange={(e) =>
-                setSelectedGraduate({
-                  ...selectedGraduate,
-                  phone: e.target.value,
-                })
-              }
+              onChange={(value) => setSelectedGraduate({ ...selectedGraduate, phone: value || "" })}
+              disabled={updateGraduate.isPending}
+              className={cn(
+                "flex h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm transition-colors",
+                "focus-within:outline-none focus-within:ring-1 focus-within:ring-ring",
+                "[&_.PhoneInputInput]:flex-1 [&_.PhoneInputInput]:min-w-0 [&_.PhoneInputInput]:border-0 [&_.PhoneInputInput]:bg-transparent [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:ring-0 [&_.PhoneInputInput]:text-sm [&_.PhoneInputInput]:placeholder:text-muted-foreground",
+                "[&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-0 [&_.PhoneInputCountrySelect]:outline-none",
+                updateGraduate.isPending && "cursor-not-allowed opacity-50"
+              )}
             />
           </Field>
         </div>
@@ -184,7 +193,7 @@ export function GraduateActionsCell({ row }) {
         fields={[
           { key: "fullName", label: "Full Name" },
           { key: "email", label: "Email" },
-          { key: "phone", label: "Phone Number" },
+          { key: "phone", label: "Phone Number", format: (v) => parsePhoneNumberFromString(String(v ?? ""), "MY")?.formatInternational() ?? v },
           { key: "createdAt", label: "Joined On", isDate: true },
         ]}
       />

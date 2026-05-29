@@ -1,6 +1,7 @@
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -10,9 +11,10 @@ export function ViewDetailsDialog({
   open,
   onOpenChange,
   title = "Details",
+  description = "View the details below.",
   data = {},
-  fields = [],          
-  children,             
+  fields = [],
+  children,
 }) {
   if (!data) return null;
 
@@ -25,9 +27,10 @@ export function ViewDetailsDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 overflow-y-auto max-h-[65vh] pr-1">
           {children ? (
             children
           ) : (
@@ -39,13 +42,13 @@ export function ViewDetailsDialog({
                 <div key={field.key}>
                   <p className="text-sm text-muted-foreground">{field.label}</p>
                   {field.isBadge ? (
-                    <Badge variant="secondary">{value}</Badge>
+                    <Badge variant="secondary">{field.format ? field.format(value) : value}</Badge>
                   ) : field.isDate ? (
                     <p className="font-medium">
-                      {new Date(value).toLocaleDateString()}
+                      {field.format ? field.format(value) : new Date(value).toLocaleDateString("en-GB")}
                     </p>
                   ) : (
-                    <p className="font-medium wrap-break-word">{value}</p>
+                    <p className="font-medium wrap-break-word">{field.format ? field.format(value) : value}</p>
                   )}
                 </div>
               );

@@ -9,12 +9,13 @@ import {
   useSubmittedShipments,
   useGetQuotation,
   useBulkProcessShipments,
+  useDownloadMergedAwb,
 } from "@/hooks/shipment/useShipments";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { RefreshCw, Calculator, CalendarIcon, X } from "lucide-react";
+import { RefreshCw, Calculator, CalendarIcon, X, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import QuotationModal from "@/pages/shipment/QuotationModal";
 import ShipmentConfirmationModal from "@/pages/shipment/ShipmentConfirmationModal";
@@ -46,12 +47,14 @@ const ShipmentManagement = () => {
 
   const getQuotationMutation = useGetQuotation();
   const bulkProcessMutation = useBulkProcessShipments();
+  const downloadMergedAwbMutation = useDownloadMergedAwb();
 
   const pendingShipments = pendingData?.data || [];
   const submittedShipments = submittedData?.data || [];
   // const pagination = isPending ? pendingData?.pagination : submittedData?.pagination;
 
   const [rowSelection, setRowSelection] = useState({});
+  const [submittedRowSelection, setSubmittedRowSelection] = useState({});
   const [showQuotationModal, setShowQuotationModal] = useState(false);
   const [quotationResult, setQuotationResult] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
@@ -66,16 +69,19 @@ const ShipmentManagement = () => {
   const handleTabChange = (key) => {
     setActiveTab(key);
     setRowSelection({});
+    setSubmittedRowSelection({});
   };
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
     setRowSelection({});
+    setSubmittedRowSelection({});
   };
 
   const handleClearDate = () => {
     setSelectedDate(null);
     setRowSelection({});
+    setSubmittedRowSelection({});
   };
 
   const selectedIds = useMemo(() => {
@@ -84,6 +90,13 @@ const ShipmentManagement = () => {
       .map((key) => pendingShipments[Number(key)]?._id)
       .filter(Boolean);
   }, [rowSelection, pendingShipments]);
+
+  const selectedSubmittedIds = useMemo(() => {
+    return Object.keys(submittedRowSelection)
+      .filter((key) => submittedRowSelection[key] === true)
+      .map((key) => submittedShipments[Number(key)]?._id)
+      .filter(Boolean);
+  }, [submittedRowSelection, submittedShipments]);
 
   const handleGetQuotation = () => {
     if (selectedIds.length === 0) return;
@@ -164,12 +177,12 @@ const ShipmentManagement = () => {
       </div>
 
       {/* Toolbar — shared across both tabs */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Date picker */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[200px] justify-start">
+              <Button variant="outline" className="w-full sm:w-[200px] justify-start">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {selectedDate ? format(selectedDate, "dd MMM yyyy") : "Filter by date"}
               </Button>
@@ -201,13 +214,18 @@ const ShipmentManagement = () => {
                 </span>
               </>
             ) : (
-              <>{pagination?.total ?? submittedShipments.length} orders submitted</>
+              <>
+                {pagination?.total ?? submittedShipments.length} orders submitted •{" "}
+                <span className="font-medium text-foreground">
+                  {selectedSubmittedIds.length} selected
+                </span>
+              </>
             )}
           </span>
         </div>
 
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={refetch} disabled={isLoading}>
+        <div className="flex gap-2 sm:gap-3">
+          <Button variant="outline" onClick={refetch} disabled={isLoading} className="flex-1 sm:flex-none">
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
@@ -216,9 +234,25 @@ const ShipmentManagement = () => {
             <Button
               onClick={handleGetQuotation}
               disabled={selectedIds.length === 0 || getQuotationMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               <Calculator className="mr-2 h-4 w-4" />
               Get Quotation
+            </Button>
+          )}
+
+          {!isPending && (
+            <Button
+              onClick={() => downloadMergedAwbMutation.mutate(selectedSubmittedIds)}
+              disabled={downloadMergedAwbMutation.isPending || submittedShipments.length === 0}
+              className="flex-1 sm:flex-none"
+            >
+              <FileDown className="mr-2 h-4 w-4" />
+              {downloadMergedAwbMutation.isPending
+                ? "Downloading..."
+                : selectedSubmittedIds.length > 0
+                  ? `Download ${selectedSubmittedIds.length} Label(s)`
+                  : "Download All Labels"}
             </Button>
           )}
         </div>
@@ -271,7 +305,9 @@ const ShipmentManagement = () => {
           description="Orders that have been submitted for shipping"
           columns={submittedColumns}
           data={submittedShipments}
-          enableRowSelection={false}
+          enableRowSelection={true}
+          rowSelection={submittedRowSelection}
+          onRowSelectionChange={setSubmittedRowSelection}
           isLoading={submittedLoading}
           onRefresh={refetchSubmitted}
           // pagination
