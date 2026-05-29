@@ -124,7 +124,33 @@ export const useWalletBalance = () => {
 
 export const useDeleteShipment = () => {
 
-}
+};
 
+export const useDownloadMergedAwb = () => {
+  return useMutation({
+    mutationFn: (shipmentIds = []) => shipmentService.mergeAwb(shipmentIds),
 
+    onSuccess: (response) => {
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: "application/pdf" })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "awb-labels.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
 
+    onError: (err) => {
+      if (err.response?.status === 404) {
+        toast.error("No AWB labels available to download");
+      } else if (err.response?.status >= 500) {
+        toast.error("Something went wrong, try again");
+      } else {
+        toast.error("Failed to download labels. Please try again.");
+      }
+    },
+  });
+};

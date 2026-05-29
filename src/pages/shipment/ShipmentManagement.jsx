@@ -9,12 +9,13 @@ import {
   useSubmittedShipments,
   useGetQuotation,
   useBulkProcessShipments,
+  useDownloadMergedAwb,
 } from "@/hooks/shipment/useShipments";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { RefreshCw, Calculator, CalendarIcon, X } from "lucide-react";
+import { RefreshCw, Calculator, CalendarIcon, X, FileDown } from "lucide-react";
 import { format } from "date-fns";
 import QuotationModal from "@/pages/shipment/QuotationModal";
 import ShipmentConfirmationModal from "@/pages/shipment/ShipmentConfirmationModal";
@@ -46,12 +47,14 @@ const ShipmentManagement = () => {
 
   const getQuotationMutation = useGetQuotation();
   const bulkProcessMutation = useBulkProcessShipments();
+  const downloadMergedAwbMutation = useDownloadMergedAwb();
 
   const pendingShipments = pendingData?.data || [];
   const submittedShipments = submittedData?.data || [];
   // const pagination = isPending ? pendingData?.pagination : submittedData?.pagination;
 
   const [rowSelection, setRowSelection] = useState({});
+  const [submittedRowSelection, setSubmittedRowSelection] = useState({});
   const [showQuotationModal, setShowQuotationModal] = useState(false);
   const [quotationResult, setQuotationResult] = useState(null);
   const [selectedService, setSelectedService] = useState(null);
@@ -66,16 +69,19 @@ const ShipmentManagement = () => {
   const handleTabChange = (key) => {
     setActiveTab(key);
     setRowSelection({});
+    setSubmittedRowSelection({});
   };
 
   const handleDateSelect = (date) => {
     setSelectedDate(date);
     setRowSelection({});
+    setSubmittedRowSelection({});
   };
 
   const handleClearDate = () => {
     setSelectedDate(null);
     setRowSelection({});
+    setSubmittedRowSelection({});
   };
 
   const selectedIds = useMemo(() => {
@@ -84,6 +90,13 @@ const ShipmentManagement = () => {
       .map((key) => pendingShipments[Number(key)]?._id)
       .filter(Boolean);
   }, [rowSelection, pendingShipments]);
+
+  const selectedSubmittedIds = useMemo(() => {
+    return Object.keys(submittedRowSelection)
+      .filter((key) => submittedRowSelection[key] === true)
+      .map((key) => submittedShipments[Number(key)]?._id)
+      .filter(Boolean);
+  }, [submittedRowSelection, submittedShipments]);
 
   const handleGetQuotation = () => {
     if (selectedIds.length === 0) return;
@@ -201,7 +214,12 @@ const ShipmentManagement = () => {
                 </span>
               </>
             ) : (
-              <>{pagination?.total ?? submittedShipments.length} orders submitted</>
+              <>
+                {pagination?.total ?? submittedShipments.length} orders submitted •{" "}
+                <span className="font-medium text-foreground">
+                  {selectedSubmittedIds.length} selected
+                </span>
+              </>
             )}
           </span>
         </div>
@@ -220,6 +238,21 @@ const ShipmentManagement = () => {
             >
               <Calculator className="mr-2 h-4 w-4" />
               Get Quotation
+            </Button>
+          )}
+
+          {!isPending && (
+            <Button
+              onClick={() => downloadMergedAwbMutation.mutate(selectedSubmittedIds)}
+              disabled={downloadMergedAwbMutation.isPending || submittedShipments.length === 0}
+              className="flex-1 sm:flex-none"
+            >
+              <FileDown className="mr-2 h-4 w-4" />
+              {downloadMergedAwbMutation.isPending
+                ? "Downloading..."
+                : selectedSubmittedIds.length > 0
+                  ? `Download ${selectedSubmittedIds.length} Label(s)`
+                  : "Download All Labels"}
             </Button>
           )}
         </div>
@@ -272,7 +305,9 @@ const ShipmentManagement = () => {
           description="Orders that have been submitted for shipping"
           columns={submittedColumns}
           data={submittedShipments}
-          enableRowSelection={false}
+          enableRowSelection={true}
+          rowSelection={submittedRowSelection}
+          onRowSelectionChange={setSubmittedRowSelection}
           isLoading={submittedLoading}
           onRefresh={refetchSubmitted}
           // pagination
