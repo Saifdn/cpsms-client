@@ -101,8 +101,8 @@ export function DataTable({
 
       <CardContent className="grid grid-cols-1 grow pt-6">
         <div className="space-y-4">
-          <div className="rounded-md">
-            <Table>
+          <div className="rounded-md overflow-x-auto">
+            <Table className="min-w-[600px]">
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>

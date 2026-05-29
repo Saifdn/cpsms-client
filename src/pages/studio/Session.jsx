@@ -40,9 +40,9 @@ function SessionPageSkeleton() {
           </Card>
         ))}
       </div>
-      <div className="flex items-center justify-between gap-3">
-        <Skeleton className="h-9 w-48" />
-        <Skeleton className="h-9 w-40" />
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <Skeleton className="h-9 w-full sm:w-48" />
+        <Skeleton className="h-9 w-full sm:w-40" />
       </div>
       <Card>
         <CardContent className="p-6 space-y-3">
@@ -145,10 +145,10 @@ const Session = () => {
         <div className="grid gap-6 py-8">
           <SessionStatsRow stats={stats} />
 
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="w-[200px] justify-start">
+                <Button variant="outline" className="w-full sm:w-[200px] justify-start">
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {filterDate ? format(filterDate, "dd MMM yyyy") : "Filter by date"}
                 </Button>
@@ -166,7 +166,7 @@ const Session = () => {
               </PopoverContent>
             </Popover>
 
-            <Button onClick={() => setShowGenerateDialog(true)} className="gap-2 shrink-0">
+            <Button onClick={() => setShowGenerateDialog(true)} className="gap-2 w-full sm:w-auto">
               <Plus className="h-4 w-4" />
               Generate Sessions
             </Button>

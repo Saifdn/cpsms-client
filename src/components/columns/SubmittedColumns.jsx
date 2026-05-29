@@ -28,9 +28,23 @@ export const submittedColumns = [
   {
     accessorKey: "package",
     header: "Package",
-    cell: ({ row }) => (
-      <div className="font-medium">{row.original.package?.name || "N/A"}</div>
-    ),
+    cell: ({ row }) => {
+      const addons = row.original.addons ?? [];
+      return (
+        <div>
+          <div className="font-medium">{row.original.package?.name || "N/A"}</div>
+          {addons.length > 0 && (
+            <div className="mt-0.5 flex flex-wrap gap-x-1">
+              {addons.map((addon) => (
+                <span key={addon._id} className="text-xs text-muted-foreground">
+                  + {addon.name}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    },
   },
   {
     accessorKey: "receiver",

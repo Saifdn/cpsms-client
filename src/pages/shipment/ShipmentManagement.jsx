@@ -164,12 +164,12 @@ const ShipmentManagement = () => {
       </div>
 
       {/* Toolbar — shared across both tabs */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-6">
+        <div className="flex flex-wrap items-center gap-2">
           {/* Date picker */}
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="w-[200px] justify-start">
+              <Button variant="outline" className="w-full sm:w-[200px] justify-start">
                 <CalendarIcon className="mr-2 h-4 w-4" />
                 {selectedDate ? format(selectedDate, "dd MMM yyyy") : "Filter by date"}
               </Button>
@@ -206,8 +206,8 @@ const ShipmentManagement = () => {
           </span>
         </div>
 
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={refetch} disabled={isLoading}>
+        <div className="flex gap-2 sm:gap-3">
+          <Button variant="outline" onClick={refetch} disabled={isLoading} className="flex-1 sm:flex-none">
             <RefreshCw className="mr-2 h-4 w-4" />
             Refresh
           </Button>
@@ -216,6 +216,7 @@ const ShipmentManagement = () => {
             <Button
               onClick={handleGetQuotation}
               disabled={selectedIds.length === 0 || getQuotationMutation.isPending}
+              className="flex-1 sm:flex-none"
             >
               <Calculator className="mr-2 h-4 w-4" />
               Get Quotation
