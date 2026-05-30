@@ -1,6 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { format } from "date-fns";
 import toast from "react-hot-toast";
+import PhoneInput from "react-phone-number-input";
+import "react-phone-number-input/style.css";
 
 import { CreateDialog } from "@/components/dialog/CreateDialog";
 import { Field, FieldLabel } from "@/components/ui/field";
@@ -10,7 +12,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -27,9 +28,13 @@ import { Calendar } from "@/components/ui/calendar";
 import {
   CalendarIcon,
   Check,
+  ChevronsUpDown,
   Clock,
   Receipt,
   Plus,
+  Minus,
+  Search,
+  UserRound,
 } from "lucide-react";
 import {
   Command,
@@ -86,9 +91,15 @@ function SectionLabel({ children }) {
   );
 }
 
-function OrderSummary({ packages, addonsList, selectedPackageId, selectedAddonIds }) {
+function OrderSummary({ packages, selectedPackageId, selectedAddons }) {
   const selectedPkg = packages.find((p) => p._id === selectedPackageId);
-  const selectedAddons = addonsList.filter((a) => selectedAddonIds.includes(a._id));
+
+  const addonMap = selectedAddons.reduce((acc, addon) => {
+    if (!acc[addon._id]) acc[addon._id] = { addon, qty: 0 };
+    acc[addon._id].qty += 1;
+    return acc;
+  }, {});
+  const uniqueAddons = Object.values(addonMap);
   const addonsTotal = selectedAddons.reduce((sum, a) => sum + (a.price ?? 0), 0);
   const total = (selectedPkg?.price ?? 0) + addonsTotal;
 
@@ -102,14 +113,14 @@ function OrderSummary({ packages, addonsList, selectedPackageId, selectedAddonId
           <span className="text-muted-foreground">{selectedPkg.name}</span>
           <span className="tabular-nums font-medium">RM {selectedPkg.price.toFixed(2)}</span>
         </div>
-        {selectedAddons.map((addon) => (
+        {uniqueAddons.map(({ addon, qty }) => (
           <div key={addon._id} className="flex justify-between text-sm">
             <span className="text-muted-foreground flex items-center gap-1">
               <Plus size={11} />
-              {addon.name}
+              {addon.name}{qty > 1 && ` ×${qty}`}
             </span>
             <span className="tabular-nums text-muted-foreground">
-              RM {(addon.price ?? 0).toFixed(2)}
+              RM {((addon.price ?? 0) * qty).toFixed(2)}
             </span>
           </div>
         ))}
@@ -129,10 +140,18 @@ function OrderSummary({ packages, addonsList, selectedPackageId, selectedAddonId
 export const CreateBookingDialog = ({ open, onOpenChange }) => {
   const createAdminBooking = useCreateAdminBooking();
 
-  // limit:200 so the graduate combobox has enough records; enabled gates fetching to when dialog is open
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 350);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   const { data: graduatesData, isLoading: graduatesLoading } = useGraduates({
-    limit: 200,
-    enabled: open,
+    search: debouncedSearch,
+    limit: 10,
+    enabled: open && debouncedSearch.length >= 1,
   });
   const { data: packagesData } = usePackages({ enabled: open });
   const { data: sessionsData, isLoading: sessionsLoading } = useSessions(null, {
@@ -150,6 +169,7 @@ export const CreateBookingDialog = ({ open, onOpenChange }) => {
   const [selectedAddons, setSelectedAddons] = useState([]);
   const [receiver, setReceiver] = useState(EMPTY_RECEIVER);
   const [openGraduate, setOpenGraduate] = useState(false);
+  const [selectedGraduate, setSelectedGraduate] = useState(null);
 
   const handleOpenChange = (isOpen) => {
     if (!isOpen) {
@@ -158,6 +178,9 @@ export const CreateBookingDialog = ({ open, onOpenChange }) => {
       setSelectedAddons([]);
       setReceiver(EMPTY_RECEIVER);
       setOpenGraduate(false);
+      setSelectedGraduate(null);
+      setSearchQuery("");
+      setDebouncedSearch("");
     }
     onOpenChange(isOpen);
   };
@@ -185,9 +208,19 @@ export const CreateBookingDialog = ({ open, onOpenChange }) => {
     setReceiver((prev) => ({ ...prev, [name]: value }));
   };
 
-  const toggleAddon = (id, checked) => {
+  const getAddonQty = (addon) =>
+    selectedAddons.filter((a) => a._id === addon._id).length;
+
+  const incrementAddon = (addon) =>
+    setSelectedAddons((prev) => [...prev, addon]);
+
+  const decrementAddon = (addon) => {
+    let removed = false;
     setSelectedAddons((prev) =>
-      checked ? [...prev, id] : prev.filter((a) => a !== id)
+      prev.filter((a) => {
+        if (!removed && a._id === addon._id) { removed = true; return false; }
+        return true;
+      })
     );
   };
 
@@ -209,7 +242,7 @@ export const CreateBookingDialog = ({ open, onOpenChange }) => {
         package: formData.package,
         session: formData.session,
         paymentMethod: "cash",
-        addons: selectedAddons,
+        addons: selectedAddons.map((a) => a._id),
         shipment: {
           receiver: {
             name: receiver.name,
@@ -252,45 +285,82 @@ export const CreateBookingDialog = ({ open, onOpenChange }) => {
                 <Button
                   variant="outline"
                   role="combobox"
-                  className="w-full justify-between font-normal"
+                  aria-expanded={openGraduate}
+                  className="w-full justify-between font-normal h-auto min-h-10 px-3 py-2"
                 >
-                  {formData.graduate
-                    ? graduates.find((g) => g._id === formData.graduate)?.fullName
-                    : "Search by name or email…"}
+                  {selectedGraduate ? (
+                    <div className="flex items-center gap-2.5 text-left">
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                        {selectedGraduate.fullName?.charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium leading-tight truncate">{selectedGraduate.fullName}</p>
+                        <p className="text-xs text-muted-foreground truncate">{selectedGraduate.email}</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground font-normal">Search by name or email…</span>
+                  )}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-40" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                <Command>
-                  <CommandInput placeholder="Type name or email…" />
-                  {graduatesLoading ? (
-                    <div className="p-3 space-y-2">
-                      <Skeleton className="h-8 w-full" />
-                      <Skeleton className="h-8 w-3/4" />
+              <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                <Command shouldFilter={false}>
+                  <CommandInput
+                    placeholder="Type name or email…"
+                    value={searchQuery}
+                    onValueChange={setSearchQuery}
+                  />
+                  {!debouncedSearch ? (
+                    <div className="flex flex-col items-center gap-2 py-8 text-center">
+                      <Search className="h-8 w-8 text-muted-foreground/40" />
+                      <p className="text-sm text-muted-foreground">Type to search graduates</p>
+                    </div>
+                  ) : graduatesLoading ? (
+                    <div className="p-2 space-y-1">
+                      {[1, 2, 3].map((n) => (
+                        <div key={n} className="flex items-center gap-3 rounded-md px-2 py-2">
+                          <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+                          <div className="space-y-1.5 flex-1">
+                            <Skeleton className="h-3.5 w-28" />
+                            <Skeleton className="h-3 w-40" />
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <>
-                      <CommandEmpty>No graduate found.</CommandEmpty>
-                      <CommandGroup className="max-h-56 overflow-auto">
-                        {graduates.map((grad) => (
-                          <CommandItem
-                            key={grad._id}
-                            value={`${grad.fullName} ${grad.email}`}
-                            onSelect={() => {
-                              setFormData((prev) => ({ ...prev, graduate: grad._id }));
-                              setOpenGraduate(false);
-                            }}
-                          >
-                            <div className="flex flex-col flex-1 min-w-0">
-                              <span className="font-medium">{grad.fullName}</span>
-                              <span className="text-xs text-muted-foreground truncate">
-                                {grad.email}
-                              </span>
-                            </div>
-                            {formData.graduate === grad._id && (
-                              <Check className="ml-2 h-4 w-4 shrink-0" />
-                            )}
-                          </CommandItem>
-                        ))}
+                      <CommandEmpty>
+                        <div className="flex flex-col items-center gap-2 py-6">
+                          <UserRound className="h-8 w-8 text-muted-foreground/40" />
+                          <p className="text-sm text-muted-foreground">No graduate found</p>
+                        </div>
+                      </CommandEmpty>
+                      <CommandGroup className="max-h-60 overflow-auto p-1">
+                        {graduates.map((grad) => {
+                          const isSelected = formData.graduate === grad._id;
+                          return (
+                            <CommandItem
+                              key={grad._id}
+                              value={grad._id}
+                              onSelect={() => {
+                                setFormData((prev) => ({ ...prev, graduate: grad._id }));
+                                setSelectedGraduate(grad);
+                                setOpenGraduate(false);
+                              }}
+                              className="flex items-center gap-3 rounded-md px-2 py-2 cursor-pointer"
+                            >
+                              <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-bold ${isSelected ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+                                {grad.fullName?.charAt(0).toUpperCase()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium truncate">{grad.fullName}</p>
+                                <p className="text-xs text-muted-foreground truncate">{grad.email}</p>
+                              </div>
+                              {isSelected && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                            </CommandItem>
+                          );
+                        })}
                       </CommandGroup>
                     </>
                   )}
@@ -423,22 +493,33 @@ export const CreateBookingDialog = ({ open, onOpenChange }) => {
             <p className="text-sm text-muted-foreground">No add-ons available</p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {addonsList.map((addon) => (
-                <div
-                  key={addon._id}
-                  className="flex items-center gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors"
-                >
-                  <Checkbox
-                    id={addon._id}
-                    checked={selectedAddons.includes(addon._id)}
-                    onCheckedChange={(checked) => toggleAddon(addon._id, checked)}
-                  />
-                  <Label htmlFor={addon._id} className="flex-1 cursor-pointer font-normal text-sm">
-                    {addon.name}{" "}
-                    <span className="text-muted-foreground">— RM {addon.price}</span>
-                  </Label>
-                </div>
-              ))}
+              {addonsList.map((addon) => {
+                const qty = getAddonQty(addon);
+                const isSelected = qty > 0;
+                return (
+                  <div
+                    key={addon._id}
+                    className={`flex items-center gap-3 rounded-xl border p-3 transition-all ${isSelected ? "border-primary bg-primary/5 ring-2 ring-primary" : "bg-background"}`}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-semibold">{addon.name}</div>
+                      {addon.description && (
+                        <div className="text-xs text-muted-foreground truncate">{addon.description}</div>
+                      )}
+                      <div className="text-sm font-bold text-primary mt-0.5">+RM {addon.price}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => decrementAddon(addon)} disabled={qty === 0}>
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <span className="w-5 text-center text-sm font-semibold">{qty}</span>
+                      <Button type="button" variant="outline" size="icon" className="h-7 w-7" onClick={() => incrementAddon(addon)}>
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
@@ -446,9 +527,8 @@ export const CreateBookingDialog = ({ open, onOpenChange }) => {
         {/* Order Summary */}
         <OrderSummary
           packages={packages}
-          addonsList={addonsList}
           selectedPackageId={formData.package}
-          selectedAddonIds={selectedAddons}
+          selectedAddons={selectedAddons}
         />
 
         {/* Delivery Address */}
@@ -472,19 +552,24 @@ export const CreateBookingDialog = ({ open, onOpenChange }) => {
               <Label htmlFor="phone_number">
                 Phone Number <span className="text-destructive">*</span>
               </Label>
-              <div className="flex">
-                <div className="bg-muted px-3 flex items-center text-sm border border-r-0 border-input rounded-l-md shrink-0">
-                  +60
-                </div>
-                <Input
-                  id="phone_number"
-                  name="phone_number"
-                  placeholder="123456789"
-                  value={receiver.phone_number}
-                  onChange={handleReceiverChange}
-                  className="rounded-l-none"
-                />
-              </div>
+              <PhoneInput
+                international
+                defaultCountry="MY"
+                countryCallingCodeEditable={false}
+                placeholder="Enter phone number"
+                value={receiver.phone_number}
+                onChange={(value) =>
+                  handleReceiverChange({
+                    target: { name: "phone_number", value: value || "" },
+                  })
+                }
+                className={[
+                  "flex h-10 w-full rounded-md border border-input bg-transparent px-3 text-sm shadow-sm transition-colors",
+                  "focus-within:outline-none focus-within:ring-1 focus-within:ring-ring",
+                  "[&_.PhoneInputInput]:flex-1 [&_.PhoneInputInput]:min-w-0 [&_.PhoneInputInput]:border-0 [&_.PhoneInputInput]:bg-transparent [&_.PhoneInputInput]:outline-none [&_.PhoneInputInput]:ring-0 [&_.PhoneInputInput]:text-sm [&_.PhoneInputInput]:placeholder:text-muted-foreground",
+                  "[&_.PhoneInputCountrySelect]:bg-transparent [&_.PhoneInputCountrySelect]:border-0 [&_.PhoneInputCountrySelect]:outline-none",
+                ].join(" ")}
+              />
             </div>
           </div>
 
