@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import { CheckCircle2, UserCheck } from "lucide-react";
+import { CheckCircle2, Hash, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const AUTO_DISMISS_MS = 6000;
@@ -50,6 +50,16 @@ const CheckInSuccessBanner = ({ snapshot, onDismiss }) => {
           <UserCheck size={18} />
           Checked In Successfully
         </div>
+
+        {snapshot.queueNumber != null && (
+          <div className="flex items-center gap-2 rounded-lg bg-green-100 dark:bg-green-900/50 px-5 py-3">
+            <Hash size={16} className="text-green-600 dark:text-green-400 shrink-0" />
+            <span className="text-xs text-green-700 dark:text-green-300 font-medium">Queue Number</span>
+            <span className="text-2xl font-bold text-green-700 dark:text-green-300 leading-none">
+              {snapshot.queueNumber}
+            </span>
+          </div>
+        )}
 
         <Button size="sm" variant="outline" className="mt-1" onClick={onDismiss}>
           Dismiss

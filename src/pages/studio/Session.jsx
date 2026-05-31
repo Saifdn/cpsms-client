@@ -17,8 +17,7 @@ import { sessionColumns } from "@/components/columns/SessionColumns";
 import { useSessions, useGenerateSessions, useSessionDates } from "@/hooks/studio/useSessions";
 
 const FORM_DEFAULTS = {
-  fromDate: "",
-  toDate: "",
+  dateRange: undefined,
   startTime: "08:00",
   endTime: "17:00",
   breakStartTime: "",
@@ -98,8 +97,13 @@ const Session = () => {
     [sessions],
   );
 
-  const handleGenerate = form.handleSubmit((values) => {
-    generateSessionsMutation.mutate(values, {
+  const handleGenerate = form.handleSubmit(({ dateRange, ...rest }) => {
+    const payload = {
+      ...rest,
+      fromDate: format(dateRange.from, "yyyy-MM-dd"),
+      toDate: format(dateRange.to, "yyyy-MM-dd"),
+    };
+    generateSessionsMutation.mutate(payload, {
       onSuccess: () => {
         setShowGenerateDialog(false);
         form.reset();
@@ -196,6 +200,7 @@ const Session = () => {
         saveLabel="Generate Sessions"
       >
         <GenerateSessionForm
+          control={form.control}
           register={form.register}
           errors={form.formState.errors}
           disabled={generateSessionsMutation.isPending}

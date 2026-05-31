@@ -1,45 +1,72 @@
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
+import { Controller } from "react-hook-form";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ClockTimePicker } from "@/components/ui/clock-time-picker";
+import { cn } from "@/lib/utils";
 
-export function GenerateSessionForm({ register, errors, disabled }) {
+export function GenerateSessionForm({ control, register, errors, disabled }) {
   return (
     <div className="space-y-5">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Date Range
         </p>
-        <div className="grid grid-cols-2 gap-4">
-          <Field>
-            <FieldLabel htmlFor="fromDate">
-              From Date <span className="text-destructive">*</span>
-            </FieldLabel>
-            <Input
-              id="fromDate"
-              type="date"
-              disabled={disabled}
-              {...register("fromDate", { required: "From date is required" })}
-            />
-            {errors.fromDate && (
-              <p className="text-xs text-destructive mt-1">{errors.fromDate.message}</p>
-            )}
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="toDate">
-              To Date <span className="text-destructive">*</span>
-            </FieldLabel>
-            <Input
-              id="toDate"
-              type="date"
-              disabled={disabled}
-              {...register("toDate", { required: "To date is required" })}
-            />
-            {errors.toDate && (
-              <p className="text-xs text-destructive mt-1">{errors.toDate.message}</p>
-            )}
-          </Field>
-        </div>
+        <Controller
+          control={control}
+          name="dateRange"
+          rules={{
+            validate: (v) =>
+              (v?.from && v?.to) || "Please select a start and end date",
+          }}
+          render={({ field }) => (
+            <div className="flex flex-col gap-2">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    disabled={disabled}
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !field.value && "text-muted-foreground",
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {field.value?.from ? (
+                      field.value.to ? (
+                        <>
+                          {format(field.value.from, "dd MMM yyyy")} —{" "}
+                          {format(field.value.to, "dd MMM yyyy")}
+                        </>
+                      ) : (
+                        format(field.value.from, "dd MMM yyyy")
+                      )
+                    ) : (
+                      "Pick a date range"
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="range"
+                    selected={field.value}
+                    onSelect={field.onChange}
+                    numberOfMonths={1}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+              {errors.dateRange && (
+                <p className="text-xs text-destructive">{errors.dateRange.message}</p>
+              )}
+            </div>
+          )}
+        />
       </div>
 
       <Separator />
@@ -50,14 +77,21 @@ export function GenerateSessionForm({ register, errors, disabled }) {
         </p>
         <div className="grid grid-cols-2 gap-4">
           <Field>
-            <FieldLabel htmlFor="startTime">
+            <FieldLabel>
               Start Time <span className="text-destructive">*</span>
             </FieldLabel>
-            <Input
-              id="startTime"
-              type="time"
-              disabled={disabled}
-              {...register("startTime", { required: "Start time is required" })}
+            <Controller
+              control={control}
+              name="startTime"
+              rules={{ required: "Start time is required" }}
+              render={({ field }) => (
+                <ClockTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                  placeholder="Start time"
+                />
+              )}
             />
             {errors.startTime && (
               <p className="text-xs text-destructive mt-1">{errors.startTime.message}</p>
@@ -65,14 +99,21 @@ export function GenerateSessionForm({ register, errors, disabled }) {
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="endTime">
+            <FieldLabel>
               End Time <span className="text-destructive">*</span>
             </FieldLabel>
-            <Input
-              id="endTime"
-              type="time"
-              disabled={disabled}
-              {...register("endTime", { required: "End time is required" })}
+            <Controller
+              control={control}
+              name="endTime"
+              rules={{ required: "End time is required" }}
+              render={({ field }) => (
+                <ClockTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                  placeholder="End time"
+                />
+              )}
             />
             {errors.endTime && (
               <p className="text-xs text-destructive mt-1">{errors.endTime.message}</p>
@@ -90,22 +131,34 @@ export function GenerateSessionForm({ register, errors, disabled }) {
         </p>
         <div className="grid grid-cols-2 gap-4">
           <Field>
-            <FieldLabel htmlFor="breakStartTime">Break Start</FieldLabel>
-            <Input
-              id="breakStartTime"
-              type="time"
-              disabled={disabled}
-              {...register("breakStartTime")}
+            <FieldLabel>Break Start</FieldLabel>
+            <Controller
+              control={control}
+              name="breakStartTime"
+              render={({ field }) => (
+                <ClockTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                  placeholder="Break start"
+                />
+              )}
             />
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="breakEndTime">Break End</FieldLabel>
-            <Input
-              id="breakEndTime"
-              type="time"
-              disabled={disabled}
-              {...register("breakEndTime")}
+            <FieldLabel>Break End</FieldLabel>
+            <Controller
+              control={control}
+              name="breakEndTime"
+              render={({ field }) => (
+                <ClockTimePicker
+                  value={field.value}
+                  onChange={field.onChange}
+                  disabled={disabled}
+                  placeholder="Break end"
+                />
+              )}
             />
           </Field>
         </div>

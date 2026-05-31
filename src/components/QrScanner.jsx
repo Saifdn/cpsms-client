@@ -11,6 +11,7 @@ import {
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -64,6 +65,7 @@ const QrScanner = ({ onScan }) => {
           { facingMode: "environment" },
           { fps: 10, qrbox: { width: 240, height: 240 } },
           (decodedText) => {
+            document.activeElement?.blur();
             onScanRef.current(decodedText);
             setDialogOpen(false);
           }
@@ -155,6 +157,9 @@ const QrScanner = ({ onScan }) => {
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Scan QR Code</DialogTitle>
+            <DialogDescription className="sr-only">
+              Point your camera at a booking QR code to scan it.
+            </DialogDescription>
           </DialogHeader>
 
           {cameraState === "error" ? (

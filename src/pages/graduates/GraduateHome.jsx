@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { usePackages } from "@/hooks/studio/usePackages";
 import { usePromoAds } from "@/hooks/studio/usePromoAds";
 import { useNavigate } from "react-router-dom";
@@ -114,7 +114,8 @@ const PromoCarousel = ({ promoAds }) => {
       </div>
 
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-none">
+        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-none" aria-describedby={undefined}>
+          <DialogTitle className="sr-only">{current?.name ?? "Package image"}</DialogTitle>
           <img
             src={current.imageBase64}
             alt={current.name}
