@@ -67,7 +67,7 @@ const RegistrationCounter = () => {
   const handleConfirmCheckIn = async () => {
     if (!scannedBookingNumber) return;
     try {
-      await checkInMutation.mutateAsync({ bookingNumber: scannedBookingNumber });
+      const result = await checkInMutation.mutateAsync({ bookingNumber: scannedBookingNumber });
 
       setSuccessSnapshot({
         bookingNumber: booking?.bookingNumber ?? scannedBookingNumber,
@@ -76,6 +76,7 @@ const RegistrationCounter = () => {
           booking?.session?.startTime && booking?.session?.endTime && booking?.session?.date
             ? `${booking.session.startTime} — ${booking.session.endTime}, ${format(new Date(booking.session.date), "dd MMM yyyy")}`
             : null,
+        queueNumber: result?.data?.data?.queueNumber ?? null,
       });
 
       setScannedBookingNumber(null);

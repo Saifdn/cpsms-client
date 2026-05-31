@@ -42,6 +42,7 @@ import {
 
 import QrScanner from "@/components/QrScanner";
 import { cn } from "@/lib/utils";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
@@ -441,7 +442,7 @@ const StudioCounter = () => {
                           {currentUser.booking?.graduate?.phone && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                               <Phone size={13} className="shrink-0" />
-                              <span>{currentUser.booking.graduate.phone}</span>
+                              <span>{parsePhoneNumberFromString(String(currentUser.booking.graduate.phone ?? ""), "MY")?.formatInternational() ?? currentUser.booking.graduate.phone}</span>
                             </div>
                           )}
                         </div>
