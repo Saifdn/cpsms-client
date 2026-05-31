@@ -23,6 +23,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { format } from "date-fns";
+import { parsePhoneNumberFromString } from "libphonenumber-js";
 import { cn } from "@/lib/utils";
 
 const STATUS_CONFIG = {
@@ -184,7 +185,7 @@ const BookingDetails = ({
           <div className="space-y-3">
             <InfoRow icon={User} label="Full Name" value={booking.graduate?.fullName} />
             <InfoRow icon={Mail} label="Email" value={booking.graduate?.email} />
-            <InfoRow icon={Phone} label="Phone" value={booking.graduate?.phone} />
+            <InfoRow icon={Phone} label="Phone" value={parsePhoneNumberFromString(String(booking.graduate?.phone ?? ""), "MY")?.formatInternational() ?? booking.graduate?.phone} />
           </div>
         </div>
 
