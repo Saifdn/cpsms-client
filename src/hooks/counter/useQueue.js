@@ -1,5 +1,5 @@
 // hooks/counter/useQueue.js
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { queueService } from "@/services/queueService";
 import toast from "react-hot-toast";
 
@@ -62,6 +62,21 @@ export const useSkip = () => {
     onError: (err) => toast.error(err.response?.data?.message || "Failed to skip customer"),
   });
 };
+
+// ====================== QUEUE STATUS (Graduate view) ======================
+export const useQueueStatus = (bookingId, enabled = true) =>
+  useQuery({
+    queryKey: ["queueStatus", bookingId],
+    queryFn: () => queueService.getQueueStatus(bookingId).then((r) => r.data.data),
+    enabled: !!bookingId && enabled,
+    refetchInterval: (query) => {
+      const status = query.state.data?.status;
+      if (status === "completed" || status === "cancelled") return false;
+      return 10_000;
+    },
+    retry: false,
+    staleTime: 0,
+  });
 
 // ====================== CHECK-OUT ======================
 export const useCheckOut = () => {

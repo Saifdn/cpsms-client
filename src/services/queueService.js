@@ -20,4 +20,6 @@ export const queueService = {
     axios.get(`/bookings/number/${bookingNumber}`),
 
   skip: (bookingId) => axios.post("/queue/skip", { bookingId }),
+
+  getQueueStatus: (bookingId) => axios.get(`/queue/status/${bookingId}`),
 };
