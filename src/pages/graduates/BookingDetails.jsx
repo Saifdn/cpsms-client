@@ -1,5 +1,4 @@
 // pages/graduates/BookingDetails.jsx
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,17 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useMyBookingById, useCancelBooking } from "@/hooks/studio/useBookings";
+import { useMyBookingById } from "@/hooks/studio/useBookings";
 import { getBookingStatus, getPaymentStatus } from "@/lib/bookingStatus";
 import { getShipmentStatus } from "@/lib/easyparcelStatus";
 import {
@@ -154,10 +143,7 @@ const LoadingSkeleton = () => (
 const BookingDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-
   const { data: response, isLoading, isError } = useMyBookingById(id);
-  const cancelBooking = useCancelBooking();
   const booking = response?.data;
 
   if (isLoading) return <LoadingSkeleton />;
@@ -185,9 +171,7 @@ const BookingDetails = () => {
   const DELIVERY_STATUSES = ["delivery", "shipped"];
   const isCancelled = booking.status === "cancelled";
   const isInDelivery = DELIVERY_STATUSES.includes(booking.status);
-  const isCancellable = ["pending", "booked"].includes(booking.status);
-
-  const statusInfo = getBookingStatus(booking.status);
+const statusInfo = getBookingStatus(booking.status);
   const paymentInfo = getPaymentStatus(booking.paymentStatus);
 
   const statusSteps = [
@@ -214,12 +198,6 @@ const BookingDetails = () => {
   const handleCopyBookingNumber = () => {
     navigator.clipboard.writeText(booking.bookingNumber).then(() => {
       toast.success("Booking number copied!");
-    });
-  };
-
-  const handleConfirmCancel = () => {
-    cancelBooking.mutate(booking._id, {
-      onSuccess: () => navigate("/my-bookings"),
     });
   };
 
@@ -497,42 +475,8 @@ const BookingDetails = () => {
             <ChevronLeft className="mr-2 h-4 w-4" />
             My Bookings
           </Button>
-          {isCancellable && (
-            <Button
-              variant="destructive"
-              onClick={() => setCancelDialogOpen(true)}
-              className="flex-1"
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              Cancel Booking
-            </Button>
-          )}
         </div>
       </div>
-
-      {/* ── Cancel Confirmation Dialog ────────────────────────────────── */}
-      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will cancel booking <strong>{booking.bookingNumber}</strong>. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelBooking.isPending}>
-              Keep Booking
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmCancel}
-              disabled={cancelBooking.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {cancelBooking.isPending ? "Cancelling…" : "Yes, Cancel"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Page>
   );
 };
