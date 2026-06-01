@@ -3,21 +3,13 @@ import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { useMyBookingById, useCancelBooking } from "@/hooks/studio/useBookings";
+import { useMyBookingById } from "@/hooks/studio/useBookings";
+import { useQueueStatus } from "@/hooks/counter/useQueue";
 import { getBookingStatus, getPaymentStatus } from "@/lib/bookingStatus";
 import { getShipmentStatus } from "@/lib/easyparcelStatus";
 import {
@@ -38,10 +30,13 @@ import {
   Hash,
   Copy,
   CreditCard,
+  Users,
+  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import QRCode from "react-qr-code";
 import { SummaryRow, SectionCard } from "@/components/booking/BookingSummaryParts";
+import { cn } from "@/lib/utils";
 
 // ─── Delivery Sub-Stepper ────────────────────────────────────────────────────
 
@@ -106,6 +101,100 @@ const DeliverySubStepper = ({ shipment }) => {
   );
 };
 
+// ─── Queue Status Card ────────────────────────────────────────────────────────
+
+const QueueStatusCard = ({ bookingId }) => {
+  const { data: queue, isLoading } = useQueueStatus(bookingId, true);
+
+  if (isLoading || !queue) return null;
+
+  const { queueNumber, status, studio, ahead } = queue;
+
+  const config = {
+    waiting: {
+      accent: "bg-blue-500",
+      badge: "bg-blue-500/10 text-blue-600 border-blue-500/30",
+      badgeLabel: "In Queue",
+      pulse: true,
+    },
+    called: {
+      accent: "bg-amber-500",
+      badge: "bg-amber-500/10 text-amber-600 border-amber-500/30",
+      badgeLabel: "Called",
+      pulse: true,
+    },
+    "in-progress": {
+      accent: "bg-green-500",
+      badge: "bg-green-500/10 text-green-600 border-green-500/30",
+      badgeLabel: "In Studio",
+      pulse: false,
+    },
+  };
+
+  const c = config[status];
+  if (!c) return null;
+
+  return (
+    <Card className="overflow-hidden">
+      <div className={cn("h-1.5 w-full", c.accent)} />
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base font-semibold flex items-center gap-2">
+          <div className={cn("rounded-md p-1.5", c.badge.replace("border", "border-0"))}>
+            <Users className="h-4 w-4" />
+          </div>
+          Queue Status
+          <span className={cn("ml-auto text-xs px-2.5 py-0.5 rounded-full font-semibold border", c.badge, c.pulse && "animate-pulse")}>
+            {c.badgeLabel}
+          </span>
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pb-6">
+        {/* Queue number display */}
+        <div className="flex flex-col items-center py-4 gap-1">
+          <span className="text-xs text-muted-foreground uppercase tracking-widest font-medium">Your Queue Number</span>
+          <span className="text-7xl font-black tracking-tight tabular-nums">{queueNumber}</span>
+        </div>
+
+        {/* Status message */}
+        {status === "waiting" && (
+          <div className="mt-2 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-4 text-center">
+            {ahead > 0 ? (
+              <>
+                <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{ahead}</p>
+                <p className="text-sm text-blue-600/80 dark:text-blue-400/80 mt-0.5">
+                  {ahead === 1 ? "person" : "people"} ahead of you
+                </p>
+              </>
+            ) : (
+              <p className="text-base font-semibold text-blue-700 dark:text-blue-300">You're next!</p>
+            )}
+          </div>
+        )}
+
+        {status === "called" && (
+          <div className="mt-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 p-4 text-center">
+            <p className="font-semibold text-amber-700 dark:text-amber-300">Your turn! Please proceed to the studio.</p>
+            {studio?.name && (
+              <p className="text-sm text-amber-600/80 dark:text-amber-400/80 mt-1">
+                {studio.name}{studio.location ? ` — ${studio.location}` : ""}
+              </p>
+            )}
+          </div>
+        )}
+
+        {status === "in-progress" && (
+          <div className="mt-2 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 text-center">
+            <p className="font-semibold text-green-700 dark:text-green-300">You are currently in the studio.</p>
+            {studio?.name && (
+              <p className="text-sm text-green-600/80 dark:text-green-400/80 mt-1">{studio.name}</p>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+};
+
 // ─── Loading Skeleton ─────────────────────────────────────────────────────────
 
 const LoadingSkeleton = () => (
@@ -154,11 +243,9 @@ const LoadingSkeleton = () => (
 const BookingDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-
   const { data: response, isLoading, isError } = useMyBookingById(id);
-  const cancelBooking = useCancelBooking();
   const booking = response?.data;
+  const [qrOpen, setQrOpen] = useState(false);
 
   if (isLoading) return <LoadingSkeleton />;
 
@@ -185,8 +272,6 @@ const BookingDetails = () => {
   const DELIVERY_STATUSES = ["delivery", "shipped"];
   const isCancelled = booking.status === "cancelled";
   const isInDelivery = DELIVERY_STATUSES.includes(booking.status);
-  const isCancellable = ["pending", "booked"].includes(booking.status);
-
   const statusInfo = getBookingStatus(booking.status);
   const paymentInfo = getPaymentStatus(booking.paymentStatus);
 
@@ -214,12 +299,6 @@ const BookingDetails = () => {
   const handleCopyBookingNumber = () => {
     navigator.clipboard.writeText(booking.bookingNumber).then(() => {
       toast.success("Booking number copied!");
-    });
-  };
-
-  const handleConfirmCancel = () => {
-    cancelBooking.mutate(booking._id, {
-      onSuccess: () => navigate("/my-bookings"),
     });
   };
 
@@ -268,7 +347,12 @@ const BookingDetails = () => {
 
               {/* Right: QR code for check-in */}
               <div className="flex flex-col items-center gap-2 shrink-0">
-                <div className="p-3 rounded-xl border bg-white shadow-sm">
+                <button
+                  onClick={() => setQrOpen(true)}
+                  className="p-3 rounded-xl border bg-white shadow-sm cursor-zoom-in hover:shadow-md transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                  title="Tap to enlarge QR code"
+                  aria-label="Enlarge QR code"
+                >
                   <QRCode
                     value={booking.bookingNumber}
                     size={110}
@@ -276,14 +360,43 @@ const BookingDetails = () => {
                     fgColor="#000000"
                     level="M"
                   />
-                </div>
+                </button>
                 <p className="text-[11px] text-muted-foreground text-center leading-tight">
                   Show this at the<br />check-in counter
                 </p>
               </div>
+
+              {/* QR enlarge dialog */}
+              <Dialog open={qrOpen} onOpenChange={setQrOpen}>
+                <DialogContent aria-describedby={undefined} className="flex flex-col items-center gap-5 max-w-xs sm:max-w-sm bg-white dark:bg-white">
+                  <DialogTitle className="text-foreground dark:text-gray-900 text-center">
+                    Booking QR Code
+                  </DialogTitle>
+                  <div className="p-4 rounded-2xl bg-white">
+                    <QRCode
+                      value={booking.bookingNumber}
+                      size={240}
+                      bgColor="#ffffff"
+                      fgColor="#000000"
+                      level="M"
+                    />
+                  </div>
+                  <p className="font-mono font-bold text-lg text-gray-900 tracking-tight">
+                    {booking.bookingNumber}
+                  </p>
+                  <p className="text-xs text-gray-500 text-center">
+                    Show this QR code at the check-in counter
+                  </p>
+                </DialogContent>
+              </Dialog>
             </div>
           </CardContent>
         </Card>
+
+        {/* ── Queue Status Card (shown after check-in) ─────────────────── */}
+        {["checked-in", "in-progress"].includes(booking.status) && (
+          <QueueStatusCard bookingId={booking._id} />
+        )}
 
         {/* ── Status Tracker Card ───────────────────────────────────────── */}
         <Card>
@@ -497,42 +610,8 @@ const BookingDetails = () => {
             <ChevronLeft className="mr-2 h-4 w-4" />
             My Bookings
           </Button>
-          {isCancellable && (
-            <Button
-              variant="destructive"
-              onClick={() => setCancelDialogOpen(true)}
-              className="flex-1"
-            >
-              <XCircle className="mr-2 h-4 w-4" />
-              Cancel Booking
-            </Button>
-          )}
         </div>
       </div>
-
-      {/* ── Cancel Confirmation Dialog ────────────────────────────────── */}
-      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Cancel this booking?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will cancel booking <strong>{booking.bookingNumber}</strong>. This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={cancelBooking.isPending}>
-              Keep Booking
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmCancel}
-              disabled={cancelBooking.isPending}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              {cancelBooking.isPending ? "Cancelling…" : "Yes, Cancel"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </Page>
   );
 };

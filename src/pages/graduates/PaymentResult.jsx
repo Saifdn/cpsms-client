@@ -5,7 +5,7 @@ import { Page } from "@/components/layout/Page";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { CheckCircle, XCircle, Home, List } from "lucide-react";
+import { CheckCircle, XCircle, Home, List, Clock } from "lucide-react";
 import { usePaymentStatusById } from "@/hooks/payment/usePayments";
 
 // ─── Hourglass Animation ──────────────────────────────────────────────────────
@@ -138,9 +138,16 @@ const PaymentResult = () => {
   const [resolved, setResolved] = useState(false);
 
   const billplzId = searchParams.get("billplz[id]");
+  const [timedOut, setTimedOut] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setTimedOut(true), 1 * 60 * 1000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const { data, isPending, isFetching, isError } = usePaymentStatusById(billplzId, {
     refetchInterval: (query) => {
+      if (timedOut) return false;
       const status = query.state.data?.data?.paymentStatus;
       if (status === "paid" || status === "failed") return false;
       return 3000;
@@ -151,12 +158,14 @@ const PaymentResult = () => {
 
   const status = !billplzId
     ? "failed"
-    : !resolved && (isPending || isFetching || paymentData?.paymentStatus === "pending")
-    ? "loading"
-    : isError
-    ? "failed"
     : paymentData?.paymentStatus === "paid"
     ? "success"
+    : paymentData?.paymentStatus === "failed" || isError
+    ? "failed"
+    : timedOut
+    ? "timeout"
+    : !resolved && (isPending || isFetching || paymentData?.paymentStatus === "pending")
+    ? "loading"
     : "failed";
 
   const bookingNumber = paymentData?.bookingNumber;
@@ -168,6 +177,44 @@ const PaymentResult = () => {
       return () => clearTimeout(timer);
     }
   }, [isPending, isFetching, paymentData?.paymentStatus]);
+
+  if (status === "timeout") {
+    return (
+      <Page>
+        <div className="max-w-md mx-auto pt-20 px-4">
+          <Card className="text-center overflow-hidden">
+            <div className="h-1.5 w-full bg-amber-400" />
+            <CardContent className="pt-10 pb-10">
+              <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-amber-100 dark:bg-amber-900/30 mb-6">
+                <Clock className="h-14 w-14 text-amber-500" />
+              </div>
+              <h1 className="text-2xl font-semibold mb-3">Payment Verification Delayed</h1>
+              <p className="text-muted-foreground mb-2">
+                We couldn&apos;t confirm your payment status within the expected time.
+              </p>
+              <p className="text-muted-foreground mb-8">
+                Please check your{" "}
+                <span className="font-semibold text-foreground">My Bookings</span>{" "}
+                page in about{" "}
+                <span className="font-semibold text-foreground">10 minutes</span>{" "}
+                to see if your booking has been confirmed.
+              </p>
+              <div className="space-y-3">
+                <Button className="w-full" onClick={() => navigate("/my-bookings")}>
+                  <List className="mr-2 h-4 w-4" />
+                  Go to My Bookings
+                </Button>
+                <Button variant="outline" className="w-full" onClick={() => navigate("/")}>
+                  <Home className="mr-2 h-4 w-4" />
+                  Back to Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Page>
+    );
+  }
 
   if (status === "loading") {
     return (

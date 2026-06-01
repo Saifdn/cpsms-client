@@ -3,32 +3,32 @@ import { cn } from "@/lib/utils";
 
 const SCHEMES = {
   waiting: {
-    card: "border-orange-200 dark:border-orange-800/60",
-    header: "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800",
-    iconWrap: "bg-orange-100 dark:bg-orange-900",
-    icon: "text-orange-500 dark:text-orange-400",
-    title: "text-orange-700 dark:text-orange-300",
-    sub: "text-orange-500 dark:text-orange-400",
-    count: "text-orange-600 dark:text-orange-400",
+    card: "border-border",
+    header: "bg-muted/50 border-border",
+    iconWrap: "bg-background border border-border",
+    icon: "text-muted-foreground",
+    title: "text-foreground",
+    sub: "text-muted-foreground",
+    count: "text-foreground",
   },
   called: {
-    card: "border-blue-300 dark:border-blue-700 ring-1 ring-blue-200 dark:ring-blue-800",
-    fsExtra: "shadow-lg shadow-blue-100/50",
-    header: "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800",
-    iconWrap: "bg-blue-100 dark:bg-blue-900",
-    icon: "text-blue-500 dark:text-blue-400",
-    title: "text-blue-700 dark:text-blue-300",
-    sub: "text-blue-500 dark:text-blue-400",
-    count: "text-blue-600 dark:text-blue-300",
+    card: "border-primary/30 ring-1 ring-primary/20",
+    fsExtra: "shadow-lg shadow-primary/10",
+    header: "bg-primary/5 border-primary/20",
+    iconWrap: "bg-primary/15",
+    icon: "text-primary",
+    title: "text-primary",
+    sub: "text-muted-foreground",
+    count: "text-primary",
   },
   "in-progress": {
-    card: "border-green-200 dark:border-green-800/60",
-    header: "bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800",
-    iconWrap: "bg-green-100 dark:bg-green-900",
-    icon: "text-green-500 dark:text-green-400",
-    title: "text-green-700 dark:text-green-300",
-    sub: "text-green-500 dark:text-green-400",
-    count: "text-green-600 dark:text-green-400",
+    card: "border-border",
+    header: "bg-muted/30 border-border",
+    iconWrap: "bg-background border border-border",
+    icon: "text-muted-foreground",
+    title: "text-foreground",
+    sub: "text-muted-foreground",
+    count: "text-foreground",
   },
 };
 
@@ -48,7 +48,7 @@ export const QueueColumn = ({
       className={cn(
         "flex flex-col",
         s.card,
-        fullscreen && "bg-white rounded-2xl",
+        fullscreen && "bg-card rounded-2xl",
         fullscreen && s.fsExtra,
       )}
     >
@@ -64,18 +64,18 @@ export const QueueColumn = ({
             <div className={cn("p-2 rounded-lg", s.iconWrap)}>
               <Icon
                 className={cn(
-                  fullscreen ? "h-7 w-7" : "h-5 w-5",
+                  fullscreen ? "h-6 w-6" : "h-4 w-4",
                   s.icon,
                 )}
               />
             </div>
             <div>
               <CardTitle
-                className={cn(s.title, fullscreen ? "text-xl" : "text-base")}
+                className={cn(s.title, fullscreen ? "text-lg" : "text-sm font-semibold")}
               >
                 {title}
               </CardTitle>
-              <p className={cn(s.sub, fullscreen ? "text-sm mt-0.5" : "text-xs")}>
+              <p className={cn(s.sub, "text-xs mt-0.5")}>
                 {subtitle}
               </p>
             </div>
@@ -84,7 +84,7 @@ export const QueueColumn = ({
             className={cn(
               "font-bold tabular-nums font-mono",
               s.count,
-              fullscreen ? "text-3xl" : "text-xl",
+              fullscreen ? "text-3xl" : "text-2xl",
             )}
           >
             {count}
@@ -95,8 +95,8 @@ export const QueueColumn = ({
       <CardContent
         className={cn(
           "flex-1 overflow-y-auto",
-          variant === "called" ? "space-y-3" : "space-y-2.5",
-          fullscreen ? "pt-5 px-5 pb-5" : "pt-4",
+          variant === "called" ? "space-y-3" : "space-y-2",
+          fullscreen ? "pt-4 px-4 pb-4" : "pt-3 px-3 pb-3",
         )}
       >
         {children}
