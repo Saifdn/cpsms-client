@@ -5,6 +5,16 @@ import { QueueColumn } from "@/components/queue/QueueColumn";
 import { QueueItem } from "@/components/queue/QueueItem";
 import { QueueBoardSkeleton } from "@/components/queue/QueueBoardSkeleton";
 import { useLiveQueue } from "@/hooks/counter/useLiveQueue";
+import { useQueueLog } from "@/hooks/counter/useQueueLog";
+import { queueLogColumns } from "@/components/columns/QueueLogColumns";
+import { DataTable } from "@/components/ui/data-table";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Logo } from "@/assets/Logo";
 import {
   Clock,
   Users,
@@ -14,6 +24,7 @@ import {
   Minimize2,
   Camera,
   WifiOff,
+  ScrollText,
 } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import { speakQueue } from "@/lib/speakQueue";
@@ -25,20 +36,17 @@ const STAT_PILLS = [
   {
     icon: Clock,
     label: "Waiting",
-    color:
-      "border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-300 bg-orange-50 dark:bg-orange-950/40",
+    color: "border-border bg-muted/50 text-muted-foreground",
   },
   {
     icon: ArrowRight,
     label: "Called",
-    color:
-      "border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/40",
+    color: "border-primary/30 bg-primary/5 text-primary",
   },
   {
     icon: UserCheck,
     label: "In Progress",
-    color:
-      "border-green-200 dark:border-green-800 text-green-700 dark:text-green-300 bg-green-50 dark:bg-green-950/40",
+    color: "border-border bg-muted/30 text-muted-foreground",
   },
 ];
 
@@ -123,6 +131,15 @@ const LiveQueueBoard = () => {
   const prevCalledRef = useRef([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [logOpen, setLogOpen] = useState(false);
+  const [logPage, setLogPage] = useState(1);
+  const [logLimit, setLogLimit] = useState(10);
+
+  const { data: logData, isLoading: logIsLoading } = useQueueLog({
+    page: logPage,
+    limit: logLimit,
+    enabled: logOpen,
+  });
 
   const waitingList = activeQueue.filter((q) => q.status === "waiting");
   const calledList = activeQueue.filter((q) => q.status === "called");
@@ -176,14 +193,13 @@ const LiveQueueBoard = () => {
 
   // ── Shared sections ──────────────────────────────────────────────────────────
 
+  const counts = [waitingList.length, calledList.length, inProgressList.length];
+
   const statsBar = (
-    <div className={cn("flex flex-wrap gap-2", isFullscreen ? "mt-1" : "mt-4")}>
-      {STAT_PILLS.map(({ icon, label, color }, i) => {
-        const counts = [waitingList.length, calledList.length, inProgressList.length];
-        return (
-          <StatPill key={label} icon={icon} label={label} count={counts[i]} color={color} />
-        );
-      })}
+    <div className="flex flex-wrap gap-2 mt-4">
+      {STAT_PILLS.map(({ icon, label, color }, i) => (
+        <StatPill key={label} icon={icon} label={label} count={counts[i]} color={color} />
+      ))}
     </div>
   );
 
@@ -224,35 +240,44 @@ const LiveQueueBoard = () => {
     return (
       <div
         ref={containerRef}
-        className="h-screen flex flex-col bg-gray-50 text-gray-900 px-8 py-6 overflow-hidden"
+        className="h-screen flex flex-col bg-background text-foreground px-8 py-5 overflow-hidden"
       >
-        <div className="flex items-start justify-between shrink-0">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-              Live Queue Board
-            </h1>
-            <p className="text-gray-500 text-sm mt-0.5">{formattedDate}</p>
+        {/* Row 1: Logo + title | Clock */}
+        <div className="flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-4">
+            <Logo size={40} color="var(--primary)" />
+            <div className="w-px h-10 bg-border" />
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight">Live Queue Board</h1>
+              <p className="text-muted-foreground text-sm mt-0.5">{formattedDate}</p>
+            </div>
           </div>
-          <div className="flex flex-col items-end gap-3">
-            <div className="font-mono text-5xl font-bold text-gray-900 tabular-nums tracking-widest">
-              {formattedTime}
-            </div>
-            <div className="flex items-center gap-3">
-              <ConnectionStatus isConnected={isConnected} />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={toggleFullscreen}
-                className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 gap-1.5"
-              >
-                <Minimize2 className="h-4 w-4" />
-                Exit Fullscreen
-              </Button>
-            </div>
+          <div className="font-mono text-5xl font-bold text-primary tabular-nums tracking-widest">
+            {formattedTime}
           </div>
         </div>
 
-        {statsBar}
+        {/* Row 2: Stat pills | Connection + exit */}
+        <div className="flex items-center justify-between shrink-0 mt-3 pt-3 border-t border-border">
+          <div className="flex flex-wrap gap-2">
+            {STAT_PILLS.map(({ icon, label, color }, i) => (
+              <StatPill key={label} icon={icon} label={label} count={counts[i]} color={color} />
+            ))}
+          </div>
+          <div className="flex items-center gap-3">
+            <ConnectionStatus isConnected={isConnected} />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={toggleFullscreen}
+              className="gap-1.5"
+            >
+              <Minimize2 className="h-4 w-4" />
+              Exit Fullscreen
+            </Button>
+          </div>
+        </div>
+
         {queueGrid}
       </div>
     );
@@ -271,6 +296,15 @@ const LiveQueueBoard = () => {
               <Button
                 variant="outline"
                 size="sm"
+                onClick={() => setLogOpen(true)}
+                className="gap-1.5"
+              >
+                <ScrollText className="h-4 w-4" />
+                Queue Log
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
                 onClick={toggleFullscreen}
                 className="gap-1.5"
               >
@@ -281,15 +315,41 @@ const LiveQueueBoard = () => {
           }
         />
 
+        {/* Branding strip */}
+        <div className="flex items-center justify-between rounded-xl border border-border bg-card px-5 py-3 mb-4">
+          <div className="flex items-center gap-3">
+            <Logo size={28} color="var(--primary)" />
+            <div className="w-px h-6 bg-border" />
+            <span className="text-sm font-semibold text-foreground">Convocation Photography Studio</span>
+          </div>
+          <span className="font-mono text-sm font-bold tabular-nums text-primary tracking-widest">
+            {formattedTime}
+          </span>
+        </div>
+
         {!isConnected && !isLoading && <DisconnectedBanner />}
 
-        {isLoading ? statsBar : statsBar}
+        {statsBar}
 
-        {isLoading ? (
-          <QueueBoardSkeleton />
-        ) : (
-          queueGrid
-        )}
+        {isLoading ? <QueueBoardSkeleton /> : queueGrid}
+
+        <Dialog open={logOpen} onOpenChange={setLogOpen}>
+          <DialogContent className="max-w-5xl">
+            <DialogHeader>
+              <DialogTitle>Queue Log</DialogTitle>
+            </DialogHeader>
+            <DataTable
+              columns={queueLogColumns}
+              data={logData?.data || []}
+              isLoading={logIsLoading}
+              currentPage={logPage}
+              totalPages={logData?.pagination?.totalPages ?? 1}
+              onPageChange={setLogPage}
+              limit={logLimit}
+              onLimitChange={(v) => { setLogLimit(v); setLogPage(1); }}
+            />
+          </DialogContent>
+        </Dialog>
       </Page>
     </div>
   );
