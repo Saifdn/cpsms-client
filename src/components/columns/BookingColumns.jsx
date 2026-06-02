@@ -4,6 +4,11 @@ import { cn } from "@/lib/utils";
 import { BookingActionsCell } from "./BookingActionsCell";
 
 const STATUS_MAP = {
+  pending: {
+    label: "Pending",
+    className:
+      "bg-yellow-100 text-yellow-700 border-yellow-200 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-800",
+  },
   booked: {
     label: "Booked",
     className:
@@ -12,12 +17,27 @@ const STATUS_MAP = {
   "checked-in": {
     label: "Checked In",
     className:
-      "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
+      "bg-cyan-100 text-cyan-700 border-cyan-200 dark:bg-cyan-900/30 dark:text-cyan-400 dark:border-cyan-800",
+  },
+  "in-progress": {
+    label: "In Progress",
+    className:
+      "bg-indigo-100 text-indigo-700 border-indigo-200 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800",
   },
   completed: {
     label: "Completed",
     className:
-      "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700",
+      "bg-green-100 text-green-700 border-green-200 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
+  },
+  preparing: {
+    label: "Preparing",
+    className:
+      "bg-orange-100 text-orange-700 border-orange-200 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800",
+  },
+  delivery: {
+    label: "Delivery",
+    className:
+      "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800",
   },
   cancelled: {
     label: "Cancelled",

@@ -30,7 +30,7 @@ export function BookingActionsCell({ row }) {
   const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const isCancellable =
-    booking.status !== "cancelled" && booking.status !== "completed";
+    booking.status !== "pending" && booking.status !== "booked";
 
   const handleConfirmCancel = () => {
     cancelBooking.mutate(booking._id, {
@@ -61,7 +61,7 @@ export function BookingActionsCell({ row }) {
             <DropdownMenuItem
               onClick={() => setShowCancelDialog(true)}
               className="cursor-pointer text-amber-600 focus:text-amber-600 focus:bg-amber-50 dark:focus:bg-amber-950/30"
-              disabled={!isCancellable}
+              disabled={isCancellable}
             >
               <XCircle className="mr-2 h-4 w-4" />
               Cancel Booking
