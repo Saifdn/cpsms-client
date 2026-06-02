@@ -73,16 +73,16 @@ const App = () => {
               <Route path="/studio-counter" element={<StudioCounter />} />
               <Route path="/live-queue" element={<LiveQueueBoard />} />
               <Route path="/shipment" element={<ShipmentManagement />} />
-              <Route path="/staff" element={<Staff />} />
               <Route path="/graduate" element={<Graduate />} />
               <Route path="/tasks/my" element={<MyTasks />} />
+              <Route path="/reports" element={<Reports />} />
             </Route>
 
             {/* Admin task management + settings + reports */}
             <Route element={<ProtectedRoute allowedRoles={["superadmin", "admin"]} />}>
               <Route path="/tasks" element={<AdminTasks />} />
-              <Route path="/settings" element={<SettingsPage />} />
-              <Route path="/reports" element={<Reports />} />
+              <Route path="/staff" element={<Staff />} />
+              <Route path="/settings" element={<SettingsPage />} />             
             </Route>
 
             {/* Only superadmin */}
