@@ -107,7 +107,7 @@ export const APP_SIDEBAR = {
       title: "Reports",
       url: "/reports",
       Icon: FileBarChart2,
-      allowedRoles: ["superadmin", "admin"],
+      allowedRoles: ["superadmin", "admin", "staff"],
     },
     {
       title: "Users",
@@ -117,7 +117,7 @@ export const APP_SIDEBAR = {
         {
           title: "Staff",
           url: "/staff",
-          allowedRoles: ["superadmin", "admin", "staff"],
+          allowedRoles: ["superadmin", "admin"],
         },
         {
           title: "Graduate",
