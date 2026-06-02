@@ -35,6 +35,7 @@ import ProfilePage from "@/pages/profile/ProfilePage";
 import SettingsPage from "@/pages/settings/SettingsPage";
 import AdminTasks from "@/pages/tasks/AdminTasks";
 import MyTasks from "@/pages/tasks/MyTasks";
+import Reports from "@/pages/reports/Reports";
 import { ProtectedRoute } from "@/routes/ProtectedRoute";
 
 const App = () => {
@@ -77,10 +78,11 @@ const App = () => {
               <Route path="/tasks/my" element={<MyTasks />} />
             </Route>
 
-            {/* Admin task management + settings */}
+            {/* Admin task management + settings + reports */}
             <Route element={<ProtectedRoute allowedRoles={["superadmin", "admin"]} />}>
               <Route path="/tasks" element={<AdminTasks />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/reports" element={<Reports />} />
             </Route>
 
             {/* Only superadmin */}
