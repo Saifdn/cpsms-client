@@ -123,6 +123,8 @@ function buildSummarySheet(wb, overall, periodLabel) {
     ["Grand Total Revenue",  overall.grandTotal ?? 0],
     ["Event Days",           overall.totalDays ?? 0],
     ["Avg Revenue / Day",    avgRevenue],
+    ["Frame Orders (count)", overall.frameOrders?.totalOrders ?? 0],
+    ["Frame Orders Revenue", overall.frameOrders?.totalRevenue ?? 0],
   ];
 
   kpis.forEach(([label, value], i) => {
@@ -231,6 +233,37 @@ function buildBreakdownSheet(wb, sheetName, rows) {
 }
 
 // ─── Sheet 5 & 6: qty pivot by date ───────────────────────────────────────────
+// ─── Sheet 7: frame orders breakdown ─────────────────────────────────────────
+function buildFrameOrdersSheet(wb, frameOrders) {
+  const frames = frameOrders?.frames ?? [];
+  const ws = wb.addWorksheet("Frame Orders");
+  ws.views = [{ state: "frozen", ySplit: 1, showGridLines: false }];
+
+  ws.columns = [
+    { key: "name",    header: "Frame",        width: 30 },
+    { key: "qty",     header: "Qty Sold",     width: 14 },
+    { key: "revenue", header: "Revenue (RM)", width: 20 },
+  ];
+
+  styleHeaderRow(ws.getRow(1), 3);
+
+  let totalQty = 0;
+  let totalRev = 0;
+
+  frames.forEach((item, i) => {
+    const row = ws.addRow({ name: item.name, qty: item.qty, revenue: item.revenue });
+    styleDataRow(row, 3, i % 2 === 1);
+    row.getCell(3).numFmt = RM_FORMAT;
+    totalQty += item.qty ?? 0;
+    totalRev += item.revenue ?? 0;
+  });
+
+  const totalRow = ws.addRow({ name: "TOTAL", qty: totalQty, revenue: totalRev });
+  styleTotalRow(totalRow, 3);
+  totalRow.getCell(3).numFmt = RM_FORMAT;
+}
+
+
 function buildQtyByDateSheet(wb, sheetName, eventDays, itemKey) {
   // Collect all unique product names in the order they first appear
   const names = [];
@@ -290,10 +323,11 @@ function buildQtyByDateSheet(wb, sheetName, eventDays, itemKey) {
 
 // ─── Main export function ─────────────────────────────────────────────────────
 export async function downloadReportExcel(summary, periodLabel) {
-  const overall   = summary?.overall ?? {};
-  const eventDays = summary?.eventDays ?? [];
-  const packages  = overall.packageBreakdown ?? [];
-  const addons    = overall.addonBreakdown ?? [];
+  const overall      = summary?.overall ?? {};
+  const eventDays    = summary?.eventDays ?? [];
+  const packages     = overall.packageBreakdown ?? [];
+  const addons       = overall.addonBreakdown ?? [];
+  const frameOrders  = overall.frameOrders ?? { frames: [] };
 
   const wb = new ExcelJS.Workbook();
   wb.creator   = "CPSMS";
@@ -307,6 +341,7 @@ export async function downloadReportExcel(summary, periodLabel) {
   buildBreakdownSheet(wb, "Addon Breakdown", addons);
   buildQtyByDateSheet(wb, "Package Qty by Date", eventDays, "packages");
   buildQtyByDateSheet(wb, "Addon Qty by Date", eventDays, "addons");
+  buildFrameOrdersSheet(wb, frameOrders);
 
   const buffer   = await wb.xlsx.writeBuffer();
   const blob     = new Blob([buffer], {

@@ -19,6 +19,7 @@ import StudioCounter from "@/pages/check-in-out/StudioCounter";
 import LiveQueueBoard from "@/pages/queue/LiveQueueBoard";
 
 import ShipmentManagement from "@/pages/shipment/ShipmentManagement";
+import FrameShipmentManagement from "@/pages/shipment/FrameShipmentManagement";
 import EasyParcelConnect from "@/pages/shipment/EasyParcelConnect";
 
 import Staff from "@/pages/users/Staff";
@@ -28,8 +29,15 @@ import Admin from "@/pages/users/Admin";
 import GraduateHome from "@/pages/graduates/GraduateHome";
 import GraduateBooking from "@/pages/graduates/Booking";
 import PaymentResult from "@/pages/graduates/PaymentResult";
-import MyBookings from "@/pages/graduates/MyBookings";
 import BookingDetails from "@/pages/graduates/BookingDetails";
+import MyOrders from "@/pages/graduates/MyOrders";
+
+import FrameShop from "@/pages/frames/FrameShop";
+import GraduateFrameOrderDetail from "@/pages/frames/GraduateFrameOrderDetail";
+import FrameOrderPaymentResult from "@/pages/frames/FrameOrderPaymentResult";
+import FrameManagement from "@/pages/frames/FrameManagement";
+import FrameOrdersList from "@/pages/frames/FrameOrdersList";
+import AdminFrameOrderDetail from "@/pages/frames/AdminFrameOrderDetail";
 
 import ProfilePage from "@/pages/profile/ProfilePage";
 import SettingsPage from "@/pages/settings/SettingsPage";
@@ -58,8 +66,13 @@ const App = () => {
               <Route path="/" element={<GraduateHome />} />
               <Route path="/book" element={<GraduateBooking />} />
               <Route path="/booking/result" element={<PaymentResult />} />
-              <Route path="/my-bookings" element={<MyBookings />} />
+              <Route path="/my-orders" element={<MyOrders />} />
+              <Route path="/my-bookings" element={<Navigate to="/my-orders?tab=bookings" replace />} />
               <Route path="/my-bookings/:id" element={<BookingDetails />} />
+              <Route path="/frames" element={<FrameShop />} />
+              <Route path="/my-frame-orders" element={<Navigate to="/my-orders?tab=frame-orders" replace />} />
+              <Route path="/my-frame-orders/:id" element={<GraduateFrameOrderDetail />} />
+              <Route path="/frame-order/result" element={<FrameOrderPaymentResult />} />
             </Route>
 
             {/* Pages accessible by superadmin, admin, staff */}
@@ -73,9 +86,13 @@ const App = () => {
               <Route path="/studio-counter" element={<StudioCounter />} />
               <Route path="/live-queue" element={<LiveQueueBoard />} />
               <Route path="/shipment" element={<ShipmentManagement />} />
+              <Route path="/shipment/frames" element={<FrameShipmentManagement />} />
               <Route path="/graduate" element={<Graduate />} />
               <Route path="/tasks/my" element={<MyTasks />} />
               <Route path="/reports" element={<Reports />} />
+              <Route path="/frame-management" element={<FrameManagement />} />
+              <Route path="/frame-orders" element={<FrameOrdersList />} />
+              <Route path="/frame-orders/:id" element={<AdminFrameOrderDetail />} />
             </Route>
 
             {/* Admin task management + settings + reports */}

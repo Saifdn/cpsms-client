@@ -1,6 +1,4 @@
-import { useState } from "react";
-import { Plus, Filter } from "lucide-react";
-
+import { useState, useEffect } from "react";
 import { Page, PageHeader } from "@/components/layout/Page";
 import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
@@ -11,51 +9,54 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { bookingColumns } from "@/components/columns/BookingColumns";
-import { useBookings } from "@/hooks/studio/useBookings";
-import { CreateBookingDialog } from "@/pages/booking/CreateBookingDialog";
+import { useFrameOrders } from "@/hooks/frameOrders/useFrameOrders";
+import { frameOrderColumns } from "@/components/columns/FrameOrderColumns";
+import { AdminCreateFrameOrderDialog } from "./AdminCreateFrameOrderDialog";
+import { Plus, Filter } from "lucide-react";
 
 const STATUS_OPTIONS = [
-  { value: "all",        label: "All Statuses" },
-  { value: "pending",    label: "Pending" },
-  { value: "booked",     label: "Booked" },
-  { value: "checked-in", label: "Checked In" },
-  { value: "in-progress", label: "In Progress" },
-  { value: "completed",  label: "Completed" },
-  { value: "preparing",  label: "Preparing" },
-  { value: "delivery",   label: "Delivery" },
-  { value: "cancelled",  label: "Cancelled" },
+  { value: "all", label: "All Statuses" },
+  { value: "pending",   label: "Pending" },
+  { value: "paid",      label: "Paid" },
+  { value: "preparing", label: "Preparing" },
+  { value: "delivery",  label: "Delivery" },
+  { value: "delivered", label: "Delivered" },
+  { value: "cancelled", label: "Cancelled" },
 ];
 
-const Booking = () => {
+const FrameOrdersList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
 
-  const { data: bookingsData, isLoading } = useBookings({
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, limit]);
+
+  const { data, isLoading } = useFrameOrders({
+    status: statusFilter === "all" ? undefined : statusFilter,
+    search,
     page: currentPage,
     limit,
-    search,
-    status: statusFilter === "all" ? undefined : statusFilter,
   });
 
-  const bookings = bookingsData?.data ?? [];
-  const totalPages = bookingsData?.pagination?.totalPages ?? 1;
-  const total = bookingsData?.pagination?.total ?? 0;
+  const orders = data?.data ?? [];
+  const totalPages = data?.pagination?.totalPages ?? 1;
+  const total = data?.pagination?.total ?? 0;
 
   return (
     <Page>
       <PageHeader
-        title="Booking Management"
-        description="Help graduates book sessions"
+        title="Frame Orders"
+        description="Manage and process all ala-carte frame orders"
       />
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
-          <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-44">
               <SelectValue />
             </SelectTrigger>
@@ -71,15 +72,15 @@ const Booking = () => {
 
         <Button onClick={() => setShowCreateDialog(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          New Booking
+          Create Order
         </Button>
       </div>
 
       <DataTable
-        title="All Bookings"
-        description={`${total} booking${total !== 1 ? "s" : ""} found`}
-        columns={bookingColumns}
-        data={bookings}
+        title="Frame Orders"
+        description={`${total} order${total !== 1 ? "s" : ""} found`}
+        columns={frameOrderColumns}
+        data={orders}
         isLoading={isLoading}
         currentPage={currentPage}
         totalPages={totalPages}
@@ -87,10 +88,10 @@ const Booking = () => {
         limit={limit}
         onLimitChange={(v) => { setLimit(v); setCurrentPage(1); }}
         searchValue={search}
-        onSearchChange={(v) => { setSearch(v); setCurrentPage(1); }}
+        onSearchChange={setSearch}
       />
 
-      <CreateBookingDialog
+      <AdminCreateFrameOrderDialog
         open={showCreateDialog}
         onOpenChange={setShowCreateDialog}
       />
@@ -98,4 +99,4 @@ const Booking = () => {
   );
 };
 
-export default Booking;
+export default FrameOrdersList;

@@ -404,6 +404,49 @@ const CtaBanner = ({ onBook }) => (
 );
 
 
+// ─── Frame Promo ─────────────────────────────────────────────────────────────
+
+const FramePromo = ({ onShop }) => (
+  <div className="mb-14">
+    <div className="rounded-3xl border border-primary/15 bg-primary/5 px-8 py-12 md:px-14">
+      <div className="flex flex-col md:flex-row items-center gap-10">
+
+        {/* Decorative visual */}
+        <div className="hidden md:flex shrink-0 items-center justify-center">
+          <div className="w-44 h-52 rounded-2xl border-4 border-primary/20 bg-primary/10 flex items-center justify-center">
+            <div className="w-32 h-40 rounded-xl border-2 border-primary/20 bg-background flex flex-col items-center justify-center gap-2.5">
+              <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                <Image className="h-6 w-6 text-primary" />
+              </div>
+              <p className="text-xs font-semibold text-primary">Your Photo Here</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Copy */}
+        <div className="flex-1 text-center md:text-left">
+          <span className="inline-block text-xs font-semibold tracking-widest text-primary uppercase mb-3">
+            À La Carte Frame Order
+          </span>
+          <h2 className="text-3xl md:text-4xl font-extrabold leading-tight mb-3">
+            Give Your Photo a Proper Home
+          </h2>
+          <p className="text-muted-foreground text-sm md:text-base max-w-md mb-7 mx-auto md:mx-0">
+            Order premium graduation frames delivered straight to your door.
+            Pick your styles, set your quantity — no bundles, no minimum.
+          </p>
+          <Button size="lg" onClick={onShop} className="font-semibold px-8">
+            Shop Frames
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+);
+
+
 // ─── Packages Section ─────────────────────────────────────────────────────────
 
 const PackagesSection = ({ isLoading, isError, packages, onBook, onRetry }) => {
@@ -466,6 +509,7 @@ const GraduateHome = () => {
     navigate(`/book?packageId=${pkg._id}`, { state: { selectedPackage: pkg } });
 
   const handleGeneralBookNow = () => navigate("/book");
+  const handleShopFrames = () => navigate("/frames");
 
   const scrollToPackages = () =>
     document.getElementById("packages")?.scrollIntoView({ behavior: "smooth" });
@@ -607,6 +651,9 @@ const GraduateHome = () => {
           />
         </div>
       </div>
+
+      {/* ── Frame Promo ───────────────────────────────────────────────────── */}
+      <FramePromo onShop={handleShopFrames} />
 
       {/* ── How It Works ──────────────────────────────────────────────────── */}
       <HowItWorks />

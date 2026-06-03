@@ -5,8 +5,8 @@ export const bookingService = {
   getMyBookings: () => axios.get("/bookings/my-bookings"),
   getMyBookingById: (id) => axios.get(`/bookings/my-bookings/${id}`),
 
-  getAllBookings: ({ date, page, limit, search } = {}) =>
-    axios.get("/bookings", { params: { date, page, limit, search: search || undefined } }),
+  getAllBookings: ({ date, page, limit, search, status } = {}) =>
+    axios.get("/bookings", { params: { date, page, limit, search: search || undefined, status: status || undefined } }),
 
   getBookingById: (id) => axios.get(`/bookings/${id}`),
   createBooking: (data) => axios.post("/bookings", data),
