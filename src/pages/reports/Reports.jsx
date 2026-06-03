@@ -298,6 +298,52 @@ function AddonRevenueChart({ data = [] }) {
   );
 }
 
+// ─── Frame orders table ───────────────────────────────────────────────────────
+function FrameOrdersTable({ data = [], totalOrders = 0, totalRevenue = 0 }) {
+  return (
+    <Card>
+      <CardHeader className="border-b">
+        <CardTitle>Frame Orders</CardTitle>
+        <CardDescription className="flex gap-2 flex-wrap mt-1">
+          <span>{totalOrders} order{totalOrders !== 1 ? "s" : ""}</span>
+          <span>·</span>
+          <span>RM {totalRevenue.toLocaleString()} total revenue</span>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0 px-0">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Frame</TableHead>
+              <TableHead className="text-right">Qty</TableHead>
+              <TableHead className="text-right">Revenue</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
+                  No frame orders for this period
+                </TableCell>
+              </TableRow>
+            ) : (
+              data.map((row, i) => (
+                <TableRow key={i}>
+                  <TableCell className="font-medium">{row.name}</TableCell>
+                  <TableCell className="text-right">{row.qty}</TableCell>
+                  <TableCell className="text-right font-semibold">
+                    RM {row.revenue.toLocaleString()}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </CardContent>
+    </Card>
+  );
+}
+
 // ─── Breakdown table ──────────────────────────────────────────────────────────
 function BreakdownTable({ title, description, data = [] }) {
   return (
@@ -480,6 +526,38 @@ function DailyDrillDownSheet({ date, onClose }) {
                           <TableCell className="text-right">{a.qty}</TableCell>
                           <TableCell className="text-right font-semibold">
                             RM {a.revenue.toLocaleString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
+            )}
+
+            {/* Frame Orders */}
+            {daily.frameOrders?.totalOrders > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold mb-1">Frame Orders</h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {daily.frameOrders.totalOrders} order{daily.frameOrders.totalOrders !== 1 ? "s" : ""} · RM {daily.frameOrders.totalRevenue.toLocaleString()}
+                </p>
+                <div className="rounded-lg border overflow-hidden">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Frame</TableHead>
+                        <TableHead className="text-right">Qty</TableHead>
+                        <TableHead className="text-right">Revenue</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {daily.frameOrders.frames.map((f, i) => (
+                        <TableRow key={i}>
+                          <TableCell className="font-medium">{f.name}</TableCell>
+                          <TableCell className="text-right">{f.qty}</TableCell>
+                          <TableCell className="text-right font-semibold">
+                            RM {f.revenue.toLocaleString()}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -727,6 +805,19 @@ export default function Reports() {
               data={overall.addonBreakdown ?? []}
             />
           </>
+        )}
+      </div>
+
+      {/* ── Frame Orders breakdown ────────────────────────────────────────── */}
+      <div className="mt-4">
+        {isLoading ? (
+          <ChartSkeleton height="h-40" />
+        ) : (
+          <FrameOrdersTable
+            data={overall.frameOrders?.frames ?? []}
+            totalOrders={overall.frameOrders?.totalOrders ?? 0}
+            totalRevenue={overall.frameOrders?.totalRevenue ?? 0}
+          />
         )}
       </div>
 

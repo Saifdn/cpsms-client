@@ -1,5 +1,4 @@
 import {
-  BookOpenIcon,
   CalendarCheck,
   ChartPieIcon,
   ClipboardList,
@@ -12,6 +11,9 @@ import {
   Truck,
   UsersIcon,
   Camera,
+  ShoppingBag,
+  Package,
+  Frame,
 } from "lucide-react";
 
 export const APP_SIDEBAR = {
@@ -23,9 +25,21 @@ export const APP_SIDEBAR = {
       allowedRoles: ["graduate"],
     },
     {
-      title: "My Bookings",
-      url: "/my-bookings",
-      Icon: BookOpenIcon,
+      title: "Frame Shop",
+      url: "/frames",
+      Icon: ShoppingBag,
+      allowedRoles: ["graduate"],
+    },
+    {
+      title: "Book Studio",
+      url: "/book",
+      Icon: CalendarCheck,
+      allowedRoles: ["graduate"],
+    },
+    {
+      title: "My Orders",
+      url: "/my-orders",
+      Icon: Package,
       allowedRoles: ["graduate"],
     },
     {
@@ -63,10 +77,21 @@ export const APP_SIDEBAR = {
       allowedRoles: ["superadmin", "admin", "staff"],
     },
     {
-      title: "Tasks",
-      url: "/tasks",
-      Icon: ClipboardList,
-      allowedRoles: ["superadmin", "admin"],
+      title: "Frames",
+      url: "#",
+      Icon: Frame,
+      children: [
+        {
+          title: "Frame Catalog",
+          url: "/frame-management",
+          allowedRoles: ["superadmin", "admin", "staff"],
+        },
+        {
+          title: "Frame Orders",
+          url: "/frame-orders",
+          allowedRoles: ["superadmin", "admin", "staff"],
+        },
+      ],
     },
     {
       title: "My Tasks",
@@ -99,15 +124,32 @@ export const APP_SIDEBAR = {
     },
     {
       title: "Shipment",
-      url: "/shipment",
+      url: "#",
       Icon: Truck,
-      allowedRoles: ["superadmin", "admin", "staff"],
+      children: [
+        {
+          title: "Studio",
+          url: "/shipment",
+          allowedRoles: ["superadmin", "admin", "staff"],
+        },
+        {
+          title: "Frame",
+          url: "/shipment/frames",
+          allowedRoles: ["superadmin", "admin", "staff"],
+        },
+      ],
     },
     {
       title: "Reports",
       url: "/reports",
       Icon: FileBarChart2,
       allowedRoles: ["superadmin", "admin", "staff"],
+    },
+    {
+      title: "Tasks",
+      url: "/tasks",
+      Icon: ClipboardList,
+      allowedRoles: ["superadmin", "admin"],
     },
     {
       title: "Users",
@@ -124,15 +166,12 @@ export const APP_SIDEBAR = {
           url: "/graduate",
           allowedRoles: ["superadmin", "admin", "staff"],
         },
-        { title: "Admin", url: "/admin", allowedRoles: ["superadmin"] },
+        { title: "Admin",
+          url: "/admin",
+          allowedRoles: ["superadmin"] 
+        },
       ],
     },
-    // {
-    //   title: 'Reporting',
-    //   url: '#',
-    //   Icon: ChartPieIcon,
-    //   allowedRoles: ['superadmin', 'admin', 'staff'],
-    // },
   ],
   secondaryNav: [
     {

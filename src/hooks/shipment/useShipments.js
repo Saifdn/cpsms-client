@@ -138,3 +138,80 @@ export const useDownloadMergedAwb = () => {
     },
   });
 };
+
+// ── Frame order shipment hooks ─────────────────────────────────────────────────
+
+export const usePendingFrameOrderShipments = ({ date = null, page = 1, limit = 20 } = {}) => {
+  return useQuery({
+    queryKey: ["frameShipments", "pending", date, page, limit],
+    queryFn: () =>
+      shipmentService.getPendingFrameOrderShipments({ date, page, limit }).then((res) => res.data),
+    staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
+  });
+};
+
+export const useSubmittedFrameOrderShipments = ({ date = null, page = 1, limit = 20 } = {}) => {
+  return useQuery({
+    queryKey: ["frameShipments", "submitted", date, page, limit],
+    queryFn: () =>
+      shipmentService.getSubmittedFrameOrderShipments({ date, page, limit }).then((res) => res.data),
+    staleTime: 2 * 60 * 1000,
+    keepPreviousData: true,
+  });
+};
+
+export const useGetFrameOrderQuotation = () => {
+  return useMutation({
+    mutationFn: (frameOrderIds) => shipmentService.getFrameOrderQuotation(frameOrderIds),
+    onSuccess: (response) => {
+      toast.success(`Found ${response.data?.totalQuotationsFound || 0} quotation options`);
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to get quotation");
+    },
+  });
+};
+
+export const useBulkProcessFrameOrderShipments = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload) => shipmentService.submitFrameOrderShipments(payload),
+    onSuccess: (response) => {
+      toast.success(response?.data?.message || "Frame order shipments processed successfully");
+      queryClient.invalidateQueries({ queryKey: ["frameShipments", "pending"] });
+      queryClient.invalidateQueries({ queryKey: ["frameShipments"] });
+    },
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Failed to process frame order shipments");
+    },
+  });
+};
+
+export const useDownloadFrameOrderMergedAwb = () => {
+  return useMutation({
+    mutationFn: (shipmentIds = []) => shipmentService.mergeFrameOrderAwb(shipmentIds),
+    onSuccess: (response) => {
+      const url = window.URL.createObjectURL(
+        new Blob([response.data], { type: "application/pdf" })
+      );
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "frame-awb-labels.pdf");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    },
+    onError: (err) => {
+      if (err.response?.status === 404) {
+        toast.error("No AWB labels available to download");
+      } else if (err.response?.status >= 500) {
+        toast.error("Something went wrong, try again");
+      } else {
+        toast.error("Failed to download labels. Please try again.");
+      }
+    },
+  });
+};

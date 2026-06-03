@@ -43,4 +43,43 @@ export const shipmentService = {
       shipmentIds.length ? { shipmentIds } : {},
       { responseType: "blob" }
     ),
+
+  // ── Frame order shipments ──────────────────────────────────────────────────
+
+  getPendingFrameOrderShipments: ({ date, page, limit } = {}) =>
+    axios.get("/shipments/frame-orders/pending", { params: { date, page, limit } }),
+
+  getSubmittedFrameOrderShipments: ({ date, page, limit } = {}) =>
+    axios.get("/shipments/frame-orders/submitted", { params: { date, page, limit } }),
+
+  getFrameOrderQuotation: (frameOrderIds) =>
+    axios.post("/shipments/frame-orders/quotation", { frameOrderIds }),
+
+  submitFrameOrderShipments: ({
+    frameOrderIds,
+    serviceId,
+    serviceName,
+    courierName,
+    collectionDate,
+    sender,
+    packageDetails,
+    features,
+  }) =>
+    axios.post("/shipments/frame-orders/submit", {
+      frameOrderIds,
+      serviceId,
+      serviceName,
+      courierName,
+      collectionDate,
+      sender,
+      packageDetails,
+      features,
+    }),
+
+  mergeFrameOrderAwb: (shipmentIds = []) =>
+    axios.post(
+      "/shipments/frame-orders/merge-awb",
+      shipmentIds.length ? { shipmentIds } : {},
+      { responseType: "blob" }
+    ),
 };

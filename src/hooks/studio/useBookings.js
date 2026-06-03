@@ -19,11 +19,11 @@ export const useMyBookingById = (id) => {
   });
 };
 
-export const useBookings = ({ date = null, page = 1, limit = 20, search = "" } = {}) => {
+export const useBookings = ({ date = null, page = 1, limit = 20, search = "", status } = {}) => {
   return useQuery({
-    queryKey: ["bookings", date, page, limit, search],
+    queryKey: ["bookings", date, page, limit, search, status],
     queryFn: () =>
-      bookingService.getAllBookings({ date, page, limit, search }).then(res => res.data),
+      bookingService.getAllBookings({ date, page, limit, search, status }).then(res => res.data),
     staleTime: 2 * 60 * 1000,
     keepPreviousData: true,
   });
