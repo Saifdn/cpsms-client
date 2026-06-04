@@ -11,11 +11,6 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-function getDiscountPercent(price, normalPrice) {
-  if (!normalPrice || normalPrice <= price) return null;
-  return Math.round(((normalPrice - price) / normalPrice) * 100);
-}
-
 export function AddonCard({ addon, onEdit, onDelete, isLoading, isDeleteLoading }) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -23,7 +18,6 @@ export function AddonCard({ addon, onEdit, onDelete, isLoading, isDeleteLoading 
     name: addon.name || "",
     description: addon.description || "",
     price: addon.price || "",
-    normalPrice: addon.normalPrice || "",
   });
 
   const handleEditSave = () => {
@@ -32,7 +26,6 @@ export function AddonCard({ addon, onEdit, onDelete, isLoading, isDeleteLoading 
       name: editForm.name,
       description: editForm.description,
       price: Number(editForm.price),
-      normalPrice: Number(editForm.normalPrice),
     });
     setShowEditDialog(false);
   };
@@ -41,8 +34,6 @@ export function AddonCard({ addon, onEdit, onDelete, isLoading, isDeleteLoading 
     onDelete(addon._id);
     setShowDeleteDialog(false);
   };
-
-  const discount = getDiscountPercent(addon.price, addon.normalPrice);
 
   return (
     <>
@@ -88,16 +79,6 @@ export function AddonCard({ addon, onEdit, onDelete, isLoading, isDeleteLoading 
             <Badge variant="secondary" className="font-semibold text-xs">
               + RM {addon.price}
             </Badge>
-            {addon.normalPrice > 0 && (
-              <span className="text-xs text-muted-foreground line-through">
-                RM {addon.normalPrice}
-              </span>
-            )}
-            {discount && (
-              <Badge variant="outline" className="text-[10px] font-semibold text-green-600 border-green-200 bg-green-50 dark:bg-green-950/40 dark:border-green-800 dark:text-green-400">
-                {discount}% off
-              </Badge>
-            )}
           </div>
 
           {addon.description && (
@@ -130,7 +111,7 @@ export function AddonCard({ addon, onEdit, onDelete, isLoading, isDeleteLoading 
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="addon-price">Promo Price (RM)</FieldLabel>
+            <FieldLabel htmlFor="addon-price">Price (RM)</FieldLabel>
             <Input
               id="addon-price"
               type="number"
@@ -138,19 +119,6 @@ export function AddonCard({ addon, onEdit, onDelete, isLoading, isDeleteLoading 
               value={editForm.price}
               onChange={(e) =>
                 setEditForm((prev) => ({ ...prev, price: e.target.value }))
-              }
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="addon-normal-price">Normal Price (RM)</FieldLabel>
-            <Input
-              id="addon-normal-price"
-              type="number"
-              min="0"
-              value={editForm.normalPrice}
-              onChange={(e) =>
-                setEditForm((prev) => ({ ...prev, normalPrice: e.target.value }))
               }
             />
           </Field>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { useMyFrameOrderById, useCancelFrameOrder } from "@/hooks/frameOrders/useFrameOrders";
+import { useMyFrameOrderById } from "@/hooks/frameOrders/useFrameOrders";
 import { getFrameOrderStatus, getFrameOrderPaymentStatus } from "@/components/columns/FrameOrderColumns";
 import { getShipmentStatus } from "@/lib/easyparcelStatus";
 import {
@@ -18,10 +18,8 @@ import {
   Package,
   MapPin,
   List,
-  XCircle,
   CheckCircle,
   Clock,
-  Loader2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { SummaryRow, SectionCard } from "@/components/booking/BookingSummaryParts";
@@ -125,7 +123,6 @@ const GraduateFrameOrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: response, isLoading, isError } = useMyFrameOrderById(id);
-  const cancelOrder = useCancelFrameOrder();
   const order = response?.data;
 
   if (isLoading) return <LoadingSkeleton />;
@@ -153,7 +150,7 @@ const GraduateFrameOrderDetail = () => {
   const statusInfo = getFrameOrderStatus(order.status);
   const paymentInfo = getFrameOrderPaymentStatus(order.paymentStatus);
   const isCancelled = order.status === "cancelled";
-  const canCancel = order.status === "pending" || order.status === "paid";
+
   const isInDelivery = order.status === "delivery";
   const currentStatusIndex = STATUS_STEPS.findIndex((s) => s.key === order.status);
   const delivery = order.shipment?.receiver ?? null;
@@ -168,10 +165,6 @@ const GraduateFrameOrderDetail = () => {
     navigator.clipboard.writeText(order.orderNumber).then(() => {
       toast.success("Order number copied!");
     });
-  };
-
-  const handleCancel = () => {
-    cancelOrder.mutate(order._id);
   };
 
   return (
@@ -379,26 +372,6 @@ const GraduateFrameOrderDetail = () => {
             My Frame Orders
           </Button>
 
-          {canCancel && (
-            <Button
-              variant="destructive"
-              onClick={handleCancel}
-              disabled={cancelOrder.isPending}
-              className="flex-1"
-            >
-              {cancelOrder.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Cancelling…
-                </>
-              ) : (
-                <>
-                  <XCircle className="mr-2 h-4 w-4" />
-                  Cancel Order
-                </>
-              )}
-            </Button>
-          )}
         </div>
       </div>
     </Page>
