@@ -243,7 +243,13 @@ const ShipmentManagement = () => {
 
           {!isPending && (
             <Button
-              onClick={() => downloadMergedAwbMutation.mutate(selectedSubmittedIds)}
+              onClick={() =>
+                downloadMergedAwbMutation.mutate(
+                  selectedSubmittedIds.length > 0
+                    ? selectedSubmittedIds
+                    : submittedShipments.map((s) => s._id)
+                )
+              }
               disabled={downloadMergedAwbMutation.isPending || submittedShipments.length === 0}
               className="flex-1 sm:flex-none"
             >

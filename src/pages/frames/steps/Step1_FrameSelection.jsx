@@ -236,10 +236,10 @@ const Step1_FrameSelection = ({ data, updateData, onNext }) => {
             Cancel
           </Button>
           <Button
-            size="lg"
             onClick={handleNext}
             disabled={cartItems.length === 0}
             className="flex-1"
+            size="lg"
           >
             Continue to Delivery
           </Button>

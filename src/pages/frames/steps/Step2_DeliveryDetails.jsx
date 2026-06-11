@@ -317,7 +317,7 @@ const DeliveryForm = ({ profile, user, data, updateData, onNext, onPrev }) => {
             Back
           </Button>
           <Button size="lg" onClick={handleContinue} disabled={!isFormValid} className="flex-1">
-            Continue to Review
+            Continue
           </Button>
         </div>
       </CardContent>

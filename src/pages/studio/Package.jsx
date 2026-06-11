@@ -62,7 +62,6 @@ const INITIAL_ADDON_FORM = {
   name: "",
   description: "",
   price: "",
-  normalPrice: "",
 };
 
 const INITIAL_PROMO_FORM = {
@@ -284,7 +283,6 @@ const Package = () => {
         name: addonForm.name,
         description: addonForm.description,
         price: Number(addonForm.price),
-        normalPrice: Number(addonForm.normalPrice),
       },
       {
         onSuccess: () => {
@@ -700,7 +698,7 @@ const Package = () => {
           </Field>
 
           <Field>
-            <FieldLabel htmlFor="new-addon-price">Promo Price (RM)</FieldLabel>
+            <FieldLabel htmlFor="new-addon-price">Price (RM)</FieldLabel>
             <Input
               id="new-addon-price"
               type="number"
@@ -708,19 +706,6 @@ const Package = () => {
               value={addonForm.price}
               onChange={(e) =>
                 setAddonForm((prev) => ({ ...prev, price: e.target.value }))
-              }
-            />
-          </Field>
-
-          <Field>
-            <FieldLabel htmlFor="new-addon-normal-price">Normal Price (RM)</FieldLabel>
-            <Input
-              id="new-addon-normal-price"
-              type="number"
-              min="0"
-              value={addonForm.normalPrice}
-              onChange={(e) =>
-                setAddonForm((prev) => ({ ...prev, normalPrice: e.target.value }))
               }
             />
           </Field>
